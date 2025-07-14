@@ -1,0 +1,287 @@
+package com.komik.komik.ui.pages.detail
+
+import android.content.Intent
+import android.os.Bundle
+import android.util.Log
+import android.view.View
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
+import com.google.android.material.snackbar.Snackbar
+import com.komik.komik.R
+import com.komik.komik.databinding.ActivityDetailBinding
+import com.komik.komik.service.adapter.AdapterChapter
+import com.komik.komik.service.adapter.AdapterGenre
+import com.komik.komik.service.client
+import com.komik.komik.service.database.dao.ComicDao
+import com.komik.komik.service.database.dao.chapterDao
+import com.komik.komik.service.database.dao.genreDao
+import com.komik.komik.service.database.data.DatabaseChapter
+import com.komik.komik.service.database.data.DatabaseComic
+import com.komik.komik.service.database.data.DatabaseGenre
+import com.komik.komik.service.database.model.Chapter
+import com.komik.komik.service.database.model.Comic
+import com.komik.komik.service.database.model.Genre
+import com.komik.komik.service.enumclass.sourceType
+import com.komik.komik.service.repository.Detail
+import com.komik.komik.ui.pages.read.ReadActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jsoup.Jsoup
+
+class DetailActivity : AppCompatActivity() {
+
+    private lateinit var viewModel: DetailViewmodel
+    private lateinit var binding: ActivityDetailBinding
+
+    private lateinit var dbcomic: DatabaseComic
+    private lateinit var comicDao: ComicDao
+
+    private lateinit var dbChapter: DatabaseChapter
+    private lateinit var chapterDao: chapterDao
+
+    private lateinit var dbGenre: DatabaseGenre
+    private lateinit var genreDao: genreDao
+
+    private var isSelengkap: Boolean? = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        binding = ActivityDetailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+//        inisialize
+        viewCompatPadding()
+        initDatabase()
+        initViewmodel()
+        initRecycleview()
+
+        val url = intent.getStringExtra(URL)
+        val location = intent.getStringExtra(LOCATION)
+
+//        Snackbar.make(binding.root, location.toString(), Snackbar.LENGTH_LONG).show()
+
+        val source = when (location) {
+            "ikiru" -> sourceType.ikiru
+            "komikcast" -> sourceType.komikcast
+            "kiryuu" -> sourceType.kiryuu
+            "komiku" -> sourceType.komiku
+            "comicscan" -> sourceType.comicscan
+            "shinigami" -> sourceType.shinigami
+            else -> sourceType.ikiru
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            binding.loading.visibility = View.VISIBLE
+            val dataDetail = comicDao.getComicByUrl(url.toString())
+
+            if (dataDetail != null) {
+                detail(url.toString(), dataDetail)
+                binding.nestedScrollView.visibility = View.VISIBLE
+            } else {
+                withContext(Dispatchers.Main) {
+                    viewModel.getDetail(source, url.toString())
+                }
+
+            }
+
+        }
+
+        viewModel.dataDetail.observe(this){ data ->
+            if(data != null){
+                CoroutineScope(Dispatchers.IO).launch {
+                    detail(url.toString(), data)
+                }
+            }
+        }
+
+        viewModel.loading.observe(this) { loading ->
+            if (loading) {
+                binding.loading.visibility = View.VISIBLE
+            } else {
+                binding.loading.visibility = View.GONE
+                binding.nestedScrollView.visibility = View.VISIBLE
+            }
+        }
+
+        viewModel.error.observe(this) { error ->
+            if (error != null) {
+                Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    suspend fun detail(url: String, data: Comic?) {
+        val genre = genreDao.getGenreByComicTitle(data?.title.toString())
+        val chapter = chapterDao.getChaptersForComic(data?.title.toString())
+        Log.d(TAG, "detail: $chapter")
+        withContext(Dispatchers.Main) {
+
+            binding.loading.visibility = View.GONE
+
+            binding.back.setOnClickListener {
+                finish()
+            }
+
+            Glide.with(this@DetailActivity)
+                .load(data?.imageUrl)
+                .error(R.drawable.placeholder)
+                .into(binding.banner)
+
+            Glide.with(this@DetailActivity)
+                .load(data?.imageUrl)
+                .error(R.drawable.placeholder)
+                .into(binding.imageView3)
+
+            binding.title.text = data?.title
+            binding.textView4.text = data?.alternativeTitle
+            binding.status.text = data?.status
+            binding.sinopsis.text = data?.description
+
+            binding.textView12.text = "${chapter.size} Chapter"
+
+            binding.genre.adapter = AdapterGenre(genre)
+            binding.chapter.adapter = AdapterChapter(chapter)
+
+            binding.selengkap.setOnClickListener {
+                isSelengkap = !isSelengkap!!
+                if (isSelengkap == true) {
+                    binding.sinopsis.maxLines = Int.MAX_VALUE
+                    binding.selengkap.text = "Sembunyikan"
+                } else {
+                    binding.sinopsis.maxLines = 3
+                    binding.selengkap.text = "Selengkapnya"
+                }
+            }
+
+            binding.btnBaca.setOnClickListener {
+                val intent = Intent(this@DetailActivity, ReadActivity::class.java)
+                intent.putExtra(ReadActivity.EXTRA_URL, chapter.first().link)
+                startActivity(intent)
+            }
+
+
+        }
+    }
+
+
+    fun testScrape() {
+        CoroutineScope(Dispatchers.IO).launch {
+
+            val html = client.Ikiru.getHtml("https://id.ikiru.wtf/manga/golden-print/")
+            val document = Jsoup.parse(html)
+
+            val bodyClasses = document.body().className().split(" ")
+            val mangaId =
+                bodyClasses.firstOrNull { it.startsWith("postid-") }?.removePrefix("postid-")
+
+            val idparser =
+                client.Ikiru.getHtml("https://id.ikiru.wtf/ajax-call?manga_id=${mangaId}&page=1&action=chapter_list")
+            val document2 = Jsoup.parse(idparser)
+
+            val title = document.select(".flex h1.text-2xl")[0].text()
+            val imageUrl = document.select(".contents img").attr("src")
+            val deskripsitable = document.select("div").attr("itemprop", "description").text()
+            val author = document.select("span.komik_info-content-info").text()
+
+            val rating = document.select("span.to-accent-2").text()
+            val type = document.select("p.ml-1").text()
+            val alternative = document.select("div.text-text").text()
+
+
+            val chapters =
+                document2.select("div#chapter-list div.cursor-pointer a.cursor-pointer").map {
+                    Chapter(
+                        title = it.select("span").text(),
+                        link = it.attr("href"),
+                        comicTitle = title,
+                        date = it.select("time").text()
+                    )
+                }
+
+
+            val genres = document.select("span.text-inherit")
+                .map {
+                    Genre(
+                        comicTitle = title,
+                        genre = it.text()
+                    )
+                }
+
+            Log.d(TAG, "genres: $genres")
+            Log.d(TAG, "chapters: ${chapters}")
+
+            Log.d(TAG, "title: ${title}")
+            Log.d(TAG, "imageUrl: ${imageUrl}")
+            Log.d(TAG, "deskripsitable: ${deskripsitable}")
+            Log.d(TAG, "author: ${author}")
+            Log.d(TAG, "id: ${mangaId}")
+
+            Log.d(TAG, "rating: ${rating}")
+            Log.d(TAG, "type: ${type}")
+            Log.d(TAG, "alternative: ${alternative}")
+
+
+        }
+    }
+
+    fun initViewmodel() {
+        val repository = Detail(
+            comicDao = comicDao,
+            genreDao = genreDao,
+            chapterDao = chapterDao,
+            client = client
+        )
+
+        viewModel = ViewModelProvider(this, Providerviewmodel(repository))[DetailViewmodel::class]
+
+    }
+
+    fun initDatabase() {
+        dbcomic = DatabaseComic.getDatabase(this)
+        comicDao = dbcomic.comicdao()
+
+        dbChapter = DatabaseChapter.getDatabase(this)
+        chapterDao = dbChapter.chapterdao()
+
+        dbGenre = DatabaseGenre.getDatabase(this)
+        genreDao = dbGenre.genredao()
+    }
+
+    fun viewCompatPadding() {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
+            insets
+        }
+
+        window.navigationBarColor = resources.getColor(R.color.bottom_navbar)
+
+        WindowCompat.getInsetsController(window, window.decorView).let { controller ->
+            controller.isAppearanceLightStatusBars = false
+            controller.isAppearanceLightNavigationBars = false
+        }
+    }
+
+    fun initRecycleview() {
+        binding.genre.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.chapter.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+
+    }
+
+    companion object {
+        const val TAG = "DetailActivity"
+        const val URL = "url"
+        const val LOCATION = "location"
+    }
+}

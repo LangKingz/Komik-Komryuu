@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Ini buat ngatur warna background-nya. Ganti aja warnanya sesuai seleramu -->
+    <solid android:color="#4A4458" />
+
+    <!-- Ini yang bikin sudutnya jadi tumpul. Makin gede nilainya, makin bulet -->
+    <corners android:radius="16dp" />
+</shape>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.pencarian.SearchFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/search_background"
+            android:clickable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginVertical="10dp"
+                android:src="@drawable/baseline_search_24"
+                app:tint="@color/gray_400" />
+
+            <EditText
+                android:id="@+id/search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:enabled="false"
+                android:hint="Cari Extensi dan Komik"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textColor="@color/gray_400"
+                android:textColorHint="@color/gray_400" />
+
+            <ImageView
+                android:id="@+id/pp"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginVertical="10dp"
+                android:background="@drawable/oval_picture"
+                android:clipToOutline="true"
+                android:src="@drawable/ppanime" />
+
+        </LinearLayout>
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:layout_width="match_parent"
+            android:id="@+id/loading"
+            android:layout_marginHorizontal="24dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:indeterminate="true" />
+
+        <!-- Bagian 1: Judul untuk Carousel -->
+        <TextView
+            android:layout_marginTop="16dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Lagi Trending 🔥"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <!-- Bagian 2: RecyclerView Horizontal untuk Carousel/Banner -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_carousel"
+            android:layout_width="match_parent"
+            android:layout_height="196dp"
+            android:layout_marginBottom="24dp"
+            android:orientation="horizontal"
+            app:carousel_alignment="center"
+            app:layoutManager="com.google.android.material.carousel.CarouselLayoutManager" />
+
+        <!-- Bagian 3: Judul untuk List Komik -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Semua Extensi Komik"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+
+        <!--
+        Bagian 4: RecyclerView Vertikal untuk List Komik
+        INI BAGIAN PALING PENTING!
+        'nestedScrollingEnabled="false"' memberitahu RecyclerView ini:
+        "Woy, kamu nggak usah pusingin soal scroll, biar NestedScrollView yang ngurus!"
+        Ini mencegah lag dan membuat scroll jadi mulus.
+        -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_comic_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+
+
+    </LinearLayout>
+
+
+</androidx.core.widget.NestedScrollView>
