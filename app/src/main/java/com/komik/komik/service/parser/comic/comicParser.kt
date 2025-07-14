@@ -14,6 +14,11 @@ object comicParser {
         val description = document.select(".seriestuhead p").text()
         val author = document.select("table tr")[4].select("td")[1].text()
 
+        val alternativeTitle = document.select("div.seriestualt").text()
+        val rating = document.select("div.num").text()
+        val type = document.select("table tr")[1].select("td")[1].text()
+        val status = document.select("table tr")[0].select("td")[1].text()
+
         val chapters = document.select("ul.clstyle li").map {
             Chapter(
                 title = it.select("a .chapternum").text(),
@@ -39,6 +44,10 @@ object comicParser {
             location = "kiryuu",
             chapters = chapters,
             genres = genres,
+            alternativeTitle = alternativeTitle,
+            type = type,
+            rating = rating,
+            status = status
         )
     }
 
@@ -47,6 +56,9 @@ object comicParser {
         val imageUrl = document.select(".komik_info-content-thumbnail img").attr("src")
         val deskripsitable = document.select(".komik_info-description-sinopsis p").text()
         val author = document.select("span.komik_info-content-info").text()
+
+        val alternativeTitle= document.select("span.komik_info-content-native")
+        val rating = document.select("div.data-rating").attr("data-ratingkomik")
 
         val chapters = document.select("ul li.komik_info-chapters-item ").map {
             Chapter(
@@ -73,7 +85,11 @@ object comicParser {
             author = author,
             location = "komikcast",
             chapters = chapters,
-            genres = genres
+            genres = genres,
+            alternativeTitle = alternativeTitle.toString(),
+            type = "Manhwa",
+            rating = rating,
+            status = "onGoing"
         )
     }
 

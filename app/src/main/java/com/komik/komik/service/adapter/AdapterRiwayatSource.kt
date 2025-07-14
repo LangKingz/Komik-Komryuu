@@ -23,7 +23,7 @@ class AdapterRiwayatSource(private val list: MutableList<RiwayatSource>): Recycl
                 "comicscan" -> "https://lc3.cosmicscans.asia/wp-content/uploads/2024/03/logo_cosmic.png"
                 "shinigami" -> "https://06.shinigami.asia/favicon.png"
                 "komikcast" -> "https://komikcast.li/wp-content/uploads/2021/02/cropped-logo-kc-32x32.png"
-                "kiryuu" -> "https://kiryuu02.com/"
+                "kiryuu" -> "https://kiryuu02.com/wp-content/uploads/2021/10/cropped-logo-icon-kiryuu-1-456248-udlqjluy-194445-3fNc9Wlc-32x32.png"
                 "komiku" -> "https://komikindo.rip/"
                 else -> ""
             }

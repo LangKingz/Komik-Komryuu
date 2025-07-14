@@ -25,7 +25,7 @@ class Detail(
         val html = when (type) {
             sourceType.komikcast -> client.Komikcast.getHtml(url)
             sourceType.ikiru -> client.Ikiru.getHtml(url)
-            sourceType.kiryuu,
+            sourceType.kiryuu -> client.Ikiru.getHtml(url)
             sourceType.komiku,
             sourceType.comicscan -> client.Comicscan.getHtml(url)
             sourceType.shinigami -> ""
@@ -36,6 +36,8 @@ class Detail(
 
         val parsedData = when (type) {
             sourceType.ikiru -> comicParser.parseIkiru(document, url)
+            sourceType.komikcast -> comicParser.parseKomikcast(document, url)
+            sourceType.kiryuu -> comicParser.parseKiryuu(document, url)
             else -> null
         }
 

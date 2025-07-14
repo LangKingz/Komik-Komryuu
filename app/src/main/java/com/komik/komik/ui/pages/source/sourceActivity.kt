@@ -4,7 +4,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
 import android.view.View
+import android.widget.SearchView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -39,6 +41,7 @@ class sourceActivity : AppCompatActivity() {
         binding = ActivitySourceBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setSupportActionBar(binding.appbar)
         adapterManhwa = AdapterManhwa(mutableListOf())
 
         window.navigationBarColor = resources.getColor(R.color.bottom_navbar)
@@ -81,6 +84,12 @@ class sourceActivity : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+                R.id.search -> {
+
+
+
+                    true
+                }
                 else -> false}
 
         }
@@ -116,6 +125,28 @@ class sourceActivity : AppCompatActivity() {
 
 
     }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+
+        menuInflater.inflate(R.menu.menu_navigation_appbar, menu)
+
+        val searchItem = menu?.findItem(R.id.search)
+        val searchView = searchItem?.actionView as androidx.appcompat.widget.SearchView
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
+            androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextChange(newText: String?): Boolean {
+                return false
+            }
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                Snackbar.make(binding.root, query.toString(), Snackbar.LENGTH_SHORT).show()
+                return true
+            }
+        })
+
+        return true
+    }
+
 
     fun scrapeTest  (url: String) {
 

@@ -8,4 +8,5 @@
         android:iconTint="@color/dark_background"
         android:contentDescription="Filter Ikon"
         android:title="filter" />
+
 </menu>

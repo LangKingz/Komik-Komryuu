@@ -3,12 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/search"
+        android:title="search"
+        android:icon="@drawable/baseline_search_24"
+        app:showAsAction="ifRoom|collapseActionView"
+        app:theme="@style/AppTheme.SearchViewStyle"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        android:iconTint="@color/white"
+        />
+    <item
         android:id="@+id/webview"
         android:title="webview"
         android:icon="@drawable/globe_hemisphere_west__1_"
         app:showAsAction="ifRoom"
         android:iconTint="@color/white"
         />
+
+
 
 
 </menu>

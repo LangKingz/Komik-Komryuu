@@ -11,7 +11,7 @@
 <!--        Warna teks atau ikon di atas colorSurface.-->
         <item name="colorOnBackground">@color/white</item>
 <!--&lt;!&ndash;        Warna latar belakang utama aplikasi.&ndash;&gt;-->
-<!--        <item name="colorSurface">@color/light_surface</item>-->
+        <item name="colorSurface">@color/light_surface</item>
 <!--         Warna teks di atas colorBackground.-->
         <item name="colorOnSurface">@color/dark_onSurface</item>
         <item name="android:textColor">@color/white</item>
@@ -25,6 +25,12 @@
 
 
 
+    </style>
+
+    <style name="AppTheme.SearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorHint">@color/gray_400</item>
+        <item name="android:tint">@color/white</item>
     </style>
 
     <style name="MyCustomSearchBar" parent="Widget.Material3.SearchBar">

@@ -4,19 +4,50 @@ import android.content.Intent
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.komik.komik.databinding.CardChapterBinding
+import com.komik.komik.service.database.dao.riwayatDao
+import com.komik.komik.service.database.dao.riwayatRelationDao
+import com.komik.komik.service.database.data.DatabaseRiwayat
+import com.komik.komik.service.database.data.Relation.DatabaseRiwayats
 import com.komik.komik.service.database.model.Chapter
+import com.komik.komik.service.database.model.Riwayat
+import com.komik.komik.service.database.model.Riwayats
 import com.komik.komik.ui.pages.read.ReadActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class AdapterChapter(private val list: List<Chapter>): RecyclerView.Adapter<AdapterChapter.Holder>() {
-    class Holder(private val binding: CardChapterBinding): RecyclerView.ViewHolder(binding.root) {
+class AdapterChapter(
+    private val list: List<Chapter>,
+    private val onChapterClick: (Chapter) -> Unit
+) :
+    RecyclerView.Adapter<AdapterChapter.Holder>() {
+    class Holder(private val binding: CardChapterBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(chapter: Chapter) {
             binding.chapter.text = chapter.title
             binding.day.text = chapter.date
         }
+
+        fun insertRiwayat(riwayat: Riwayats) {
+            val db: DatabaseRiwayats = DatabaseRiwayats.getDatabase(itemView.context)
+            val dao: riwayatRelationDao = db.riwayatdao()
+
+            CoroutineScope(Dispatchers.IO).launch {
+                val data = dao.getRiwayatByChapterId(riwayat.chapterId)
+                if (data == null) {
+                    dao.insertRiwayatRelasi(riwayat)
+                } else {
+                    dao.updateRiwayatRelasi(riwayat)
+                }
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
-        val bind = CardChapterBinding.inflate(android.view.LayoutInflater.from(parent.context),parent,false)
+        val bind = CardChapterBinding.inflate(
+            android.view.LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
         return Holder(bind)
     }
 
@@ -27,12 +58,7 @@ class AdapterChapter(private val list: List<Chapter>): RecyclerView.Adapter<Adap
     override fun onBindViewHolder(holder: Holder, position: Int) {
         holder.bind(list[position])
         holder.itemView.setOnClickListener {
-            val intent = Intent(holder.itemView.context,ReadActivity::class.java)
-            intent.putExtra(ReadActivity.EXTRA_URL,list[position].link)
-            intent.putExtra(ReadActivity.EXTRA_TITLE,list[position].title)
-            intent.putExtra(ReadActivity.EXTRA_TYPE,list[position].location)
-            intent.putExtra(ReadActivity.EXTRA_ID,list[position].id)
-            holder.itemView.context.startActivity(intent)
+            onChapterClick(list[position])
         }
     }
 }

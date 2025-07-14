@@ -87,6 +87,10 @@ class Comic(val client: client) : RepositroyComic {
 
     }
 
+    override suspend fun getSearch(type: sourceType, query: String): List<getListUpdate> {
+        TODO("Not yet implemented")
+    }
+
     companion object {
         private const val TAG = "Comic"
     }

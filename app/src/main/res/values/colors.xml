@@ -64,4 +64,5 @@
     <color name="text_emerald_400">#4ADE80</color>
     <color name="grey_300">#D1D5DB</color>
     <color name="text_violet_400">#A78BFA</color>
+    <color name="text_grey_500">#a0aec0</color>
 </resources>

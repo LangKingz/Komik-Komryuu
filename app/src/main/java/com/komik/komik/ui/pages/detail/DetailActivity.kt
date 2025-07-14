@@ -21,12 +21,15 @@ import com.komik.komik.service.client
 import com.komik.komik.service.database.dao.ComicDao
 import com.komik.komik.service.database.dao.chapterDao
 import com.komik.komik.service.database.dao.genreDao
+import com.komik.komik.service.database.dao.riwayatRelationDao
 import com.komik.komik.service.database.data.DatabaseChapter
 import com.komik.komik.service.database.data.DatabaseComic
 import com.komik.komik.service.database.data.DatabaseGenre
+import com.komik.komik.service.database.data.Relation.DatabaseRiwayats
 import com.komik.komik.service.database.model.Chapter
 import com.komik.komik.service.database.model.Comic
 import com.komik.komik.service.database.model.Genre
+import com.komik.komik.service.database.model.Riwayats
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.repository.Detail
 import com.komik.komik.ui.pages.read.ReadActivity
@@ -42,14 +45,14 @@ class DetailActivity : AppCompatActivity() {
     private lateinit var viewModel: DetailViewmodel
     private lateinit var binding: ActivityDetailBinding
 
-    private lateinit var dbcomic: DatabaseComic
     private lateinit var comicDao: ComicDao
-
-    private lateinit var dbChapter: DatabaseChapter
     private lateinit var chapterDao: chapterDao
 
     private lateinit var dbGenre: DatabaseGenre
     private lateinit var genreDao: genreDao
+
+    private lateinit var dbUtama : DatabaseRiwayats
+    private lateinit var riwayatRelationDao : riwayatRelationDao
 
     private var isSelengkap: Boolean? = false
 
@@ -79,24 +82,8 @@ class DetailActivity : AppCompatActivity() {
             else -> sourceType.ikiru
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            binding.loading.visibility = View.VISIBLE
-            val dataDetail = comicDao.getComicByUrl(url.toString())
-
-            if (dataDetail != null) {
-                detail(url.toString(), dataDetail)
-                binding.nestedScrollView.visibility = View.VISIBLE
-            } else {
-                withContext(Dispatchers.Main) {
-                    viewModel.getDetail(source, url.toString())
-                }
-
-            }
-
-        }
-
-        viewModel.dataDetail.observe(this){ data ->
-            if(data != null){
+        viewModel.dataDetail.observe(this) { data ->
+            if (data != null) {
                 CoroutineScope(Dispatchers.IO).launch {
                     detail(url.toString(), data)
                 }
@@ -116,6 +103,26 @@ class DetailActivity : AppCompatActivity() {
             if (error != null) {
                 Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show()
             }
+        }
+
+        loadData(url.toString(),source)
+    }
+
+    fun loadData(url: String,type: sourceType){
+        CoroutineScope(Dispatchers.IO).launch {
+            binding.loading.visibility = View.VISIBLE
+            val dataDetail = comicDao.getComicByUrl(url.toString())
+
+            if (dataDetail != null) {
+                detail(url.toString(), dataDetail)
+                binding.nestedScrollView.visibility = View.VISIBLE
+            } else {
+                withContext(Dispatchers.Main) {
+                    viewModel.getDetail(type, url.toString())
+                }
+
+            }
+
         }
     }
 
@@ -149,7 +156,23 @@ class DetailActivity : AppCompatActivity() {
             binding.textView12.text = "${chapter.size} Chapter"
 
             binding.genre.adapter = AdapterGenre(genre)
-            binding.chapter.adapter = AdapterChapter(chapter)
+            binding.chapter.adapter = AdapterChapter(chapter) { list ->
+
+
+                if (data != null) {
+                    insertRiwayat(
+                        chapterId = list.id,
+                        comicId = data.id
+                    )
+                }
+
+                val intent = Intent(this@DetailActivity, ReadActivity::class.java)
+                intent.putExtra(ReadActivity.EXTRA_URL, list.link)
+                intent.putExtra(ReadActivity.EXTRA_TITLE, list.title)
+                intent.putExtra(ReadActivity.EXTRA_TYPE, list.location)
+                intent.putExtra(ReadActivity.EXTRA_ID, list.id)
+                startActivity(intent)
+            }
 
             binding.selengkap.setOnClickListener {
                 isSelengkap = !isSelengkap!!
@@ -172,6 +195,73 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
+    fun insertRiwayat(chapterId: Int,comicId: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = riwayatRelationDao.getRiwayatByChapterId(comicId)
+            if (data == null) {
+                riwayatRelationDao.insertRiwayatRelasi(
+                    Riwayats(
+                        chapterId = chapterId,
+                        comicId = comicId
+                    )
+                )
+            } else {
+                riwayatRelationDao.updateRiwayatRelasi(
+                    data.copy(
+                        chapterId = chapterId,
+                        comicId = comicId
+                    )
+                )
+            }
+        }
+    }
+
+
+
+    fun initViewmodel() {
+        val repository = Detail(
+            comicDao = comicDao,
+            genreDao = genreDao,
+            chapterDao = chapterDao,
+            client = client
+        )
+
+        viewModel = ViewModelProvider(this, Providerviewmodel(repository))[DetailViewmodel::class]
+
+    }
+
+    fun initDatabase() {
+        dbUtama = DatabaseRiwayats.getDatabase(this)
+        riwayatRelationDao = dbUtama.riwayatdao()
+        comicDao = dbUtama.comicdao()
+        chapterDao = dbUtama.chapterdao()
+
+        dbGenre = DatabaseGenre.getDatabase(this)
+        genreDao = dbGenre.genredao()
+    }
+
+    fun viewCompatPadding() {
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
+            insets
+        }
+
+        window.navigationBarColor = resources.getColor(R.color.bottom_navbar)
+
+        WindowCompat.getInsetsController(window, window.decorView).let { controller ->
+            controller.isAppearanceLightStatusBars = false
+            controller.isAppearanceLightNavigationBars = false
+        }
+    }
+
+    fun initRecycleview() {
+        binding.genre.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.chapter.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+
+    }
 
     fun testScrape() {
         CoroutineScope(Dispatchers.IO).launch {
@@ -233,51 +323,6 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
-    fun initViewmodel() {
-        val repository = Detail(
-            comicDao = comicDao,
-            genreDao = genreDao,
-            chapterDao = chapterDao,
-            client = client
-        )
-
-        viewModel = ViewModelProvider(this, Providerviewmodel(repository))[DetailViewmodel::class]
-
-    }
-
-    fun initDatabase() {
-        dbcomic = DatabaseComic.getDatabase(this)
-        comicDao = dbcomic.comicdao()
-
-        dbChapter = DatabaseChapter.getDatabase(this)
-        chapterDao = dbChapter.chapterdao()
-
-        dbGenre = DatabaseGenre.getDatabase(this)
-        genreDao = dbGenre.genredao()
-    }
-
-    fun viewCompatPadding() {
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        window.navigationBarColor = resources.getColor(R.color.bottom_navbar)
-
-        WindowCompat.getInsetsController(window, window.decorView).let { controller ->
-            controller.isAppearanceLightStatusBars = false
-            controller.isAppearanceLightNavigationBars = false
-        }
-    }
-
-    fun initRecycleview() {
-        binding.genre.layoutManager =
-            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        binding.chapter.layoutManager =
-            LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-
-    }
 
     companion object {
         const val TAG = "DetailActivity"

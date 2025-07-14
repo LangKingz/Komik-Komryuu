@@ -1,9 +1,11 @@
 package com.komik.komik.service.database.model
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 
 
 @Entity(tableName = "Pustaka")
@@ -33,8 +35,8 @@ data class Riwayat(
     @PrimaryKey(autoGenerate = true) val id: Int=0,
     val title: String,
     val chapter: String,
-    val url: String,
-    val imageUrl: String,
+    val url: String?=null,
+    val imageUrl: String?=null,
     val urlWebsite: String?=null,
     val location: String,
     val createdAt: Long = System.currentTimeMillis()
@@ -94,4 +96,41 @@ data class Comics(
     val createdAt: Long = System.currentTimeMillis()
 )
 
+@Entity(
+    tableName = "RiwayatRelasi",
+    foreignKeys = [
+        ForeignKey(
+            entity = Comic::class,         // Tabel induknya adalah Comics
+            parentColumns = ["id"],       // Kolom Primary Key di tabel Comics
+            childColumns = ["comicId"],     // Kolom Foreign Key di tabel Riwayat ini
+            onDelete = ForeignKey.CASCADE // Jika komik dihapus, riwayatnya ikut terhapus
+        ),
+        ForeignKey(
+            entity = Chapter::class,        // Tabel induknya adalah Chapter
+            parentColumns = ["id"],       // Kolom Primary Key di tabel Chapter
+            childColumns = ["chapterId"],   // Kolom Foreign Key di tabel Riwayat ini
+            onDelete = ForeignKey.CASCADE // Jika chapter dihapus, riwayatnya ikut terhapus
+        )
+    ],
+    indices = [Index("comicId"), Index("chapterId")]
+)
+data class Riwayats(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val comicId: Int,
+    val chapterId: Int,
+    val readAt: Long = System.currentTimeMillis()
+)
 
+data class RiwayatDetail(
+    @Embedded val riwayat: Riwayats,
+    @Relation(
+        parentColumn = "comicId",
+        entityColumn = "id"
+    )
+    val comic: Comic,
+    @Relation(
+        parentColumn = "chapterId",
+        entityColumn = "id"
+    )
+    val chapter: Chapter
+)

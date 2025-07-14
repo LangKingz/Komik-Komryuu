@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:clickable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:focusable="true"
+    android:layout_width="match_parent"
+    android:layout_marginHorizontal="6dp"
+    android:layout_marginVertical="3dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/corner_gambar"
+    android:backgroundTint="@color/btn_background">
+
+
+    <ImageView
+        android:id="@+id/Gambar"
+        android:layout_width="60dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/corner_gambar"
+        android:clipToOutline="true"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/avatars" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="@+id/Gambar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/Gambar"
+        app:layout_constraintTop_toTopOf="@+id/Gambar">
+
+        <TextView
+            android:id="@+id/NameKomik"
+            style="@style/Costumtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Solo Leveling"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/Chapter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="chapter 20"
+            android:textColor="@color/text_grey_500" />
+
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="dari Komiku • 14:10"
+            android:textColor="@color/gray_400"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

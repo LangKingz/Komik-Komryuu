@@ -1,15 +1,11 @@
 package com.komik.komik.service.adapter
 
-import android.content.Intent
-import android.provider.ContactsContract.Data
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.appcompat.view.menu.MenuView.ItemView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.komik.komik.databinding.CardDailyBinding
 import com.komik.komik.service.api.model.DataItem
-import com.komik.komik.ui.pages.detail.DetailActivity
 
 class AdapterDaily(private val list: List<DataItem>): RecyclerView.Adapter<AdapterDaily.ViewHolder>() {
     class ViewHolder(private val binding: CardDailyBinding): RecyclerView.ViewHolder(binding.root) {
