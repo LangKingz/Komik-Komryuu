@@ -1,11 +1,11 @@
-package com.komik.komik.service.database.dao
+package com.komik.komik.service.data.dao
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import com.komik.komik.service.database.model.Riwayat
+import com.komik.komik.service.data.model.Riwayat
 
 
 @Dao

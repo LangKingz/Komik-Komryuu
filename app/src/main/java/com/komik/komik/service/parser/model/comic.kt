@@ -1,7 +1,7 @@
 package com.komik.komik.service.parser.model
 
-import com.komik.komik.service.database.model.Chapter
-import com.komik.komik.service.database.model.Genre
+import com.komik.komik.service.data.model.Chapter
+import com.komik.komik.service.data.model.Genre
 
 data class detailComic(
     val title: String,

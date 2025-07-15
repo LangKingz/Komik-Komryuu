@@ -1,7 +1,7 @@
-package com.komik.komik.service.database.pojo
+package com.komik.komik.service.data.pojo
 
 import androidx.room.Embedded
-import com.komik.komik.service.database.model.Comics
+import com.komik.komik.service.data.model.Comics
 
 data class ComicWithChapter(
     @Embedded

@@ -1,9 +1,9 @@
-package com.komik.komik.service.database.dao
+package com.komik.komik.service.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.komik.komik.service.database.model.Genre
+import com.komik.komik.service.data.model.Genre
 
 
 @Dao

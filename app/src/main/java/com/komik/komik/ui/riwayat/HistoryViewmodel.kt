@@ -3,7 +3,7 @@ package com.komik.komik.ui.riwayat
 import android.app.Application
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.komik.komik.service.database.model.Riwayat
+import com.komik.komik.service.data.model.Riwayat
 
 class HistoryViewmodel(application: Application): ViewModel() {
 

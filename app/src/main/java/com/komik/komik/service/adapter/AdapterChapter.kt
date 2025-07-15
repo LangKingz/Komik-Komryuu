@@ -1,17 +1,12 @@
 package com.komik.komik.service.adapter
 
-import android.content.Intent
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.komik.komik.databinding.CardChapterBinding
-import com.komik.komik.service.database.dao.riwayatDao
-import com.komik.komik.service.database.dao.riwayatRelationDao
-import com.komik.komik.service.database.data.DatabaseRiwayat
-import com.komik.komik.service.database.data.Relation.DatabaseRiwayats
-import com.komik.komik.service.database.model.Chapter
-import com.komik.komik.service.database.model.Riwayat
-import com.komik.komik.service.database.model.Riwayats
-import com.komik.komik.ui.pages.read.ReadActivity
+import com.komik.komik.service.data.dao.riwayatRelationDao
+import com.komik.komik.service.data.Database.DatabaseRiwayats
+import com.komik.komik.service.data.model.Chapter
+import com.komik.komik.service.data.model.Riwayats
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

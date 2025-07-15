@@ -1,8 +1,8 @@
 package com.komik.komik.service.parser.comic
 
 import com.komik.komik.service.client
-import com.komik.komik.service.database.model.Chapter
-import com.komik.komik.service.database.model.Genre
+import com.komik.komik.service.data.model.Chapter
+import com.komik.komik.service.data.model.Genre
 import com.komik.komik.service.parser.model.ParsedData
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -24,7 +24,8 @@ object comicParser {
                 title = it.select("a .chapternum").text(),
                 link = it.select("a").attr("href"),
                 comicTitle = title,
-                date = it.select("a .chapterdate").text()
+                date = it.select("a .chapterdate").text(),
+                location = "kiryuu"
             )
         }
 
@@ -65,7 +66,8 @@ object comicParser {
                 title = it.select("a.chapter-link-item").text(),
                 link = it.select("a.chapter-link-item").attr("href"),
                 comicTitle = title,
-                date = it.select(".chapter-link-time").text()
+                date = it.select(".chapter-link-time").text(),
+                location = "komikcast"
             )
         }
 
@@ -162,7 +164,8 @@ object comicParser {
                 title = it.select("td.judulseries span").text(),
                 link = linkChapter,
                 comicTitle = title,
-                date = it.select("td.tanggalseries").text()
+                date = it.select("td.tanggalseries").text(),
+                location = "komiku"
             )
         }
 
@@ -191,12 +194,20 @@ object comicParser {
         val description = document.select(".bigcontent .infox .entry-content p").text() ?: ""
         val author = document.select(".bigcontent .infox .flex-wrap span")[1].text() ?: ""
 
+        val alternativeTitle = "#"
+        val rating = document.select(".num").text()
+        val type = document.select(".tsinfo .imptdt")[1].select(" a").text() ?: ""
+        val status = document.select(".tsinfo .imptdt")[0].select("a").text() ?:""
+
+
+
         val chapters = document.select("ul li .chbox").map {
             Chapter(
                 title = it.select(".eph-num a span")[0].text(),
                 link = it.select(".eph-num a").attr("href"),
                 comicTitle = title,
-                date = it.select(".eph-num a span")[1].text()
+                date = it.select(".eph-num a span")[1].text(),
+                location = "comicscan"
             )
         }
 
@@ -212,10 +223,14 @@ object comicParser {
             title = title,
             imageUrl = imageUrl,
             description = description,
-            author = author,
+            author =author,
             location = "comicscan",
             chapters = chapters,
-            genres = genres
+            genres = genres,
+            alternativeTitle = alternativeTitle,
+            rating = rating,
+            type = type,
+            status = status
         )
     }
 }

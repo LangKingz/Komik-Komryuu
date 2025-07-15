@@ -6,11 +6,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.komik.komik.R
 import com.komik.komik.databinding.FragmentHistoryBinding
 import com.komik.komik.service.adapter.AdapterRiwayat
-import com.komik.komik.service.database.dao.riwayatRelationDao
-import com.komik.komik.service.database.data.Relation.DatabaseRiwayats
+import com.komik.komik.service.data.dao.riwayatRelationDao
+import com.komik.komik.service.data.Database.DatabaseRiwayats
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,7 +21,7 @@ class HistoryFragment : Fragment() {
     private lateinit var _binding: FragmentHistoryBinding
     private val binding get() = _binding
 
-    private lateinit var db:DatabaseRiwayats
+    private lateinit var db: DatabaseRiwayats
     private lateinit var dao:riwayatRelationDao
 
     override fun onCreateView(

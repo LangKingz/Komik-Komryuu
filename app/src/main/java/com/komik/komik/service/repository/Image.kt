@@ -23,6 +23,36 @@ class Image(private val client: client) : RepositoryImage {
                 return pagedData
             }
 
+            sourceType.komikcast-> {
+                val html = client.Komikcast.getHtml(url)
+                val document = Jsoup.parse(html)
+                val pageData = ImageParser.komikcastParse(document)
+
+                Log.d(TAG, "getImage: $pageData")
+
+                pageData
+            }
+
+            sourceType.comicscan->{
+                val html = client.Comicscan.getHtml(url)
+                val document = Jsoup.parse(html)
+                val pageData = ImageParser.comicscanParse(document)
+
+                Log.d(TAG, "getImage: $pageData")
+
+                pageData
+            }
+
+            sourceType.kiryuu->{
+                val html = client.Ikiru.getHtml(url)
+                val document = Jsoup.parse(html)
+                val pageData = ImageParser.kiryuuParse(document)
+
+                Log.d(TAG, "getImage: $pageData")
+
+                pageData
+            }
+
             else -> emptyList()
         }
     }

@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.komik.komik.databinding.CardRiwayatBinding
-import com.komik.komik.service.database.model.RiwayatDetail
+import com.komik.komik.service.data.model.RiwayatDetail
 import com.komik.komik.service.utils.formatWaktuLalu
 import com.komik.komik.ui.pages.detail.DetailActivity
 

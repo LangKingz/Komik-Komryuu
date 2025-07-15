@@ -1,10 +1,10 @@
-package com.komik.komik.service.database.data
+package com.komik.komik.service.data.data
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.komik.komik.service.database.dao.pustakaDao
-import com.komik.komik.service.database.model.Pustaka
+import com.komik.komik.service.data.dao.pustakaDao
+import com.komik.komik.service.data.model.Pustaka
 
 @Database(entities = [Pustaka::class], version = 1, exportSchema = false)
 abstract class DatabasePustaka:RoomDatabase() {

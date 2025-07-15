@@ -1,14 +1,12 @@
-package com.komik.komik.service.database.data
+package com.komik.komik.service.data.data
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.komik.komik.service.database.dao.pustakaDao
-import com.komik.komik.service.database.dao.riwayatDao
-import com.komik.komik.service.database.dao.sourceDao
-import com.komik.komik.service.database.model.Pustaka
-import com.komik.komik.service.database.model.Riwayat
-import com.komik.komik.service.database.model.RiwayatSource
+import com.komik.komik.service.data.dao.riwayatDao
+import com.komik.komik.service.data.dao.sourceDao
+import com.komik.komik.service.data.model.Riwayat
+import com.komik.komik.service.data.model.RiwayatSource
 
 @Database(entities = [Riwayat::class], version = 1, exportSchema = false)
 abstract class DatabaseRiwayat: RoomDatabase() {

@@ -4,11 +4,10 @@ import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.Adapter
 import com.bumptech.glide.Glide
 import com.komik.komik.R
 import com.komik.komik.databinding.CardSourceHistoryBinding
-import com.komik.komik.service.database.model.RiwayatSource
+import com.komik.komik.service.data.model.RiwayatSource
 import com.komik.komik.service.utils.formatWaktuLalu
 import com.komik.komik.ui.pages.source.sourceActivity
 

@@ -1,14 +1,12 @@
-package com.komik.komik.service.database.data
+package com.komik.komik.service.data.data
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.komik.komik.service.database.dao.chapterDao
-import com.komik.komik.service.database.dao.pustakaDao
-import com.komik.komik.service.database.model.Chapter
-import com.komik.komik.service.database.model.Pustaka
+import com.komik.komik.service.data.dao.chapterDao
+import com.komik.komik.service.data.model.Chapter
 
 @Database(entities = [Chapter::class], version = 2, exportSchema = false)
 abstract class DatabaseChapter: RoomDatabase() {

@@ -44,4 +44,20 @@ class sourceViewmodel: ViewModel() {
         }
     }
 
+    fun search (type: sourceType,query:String=""){
+        _loading.postValue(true)
+        viewModelScope.launch {
+            try {
+                val response = repository.getSearch(type,query)
+                _source.postValue(response)
+                _loading.postValue(false)
+            }catch (e:Exception){
+                e.printStackTrace()
+                _error.postValue(e.message)
+                _loading.postValue(false)
+            }
+        }
+
+    }
+
 }

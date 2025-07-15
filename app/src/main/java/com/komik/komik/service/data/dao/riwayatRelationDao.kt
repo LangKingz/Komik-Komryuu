@@ -1,4 +1,4 @@
-package com.komik.komik.service.database.dao
+package com.komik.komik.service.data.dao
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
@@ -6,9 +6,8 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.komik.komik.service.database.model.RiwayatDetail
-import com.komik.komik.service.database.model.Riwayats
-import kotlinx.coroutines.flow.Flow
+import com.komik.komik.service.data.model.RiwayatDetail
+import com.komik.komik.service.data.model.Riwayats
 
 @Dao
 interface riwayatRelationDao {

@@ -18,24 +18,21 @@ import com.komik.komik.databinding.ActivityDetailBinding
 import com.komik.komik.service.adapter.AdapterChapter
 import com.komik.komik.service.adapter.AdapterGenre
 import com.komik.komik.service.client
-import com.komik.komik.service.database.dao.ComicDao
-import com.komik.komik.service.database.dao.chapterDao
-import com.komik.komik.service.database.dao.genreDao
-import com.komik.komik.service.database.dao.riwayatRelationDao
-import com.komik.komik.service.database.data.DatabaseChapter
-import com.komik.komik.service.database.data.DatabaseComic
-import com.komik.komik.service.database.data.DatabaseGenre
-import com.komik.komik.service.database.data.Relation.DatabaseRiwayats
-import com.komik.komik.service.database.model.Chapter
-import com.komik.komik.service.database.model.Comic
-import com.komik.komik.service.database.model.Genre
-import com.komik.komik.service.database.model.Riwayats
+import com.komik.komik.service.data.dao.ComicDao
+import com.komik.komik.service.data.dao.chapterDao
+import com.komik.komik.service.data.dao.genreDao
+import com.komik.komik.service.data.dao.riwayatRelationDao
+import com.komik.komik.service.data.Database.DatabaseRiwayats
+import com.komik.komik.service.data.model.Chapter
+import com.komik.komik.service.data.model.Comic
+import com.komik.komik.service.data.model.Genre
+import com.komik.komik.service.data.model.Library
+import com.komik.komik.service.data.model.Riwayats
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.repository.Detail
 import com.komik.komik.ui.pages.read.ReadActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
@@ -47,14 +44,15 @@ class DetailActivity : AppCompatActivity() {
 
     private lateinit var comicDao: ComicDao
     private lateinit var chapterDao: chapterDao
-
-    private lateinit var dbGenre: DatabaseGenre
     private lateinit var genreDao: genreDao
-
     private lateinit var dbUtama : DatabaseRiwayats
     private lateinit var riwayatRelationDao : riwayatRelationDao
 
+    private var isFavorite: Boolean? = false
+
     private var isSelengkap: Boolean? = false
+
+    private var locations : String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +67,7 @@ class DetailActivity : AppCompatActivity() {
 
         val url = intent.getStringExtra(URL)
         val location = intent.getStringExtra(LOCATION)
+        locations = location
 
 //        Snackbar.make(binding.root, location.toString(), Snackbar.LENGTH_LONG).show()
 
@@ -81,6 +80,8 @@ class DetailActivity : AppCompatActivity() {
             "shinigami" -> sourceType.shinigami
             else -> sourceType.ikiru
         }
+
+
 
         viewModel.dataDetail.observe(this) { data ->
             if (data != null) {
@@ -111,14 +112,15 @@ class DetailActivity : AppCompatActivity() {
     fun loadData(url: String,type: sourceType){
         CoroutineScope(Dispatchers.IO).launch {
             binding.loading.visibility = View.VISIBLE
-            val dataDetail = comicDao.getComicByUrl(url.toString())
+            val dataDetail = comicDao.getComicByUrl(url)
+
 
             if (dataDetail != null) {
-                detail(url.toString(), dataDetail)
+                detail(url, dataDetail)
                 binding.nestedScrollView.visibility = View.VISIBLE
             } else {
                 withContext(Dispatchers.Main) {
-                    viewModel.getDetail(type, url.toString())
+                    viewModel.getDetail(type, url)
                 }
 
             }
@@ -126,11 +128,44 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
-    suspend fun detail(url: String, data: Comic?) {
-        val genre = genreDao.getGenreByComicTitle(data?.title.toString())
-        val chapter = chapterDao.getChaptersForComic(data?.title.toString())
+//    fun insertPustaka(chapterId: Int){
+//        CoroutineScope(Dispatchers.IO).launch {
+//            comicDao.insertLibrary(
+//                Library(
+//                    comicId = chapterId
+//                )
+//            )
+//        }
+//    }
+
+//    fun deletePustaka(chapterId: Int){
+//        CoroutineScope(Dispatchers.IO).launch {
+//            comicDao.deleteLibrary(chapterId)
+//        }
+//    }
+
+//    fun checkPustaka(chapterId: Int){
+//        CoroutineScope(Dispatchers.IO).launch {
+//            val data = comicDao.getLibraryByComicId(chapterId)
+//            if (data != null) {
+//                isFavorite = true
+//                binding.button2.setImageResource(R.drawable.bookmark_simple_fill)
+//            } else {
+//                isFavorite = false
+//                binding.button2.setImageResource(R.drawable.bookmark_simple)
+//            }
+//        }
+//    }
+
+
+
+    suspend fun detail(url: String, data: Comic) {
+        val genre = genreDao.getGenreByComicTitle(data.title)
+        val chapter = chapterDao.getChaptersForComic(data.title)
         Log.d(TAG, "detail: $chapter")
         withContext(Dispatchers.Main) {
+
+//            checkPustaka(data.id)
 
             binding.loading.visibility = View.GONE
 
@@ -139,31 +174,43 @@ class DetailActivity : AppCompatActivity() {
             }
 
             Glide.with(this@DetailActivity)
-                .load(data?.imageUrl)
+                .load(data.imageUrl)
                 .error(R.drawable.placeholder)
                 .into(binding.banner)
 
             Glide.with(this@DetailActivity)
-                .load(data?.imageUrl)
+                .load(data.imageUrl)
                 .error(R.drawable.placeholder)
                 .into(binding.imageView3)
 
-            binding.title.text = data?.title
-            binding.textView4.text = data?.alternativeTitle
-            binding.status.text = data?.status
-            binding.sinopsis.text = data?.description
+            binding.title.text = data.title
+            binding.textView4.text = data.alternativeTitle
+            binding.status.text = data.status
+            binding.sinopsis.text = data.description
 
             binding.textView12.text = "${chapter.size} Chapter"
 
             binding.genre.adapter = AdapterGenre(genre)
             binding.chapter.adapter = AdapterChapter(chapter) { list ->
-
-
                 if (data != null) {
-                    insertRiwayat(
-                        chapterId = list.id,
-                        comicId = data.id
-                    )
+//                    insertRiwayat(
+//                        chapterId = list.id,
+//                        comicId = data.id
+//                    )
+                }else{
+                    Snackbar.make(binding.root, "Data tidak ditemukan", Snackbar.LENGTH_LONG)
+                        .setAction("Refresh"){
+                            val source = when (locations) {
+                                "ikiru" -> sourceType.ikiru
+                                "komikcast" -> sourceType.komikcast
+                                "kiryuu" -> sourceType.kiryuu
+                                "komiku" -> sourceType.komiku
+                                "comicscan" -> sourceType.comicscan
+                                "shinigami" -> sourceType.shinigami
+                                else -> sourceType.ikiru
+                            }
+                            loadData(url,source)
+                        }
                 }
 
                 val intent = Intent(this@DetailActivity, ReadActivity::class.java)
@@ -172,6 +219,7 @@ class DetailActivity : AppCompatActivity() {
                 intent.putExtra(ReadActivity.EXTRA_TYPE, list.location)
                 intent.putExtra(ReadActivity.EXTRA_ID, list.id)
                 startActivity(intent)
+
             }
 
             binding.selengkap.setOnClickListener {
@@ -191,6 +239,15 @@ class DetailActivity : AppCompatActivity() {
                 startActivity(intent)
             }
 
+//            binding.button2.setOnClickListener {
+//                if (isFavorite == true) {
+//                    isFavorite = false
+//                    deletePustaka(data.id)
+//                } else {
+//                    isFavorite = true
+//                    insertPustaka(data.id)
+//                }
+//            }
 
         }
     }
@@ -221,8 +278,6 @@ class DetailActivity : AppCompatActivity() {
     fun initViewmodel() {
         val repository = Detail(
             comicDao = comicDao,
-            genreDao = genreDao,
-            chapterDao = chapterDao,
             client = client
         )
 
@@ -235,9 +290,7 @@ class DetailActivity : AppCompatActivity() {
         riwayatRelationDao = dbUtama.riwayatdao()
         comicDao = dbUtama.comicdao()
         chapterDao = dbUtama.chapterdao()
-
-        dbGenre = DatabaseGenre.getDatabase(this)
-        genreDao = dbGenre.genredao()
+        genreDao = dbUtama.genreDao()
     }
 
     fun viewCompatPadding() {

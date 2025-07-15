@@ -1,4 +1,4 @@
-package com.komik.komik.service.database.dao
+package com.komik.komik.service.data.dao
 
 import androidx.room.Dao
 

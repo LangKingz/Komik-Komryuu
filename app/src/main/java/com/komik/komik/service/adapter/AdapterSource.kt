@@ -7,9 +7,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.komik.komik.databinding.CardSourceBinding
 import com.komik.komik.ui.pages.source.sourceActivity
 import com.komik.komik.service.api.model.ListItem
-import com.komik.komik.service.database.dao.sourceDao
-import com.komik.komik.service.database.data.DatabaseRiwayatSource
-import com.komik.komik.service.database.model.RiwayatSource
+import com.komik.komik.service.data.dao.sourceDao
+import com.komik.komik.service.data.data.DatabaseRiwayatSource
+import com.komik.komik.service.data.model.RiwayatSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

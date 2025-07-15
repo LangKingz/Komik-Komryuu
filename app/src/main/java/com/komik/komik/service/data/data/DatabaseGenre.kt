@@ -1,10 +1,10 @@
-package com.komik.komik.service.database.data
+package com.komik.komik.service.data.data
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.komik.komik.service.database.dao.genreDao
-import com.komik.komik.service.database.model.Genre
+import com.komik.komik.service.data.dao.genreDao
+import com.komik.komik.service.data.model.Genre
 
 @Database(entities = [Genre::class], version = 1, exportSchema = false)
 abstract class DatabaseGenre:RoomDatabase() {

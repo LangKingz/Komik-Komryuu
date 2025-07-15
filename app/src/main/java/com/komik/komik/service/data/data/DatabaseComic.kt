@@ -1,17 +1,23 @@
-package com.komik.komik.service.database.data
+package com.komik.komik.service.data.data
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.komik.komik.service.database.dao.ComicDao
-import com.komik.komik.service.database.model.Comic
+import com.komik.komik.service.data.dao.ComicDao
+import com.komik.komik.service.data.dao.chapterDao
+import com.komik.komik.service.data.dao.genreDao
+import com.komik.komik.service.data.model.Chapter
+import com.komik.komik.service.data.model.Comic
+import com.komik.komik.service.data.model.Genre
 
-@Database(entities = [Comic::class], version = 2, exportSchema = false)
+@Database(entities = [Comic::class, Genre::class, Chapter::class], version = 2, exportSchema = false)
 abstract class DatabaseComic : RoomDatabase() {
 
     abstract fun comicdao(): ComicDao
+    abstract fun genredao(): genreDao
+    abstract fun chapterdao(): chapterDao
 
     companion object {
         @Volatile

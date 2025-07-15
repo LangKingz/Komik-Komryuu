@@ -35,6 +35,8 @@ class sourceActivity : AppCompatActivity() {
 
     private lateinit var adapterManhwa: AdapterManhwa
 
+    private lateinit var locations : String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -61,7 +63,9 @@ class sourceActivity : AppCompatActivity() {
         binding.listSource.layoutManager = GridLayoutManager(this, 3)
 
         val url = intent.getStringExtra(URL)
-        val location = intent.getStringExtra(location)
+        val location = intent.getStringExtra(location).toString()
+
+        locations = location
 
         binding.appbar.title = location
         binding.appbar.subtitle = url
@@ -85,8 +89,6 @@ class sourceActivity : AppCompatActivity() {
                     true
                 }
                 R.id.search -> {
-
-
 
                     true
                 }
@@ -139,7 +141,20 @@ class sourceActivity : AppCompatActivity() {
                 return false
             }
             override fun onQueryTextSubmit(query: String?): Boolean {
-                Snackbar.make(binding.root, query.toString(), Snackbar.LENGTH_SHORT).show()
+
+                adapterManhwa.clear()
+
+                when(locations){
+                    "ikiru" -> viewmodel.search(sourceType.ikiru,query.toString())
+                    "comicscan" -> viewmodel.search(sourceType.comicscan,query.toString())
+                    "shinigami" -> viewmodel.search(sourceType.shinigami,query.toString())
+                    "komikcast" -> viewmodel.search(sourceType.komikcast,query.toString())
+                    "kiryuu" -> viewmodel.search(sourceType.kiryuu,query.toString())
+                    "komiku" -> viewmodel.search(sourceType.komiku,query.toString())
+                    else -> viewmodel.search(sourceType.ikiru,query.toString())
+                }
+
+
                 return true
             }
         })

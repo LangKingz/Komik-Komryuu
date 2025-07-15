@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.komik.komik.databinding.CardGenreBinding
-import com.komik.komik.service.database.model.Genre
+import com.komik.komik.service.data.model.Genre
 
 class AdapterGenre(private val list: List<Genre>):RecyclerView.Adapter<AdapterGenre.ViewHolder>() {
     class ViewHolder(private val binding: CardGenreBinding): RecyclerView.ViewHolder(binding.root) {

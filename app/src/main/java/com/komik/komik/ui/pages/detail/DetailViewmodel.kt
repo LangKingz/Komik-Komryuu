@@ -1,11 +1,11 @@
 package com.komik.komik.ui.pages.detail
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.komik.komik.service.database.model.Comic
+import com.komik.komik.service.data.model.Comic
 import com.komik.komik.service.enumclass.sourceType
-import com.komik.komik.service.parser.model.getListUpdate
 import com.komik.komik.service.repository.Detail
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -32,8 +32,15 @@ class DetailViewmodel(private val repository: Detail) : ViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 _error.value = e.message
+                Log.d(TAG, "getDetail: ${e.localizedMessage}")
+
             }
         }
+    }
+
+    companion object{
+        const val TAG = "DetailViewmodel"
+
     }
 
 }

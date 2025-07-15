@@ -4,11 +4,16 @@ import android.util.Log
 import com.komik.komik.service.client
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.modelrepository.RepositroyComic
+import com.komik.komik.service.parser.comic.SearchParser
 import com.komik.komik.service.parser.comic.SourceParser
 import com.komik.komik.service.parser.model.getListUpdate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.FormBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 
 class Comic(val client: client) : RepositroyComic {
     override suspend fun getComic(type: sourceType,url:String): List<getListUpdate> {
@@ -88,7 +93,64 @@ class Comic(val client: client) : RepositroyComic {
     }
 
     override suspend fun getSearch(type: sourceType, query: String): List<getListUpdate> {
-        TODO("Not yet implemented")
+       val result = mutableListOf<getListUpdate>()
+       return when(type){
+            sourceType.komikcast,
+            sourceType.ikiru ->{
+                withContext(Dispatchers.IO) {
+                    // 1. Buat instance OkHttpClient. Sebaiknya satu instance dipakai berulang.
+                    val client = OkHttpClient()
+
+                    // 2. Buat Request Body untuk metode POST
+                    val formBody = FormBody.Builder()
+                        .add("query", query) // Menambahkan data form: query=...
+                        .build()
+
+                    // 3. Buat Request Object
+                    val request = Request.Builder()
+                        .url("https://id.ikiru.wtf/ajax-call?nonce=91595ea9cd&action=search")
+                        .post(formBody) // Tentukan metode POST dengan body yang sudah dibuat
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                        .build()
+
+                    try {
+                        // 4. Eksekusi request dan dapatkan response
+                        val response = client.newCall(request).execute()
+                        // 'use' akan otomatis menutup response setelah selesai, ini penting!
+                        response.use {
+                            if (!it.isSuccessful) {
+                                Log.e(TAG, "Request Gagal! Kode: ${it.code}")
+                                return@withContext emptyList<getListUpdate>()
+                            }
+                            // 5. Ambil body response sebagai String (HTML mentah)
+                            val htmlString = it.body?.string()
+
+                            if (htmlString != null) {
+                                // 6. Parsing HTML menggunakan Jsoup
+                                val doc = Jsoup.parse(htmlString)
+                                val pageData = SearchParser.parseIkiru(doc)
+                                Log.d(TAG, "OkHttp & Jsoup: Ditemukan ${pageData.size} item.")
+                                return@withContext pageData
+                            } else {
+                                Log.w(TAG, "Response body dari OkHttp kosong.")
+                                return@withContext emptyList<getListUpdate>()
+                            }
+                        }
+
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Gagal menjalankan OkHttp: ${e.message}")
+                        return@withContext emptyList<getListUpdate>()
+                    }
+                }
+            }
+            sourceType.shinigami,
+            sourceType.comicscan,
+            sourceType.kiryuu,
+            sourceType.komiku ->{
+                result
+            }
+            else -> emptyList()
+       }
     }
 
     companion object {
