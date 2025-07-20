@@ -1,6 +1,7 @@
 package com.komik.komik.ui.pages.read
 
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -41,6 +42,7 @@ class ReadActivity : AppCompatActivity() {
             "komikcast" -> viewmodel.setImage(sourceType.komikcast, url)
             "kiryuu" -> viewmodel.setImage(sourceType.kiryuu, url)
             "komiku" -> viewmodel.setImage(sourceType.komiku, url)
+            "manhwaindo" -> viewmodel.setImage(sourceType.manhwaindo, url)
             else -> viewmodel.setImage(sourceType.ikiru, url)
         }
 
@@ -62,6 +64,31 @@ class ReadActivity : AppCompatActivity() {
             }
         })
 
+    }
+
+    private fun saveReadingProgress() {
+        // Ambil posisi gambar yang terlihat saat ini
+        val layoutManager = binding.listImage.layoutManager as LinearLayoutManager
+        val lastVisiblePosition = layoutManager.findFirstVisibleItemPosition() // Gunakan first visible untuk penanda
+        val totalItem = layoutManager.itemCount
+
+        if (totalItem > 0 && lastVisiblePosition != RecyclerView.NO_POSITION) {
+            val progress = "${lastVisiblePosition + 1}/${totalItem}"
+            val chapterId = intent.getStringExtra(EXTRA_ID) // Asumsi EXTRA_ID adalah unik untuk chapter
+
+
+            Log.d(TAG, "Progress saved for chapter $chapterId at page ${lastVisiblePosition + 1}")
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveReadingProgress()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        saveReadingProgress()
     }
 
     fun initRecyclerView(){

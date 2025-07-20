@@ -27,4 +27,8 @@ interface riwayatRelationDao {
     @Query("SELECT * FROM RiwayatRelasi WHERE comicId = :chapterId LIMIT 1")
     suspend fun getRiwayatByChapterId(chapterId: Int): Riwayats?
 
+    @Query("SELECT * FROM RiwayatRelasi ORDER BY readAt DESC LIMIT 1")
+     fun getLastRiwayats(): LiveData<RiwayatDetail>
+
+
 }

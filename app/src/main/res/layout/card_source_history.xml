@@ -33,7 +33,7 @@
         android:layout_marginTop="16dp"
         android:text="Komiku"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/imageButton2"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/imageView"
         app:layout_constraintTop_toTopOf="parent" />
@@ -46,5 +46,20 @@
         android:text="5 menit yang lalu"
         app:layout_constraintStart_toStartOf="@+id/JudulExtensi"
         app:layout_constraintTop_toBottomOf="@+id/JudulExtensi" />
+
+    <ImageButton
+        android:id="@+id/imageButton2"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:clipToOutline="true"
+        android:focusable="true"
+        app:tint="@color/white"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/dots_three_outline_vertical_fill" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

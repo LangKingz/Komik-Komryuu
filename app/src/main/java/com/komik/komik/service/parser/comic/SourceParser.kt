@@ -33,11 +33,11 @@ object SourceParser {
             }
     }
 
-    suspend fun parseShinigami(client:client,page:Int): List<getListUpdate>? {
+    suspend fun parseShinigami(client: client, page: Int): List<getListUpdate>? {
         val response = client.Shinigami.getMangaList(pageSize = 24, page = page, sortBy = "latest")
         val pageData = response.data
 
-        return pageData?.mapIndexed{index,item->
+        return pageData?.mapIndexed { index, item ->
             getListUpdate(
                 index = index,
                 title = item?.title.toString(),
@@ -91,6 +91,38 @@ object SourceParser {
                 location = "komiku"
             )
         }
+    }
+
+    fun parseManhwaindo(document: Document): List<getListUpdate> {
+        return document.select(".bs .bsx")
+            .mapIndexed { index, it ->
+                getListUpdate(
+                    index = index,
+                    title = it.select(".bigor .tt").text(),
+                    urlImage = it.select(".limit img").attr("src")
+                        ?: "https://cosmic345.co/img/noimage.png",
+                    link = it.select("a").attr("href"),
+                    location = "manhwaindo"
+                )
+            }
+    }
+
+    fun parseBatoto(document: Document): List<getListUpdate> {
+        val baseUrl = "https://bato.si"
+        return document.select(".grid .flex").attr("q:key", "wP_7")
+            .filter { it ->
+                it.select("h3 a.link-hover span").isNotEmpty() && it
+                    .select(".shrink-0 .group img.rounded").isNotEmpty()
+            }
+            .mapIndexed { index, element ->
+                getListUpdate(
+                    index = index,
+                    title = element.select("h3 a.link-hover span").text(),
+                    urlImage = baseUrl + element.select(".shrink-0 .group img.rounded").attr("src"),
+                    link = baseUrl + element.select(".group a").attr("href"),
+                    location = "batoto-all"
+                )
+            }
     }
 
 

@@ -1,5 +1,6 @@
 package com.komik.komik.service.parser.comic
 
+import com.komik.komik.service.api.model.DataIteme
 import com.komik.komik.service.client
 import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.Genre
@@ -8,6 +9,65 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
 object comicParser {
+
+    suspend fun parseShinigami(id:String,client:client,page:Int):ParsedData{
+
+        val response = client.Shinigami.getMangaDetail(id)
+        val data = response.data
+
+        val dataChapter = mutableListOf<DataIteme>()
+
+        for (page in 1..10){
+            val resChapter = client.Shinigami.getChapter(id, pageSize = 40, page = page)
+            val chapter  = resChapter.data
+            dataChapter.add(chapter as DataIteme)
+        }
+
+        val title = data?.title
+        val imageUrl = data?.coverPortraitUrl
+        val description = data?.description
+        val author = data?.taxonomy?.author
+
+        val alternativeTitle = data?.alternativeTitle
+        val rating = data?.userRate
+        val type = "Manhwa"
+        val status = data?.status
+
+        val genre = data?.taxonomy?.genre
+        val genres = genre?.mapIndexed{ index, genre ->
+            Genre(
+                comicTitle = title.toString(),
+                genre = genre?.name.toString(),
+                location = "shinigami"
+            )
+        }
+
+        val chapters = dataChapter.map {
+            Chapter(
+                comicTitle = title.toString(),
+                title = "chapter ${it.chapterNumber}",
+                location = "shinigami",
+                link = it.chapterId.toString(),
+                date = it.releaseDate.toString()
+            )
+        }
+
+        return ParsedData(
+            url = id,
+            title = title.toString(),
+            imageUrl = imageUrl.toString(),
+            description = description.toString(),
+            author = author.toString(),
+            location = "shinigami",
+            chapters = chapters?: emptyList(),
+            genres = genres?: emptyList(),
+            alternativeTitle = alternativeTitle,
+            type = type,
+            rating = rating.toString(),
+            status = status.toString()
+        )
+    }
+
     fun parseKiryuu(document: Document, url: String): ParsedData {
         val title = document.select("h1.entry-title").text()
         val imageUrl = document.select(".thumb img").attr("src")
@@ -233,4 +293,51 @@ object comicParser {
             status = status
         )
     }
+
+    fun parsemanhwaIndo(document: Document,url: String): ParsedData{
+        val title = document.select("h1.entry-title").text() ?: ""
+        val imageUrl = document.select(".thumb  img").attr("src") ?: ""
+        val description = document.select(".wd-full .entry-content p").text() ?: ""
+        val author = document.select(".tsinfo .imptdt")[3].select("i").text() ?: ""
+
+        val alternativeTitle = "#"
+        val rating = document.select(".num").text()
+        val type = document.select(".tsinfo .imptdt")[1].select(" a").text() ?: "Manhwa"
+        val status = document.select(".tsinfo .imptdt")[0].select("a").text() ?:"onGoing"
+
+
+
+        val chapters = document.select("ul li .chbox").map {
+            Chapter(
+                title = it.select(".eph-num a span")[0].text(),
+                link = it.select(".eph-num a").attr("href"),
+                comicTitle = title,
+                date = it.select(".eph-num a span")[1].text(),
+                location = "manhwaindo"
+            )
+        }
+
+        val genres = document.select(".wd-full .mgen a").map {
+            Genre(
+                comicTitle = title,
+                genre = it.text()
+            )
+        }
+
+        return ParsedData(
+            url = url,
+            title = title,
+            imageUrl = imageUrl,
+            description = description,
+            author =author,
+            location = "manhwaindo",
+            chapters = chapters,
+            genres = genres,
+            alternativeTitle = alternativeTitle,
+            rating = rating,
+            type = type,
+            status = status
+        )
+    }
+
 }

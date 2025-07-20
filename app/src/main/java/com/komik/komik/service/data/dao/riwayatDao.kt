@@ -26,4 +26,8 @@ interface riwayatDao {
     @Query("SELECT * FROM Riwayat WHERE title =:title AND location =:location LIMIT 1")
     suspend fun getRiwayatByTitle(title: String, location: String): Riwayat?
 
+    @Query("SELECT * FROM Riwayat ORDER BY id DESC LIMIT 1")
+    suspend fun getLastRiwayat(): Riwayat?
+
+
 }

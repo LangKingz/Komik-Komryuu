@@ -3,6 +3,7 @@ package com.komik.komik
 import android.content.Context
 import android.os.Bundle
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -12,10 +13,18 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.komik.komik.databinding.ActivityMainBinding
+import com.komik.komik.service.client
+import com.komik.komik.service.parser.comic.SourceParser
+import com.komik.komik.service.parser.model.getImages
+import com.komik.komik.service.utils.generateFakeCookie
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.jsoup.Jsoup
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding : ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,9 +46,42 @@ class MainActivity : AppCompatActivity() {
         }
 
         val nav = binding.bottomNavigation
+        val navRail = binding.navigationRail
         val navController = findNavController(R.id.nav_host_fragment)
 
-        nav.setupWithNavController(navController)
+        nav?.setupWithNavController(navController)
+        navRail?.setupWithNavController(navController)
+
+        scrapeTest("")
+    }
+
+    fun scrapeTest(url: String) {
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            val html =
+                client.ScrapeDataImage.getHtml("https://bato.si/v4x-latest/1")
+            val document = Jsoup.parse(html)
+
+            val pageData = SourceParser.parseBatoto(document)
+
+            val data =
+                document.select(".cursor-pointer img").mapIndexed { index, element ->
+                    getImages(
+                        index = index,
+                        image = element.attr("src"),
+                    )
+                }
+
+            Log.d(TAG, "scrapeTest: ${pageData.size}")
+//            Log.d(TAG, "fakecookie: ${generateFakeCookie()}")
+
+        }
+
+    }
+
+    companion object{
+        const val TAG = "MainActivity"
     }
 
 

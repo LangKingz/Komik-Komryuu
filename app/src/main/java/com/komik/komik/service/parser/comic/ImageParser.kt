@@ -14,9 +14,9 @@ object ImageParser {
             }
     }
 
-    fun komikcastParse(document: Document): List<getImages>{
+    fun komikcastParse(document: Document): List<getImages> {
         return document.select("div.chapter_body div.main-reading-area img")
-            .mapIndexed{index, element ->
+            .mapIndexed { index, element ->
                 getImages(
                     index = index,
                     image = element.attr("src"),
@@ -24,7 +24,7 @@ object ImageParser {
             }
     }
 
-    fun comicscanParse(document: Document): List<getImages>{
+    fun comicscanParse(document: Document): List<getImages> {
         return document.select("div#readerarea img")
             .filterNot { image ->
                 val src = image.attr("src")
@@ -39,13 +39,31 @@ object ImageParser {
             }
     }
 
-    fun kiryuuParse(document: Document): List<getImages>{
-        return  document.select("div#readerarea img")
+    fun kiryuuParse(document: Document): List<getImages> {
+        return document.select("div#readerarea img")
             .mapIndexed { index, it ->
                 getImages(
                     index = index,
                     it.attr("src")
                 )
             }
+    }
+
+    fun manhwaIndoParse(document: Document): List<getImages> {
+        return document.select(".maincontent div#readerarea img").mapIndexed { index, element ->
+            getImages(
+                index = index,
+                image = element.attr("src"),
+            )
+        }
+    }
+
+    fun batotoParse(document: Document): List<getImages> {
+        return document.select(".cursor-pointer img").mapIndexed { index, element ->
+            getImages(
+                index = index,
+                image = element.attr("src"),
+            )
+        }
     }
 }

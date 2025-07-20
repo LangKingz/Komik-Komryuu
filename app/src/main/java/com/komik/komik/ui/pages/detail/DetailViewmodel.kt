@@ -26,7 +26,7 @@ class DetailViewmodel(private val repository: Detail) : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = repository.getDetail(type, url)
-                delay(3000)
+//                delay(3000)
                 _dataDetail.value = response
                 _loading.value = false
             } catch (e: Exception) {

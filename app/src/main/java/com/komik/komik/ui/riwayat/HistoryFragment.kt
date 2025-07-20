@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import com.komik.komik.databinding.FragmentHistoryBinding
 import com.komik.komik.service.adapter.AdapterRiwayat
 import com.komik.komik.service.data.dao.riwayatRelationDao
@@ -22,13 +23,13 @@ class HistoryFragment : Fragment() {
     private val binding get() = _binding
 
     private lateinit var db: DatabaseRiwayats
-    private lateinit var dao:riwayatRelationDao
+    private lateinit var dao: riwayatRelationDao
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-       _binding= FragmentHistoryBinding.inflate(inflater,container,false)
+        _binding = FragmentHistoryBinding.inflate(inflater, container, false)
 
         db = DatabaseRiwayats.getDatabase(requireContext())
         dao = db.riwayatdao()
@@ -41,19 +42,27 @@ class HistoryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.listRiwayat.layoutManager = LinearLayoutManager(requireContext())
+        fetchData()
+
+    }
+
+    private fun fetchData() {
         CoroutineScope(Dispatchers.IO).launch {
             val data = dao.getRiwayatDetail()
-           withContext(Dispatchers.Main){
-               if(data != null){
-                   data.observe(viewLifecycleOwner){list->
-                       binding.listRiwayat.adapter = AdapterRiwayat(list)
-                   }
-               }else{
-                   binding.listRiwayat.adapter = AdapterRiwayat(mutableListOf())
-               }
-           }
+            withContext(Dispatchers.Main) {
+                data.observe(viewLifecycleOwner) { list ->
+                    if (list.isNotEmpty()) {
+                        binding.listRiwayat.adapter = AdapterRiwayat(list)
+                    } else if (list.isEmpty()) {
+                        Snackbar.make(binding.root, "Data Kosong", Snackbar.LENGTH_SHORT)
+                            .setAction("Refresh", {
+                                fetchData()
+                            })
+                            .show()
+                    }
+                }
+            }
         }
-
     }
 
 }

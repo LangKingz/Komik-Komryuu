@@ -121,6 +121,9 @@ data class Riwayats(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val comicId: Int,
     val chapterId: Int,
+    val pageRead: Int? = null,
+    val totalPage: Int? = null,
+    val isRead: Boolean = false,
     val readAt: Long = System.currentTimeMillis()
 )
 
@@ -152,6 +155,8 @@ data class Library(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val comicId: Int,
     val isSelected: Boolean = false,
+    val isFavorite: Boolean = false,
+    val isRead: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )
 

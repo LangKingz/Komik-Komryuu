@@ -1,0 +1,26 @@
+package com.komik.komik.service.data.dao
+
+import androidx.lifecycle.LiveData
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import com.komik.komik.service.data.model.Library
+import com.komik.komik.service.data.model.LibraryDetail
+
+@Dao
+interface LibraryDao {
+    @Transaction
+    @Query("SELECT * FROM Library ORDER BY createdAt DESC")
+    fun getLibrary(): LiveData<List<LibraryDetail>>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertLibrary(library: Library)
+
+    @Query("DELETE FROM Library WHERE comicId = :title")
+    suspend fun deleteLibrary(title: Int)
+
+    @Query("SELECT * FROM Library WHERE comicId = :comicId")
+    suspend fun getLibraryByComicId(comicId: Int): Library?
+}

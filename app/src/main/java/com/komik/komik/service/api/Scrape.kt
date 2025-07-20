@@ -21,3 +21,8 @@ interface ScrapeComicscan{
     @GET
     suspend fun getHtml(@Url url: String): String
 }
+
+interface Scrape {
+    @GET
+    suspend fun getHtml(@Url url: String): String
+}

@@ -23,8 +23,8 @@ class Detail(
             sourceType.kiryuu -> client.Ikiru.getHtml(url)
             sourceType.komiku,
             sourceType.comicscan -> client.Comicscan.getHtml(url)
-
             sourceType.shinigami -> ""
+            sourceType.manhwaindo -> client.Ikiru.getHtml(url)
             else -> ""
         }
 
@@ -35,6 +35,8 @@ class Detail(
             sourceType.komikcast -> comicParser.parseKomikcast(document, url)
             sourceType.kiryuu -> comicParser.parseKiryuu(document, url)
             sourceType.comicscan -> comicParser.parseComictoon(document, url)
+            sourceType.shinigami -> comicParser.parseShinigami(url, client, 150)
+            sourceType.manhwaindo -> comicParser.parsemanhwaIndo(document, url)
             else -> null
         }
 

@@ -6,5 +6,7 @@ enum class sourceType {
     komikcast,
     ikiru,
     kiryuu,
-    komiku
+    komiku,
+    manhwaindo,
+    batoto_all
 }

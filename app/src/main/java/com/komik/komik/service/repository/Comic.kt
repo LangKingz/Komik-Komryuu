@@ -13,10 +13,9 @@ import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 
 class Comic(val client: client) : RepositroyComic {
-    override suspend fun getComic(type: sourceType,url:String): List<getListUpdate> {
+    override suspend fun getComic(type: sourceType, url: String): List<getListUpdate> {
 
         return withContext(Dispatchers.IO) {
             when (type) {
@@ -25,9 +24,10 @@ class Comic(val client: client) : RepositroyComic {
                     val result = mutableListOf<getListUpdate>()
 
                     for (page in 2..10) {
-                        val html = client.Komikcast.getHtml("https://komikcast.li/daftar-komik/page/$page/?sortby=update")
+                        val html =
+                            client.Komikcast.getHtml("https://komikcast.li/daftar-komik/page/$page/?sortby=update")
                         val document = Jsoup.parse(html)
-                        val pageData =SourceParser.parseKomikcast(document).toList()
+                        val pageData = SourceParser.parseKomikcast(document).toList()
                         result.addAll(pageData)
 
                     }
@@ -35,36 +35,41 @@ class Comic(val client: client) : RepositroyComic {
                     result
 
                 }
+
                 sourceType.ikiru -> {
 
                     val result = mutableListOf<getListUpdate>()
                     for (page in 1..10) {
-                        val html = client.Ikiru.getHtml("https://id.ikiru.wtf/latest-update/?the_page=$page")
+                        val html =
+                            client.Ikiru.getHtml("https://id.ikiru.wtf/latest-update/?the_page=$page")
                         val document = Jsoup.parse(html)
-                        val pageData =SourceParser.parseIkiru(document).toList()
+                        val pageData = SourceParser.parseIkiru(document).toList()
 
                         result.addAll(pageData)
                     }
 
                     result
                 }
+
                 sourceType.komiku,
                 sourceType.shinigami -> {
                     val data = mutableListOf<getListUpdate>()
 
-                    for(page in 1..10){
-                        val result = SourceParser.parseShinigami(client,page)
+                    for (page in 1..10) {
+                        val result = SourceParser.parseShinigami(client, page)
                         Log.d(TAG, "getComic: ${result?.size}")
                         data.addAll(result!!)
                     }
 
                     data
                 }
+
                 sourceType.comicscan -> {
                     val result = mutableListOf<getListUpdate>()
 
-                    for(page in 1..10){
-                        val html = client.Comicscan.getHtml("https://lc3.cosmicscans.asia/manga/?page=$page&order=update")
+                    for (page in 1..10) {
+                        val html =
+                            client.Comicscan.getHtml("https://lc3.cosmicscans.asia/manga/?page=$page&order=update")
                         val document = Jsoup.parse(html)
                         val pageData = SourceParser.parseComicscan(document).toList()
                         result.addAll(pageData)
@@ -74,11 +79,13 @@ class Comic(val client: client) : RepositroyComic {
 
                     result
                 }
+
                 sourceType.kiryuu -> {
                     val result = mutableListOf<getListUpdate>()
 
-                    for (page in 1..10){
-                        val html = com.komik.komik.service.client.Ikiru.getHtml("https://kiryuu02.com/manga/?page=$page&order=update")
+                    for (page in 1..10) {
+                        val html =
+                            com.komik.komik.service.client.Ikiru.getHtml("https://kiryuu02.com/manga/?page=$page&order=update")
                         val document = Jsoup.parse(html)
 
                         val pageData = SourceParser.parseKiryuu(document)
@@ -86,6 +93,39 @@ class Comic(val client: client) : RepositroyComic {
                     }
                     result
                 }
+
+                sourceType.manhwaindo -> {
+                    val result = mutableListOf<getListUpdate>()
+
+                    for (page in 1..10) {
+                        val html =
+                            client.Ikiru.getHtml("https://manhwaindo.com/series/?page=$page&order=update")
+                        val document = Jsoup.parse(html)
+                        val pageData = SourceParser.parseManhwaindo(document)
+
+                        result.addAll(pageData)
+                    }
+
+                    Log.d(TAG, "getComic: ${result}")
+
+                    result
+                }
+
+                sourceType.batoto_all -> {
+                    val result = mutableListOf<getListUpdate>()
+
+                    for (page in 1..10) {
+                        val html =
+                            client.ScrapeDataImage.getHtml("https://bato.si/v4x-latest/$page")
+                        val document = Jsoup.parse(html)
+                        val pageData = SourceParser.parseBatoto(document)
+
+                        result.addAll(pageData)
+                    }
+
+                    result
+                }
+
                 else -> emptyList() // Default case, kembalikan list kosong
             }
         }
@@ -93,24 +133,24 @@ class Comic(val client: client) : RepositroyComic {
     }
 
     override suspend fun getSearch(type: sourceType, query: String): List<getListUpdate> {
-       val result = mutableListOf<getListUpdate>()
-       return when(type){
+        val result = mutableListOf<getListUpdate>()
+        return when (type) {
             sourceType.komikcast,
-            sourceType.ikiru ->{
+            sourceType.ikiru -> {
                 withContext(Dispatchers.IO) {
-                    // 1. Buat instance OkHttpClient. Sebaiknya satu instance dipakai berulang.
                     val client = OkHttpClient()
 
-                    // 2. Buat Request Body untuk metode POST
                     val formBody = FormBody.Builder()
-                        .add("query", query) // Menambahkan data form: query=...
+                        .add("query", query)
                         .build()
 
-                    // 3. Buat Request Object
                     val request = Request.Builder()
                         .url("https://id.ikiru.wtf/ajax-call?nonce=91595ea9cd&action=search")
                         .post(formBody) // Tentukan metode POST dengan body yang sudah dibuat
-                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                        .header(
+                            "User-Agent",
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                        )
                         .build()
 
                     try {
@@ -143,14 +183,16 @@ class Comic(val client: client) : RepositroyComic {
                     }
                 }
             }
+
             sourceType.shinigami,
             sourceType.comicscan,
             sourceType.kiryuu,
-            sourceType.komiku ->{
+            sourceType.komiku -> {
                 result
             }
+
             else -> emptyList()
-       }
+        }
     }
 
     companion object {

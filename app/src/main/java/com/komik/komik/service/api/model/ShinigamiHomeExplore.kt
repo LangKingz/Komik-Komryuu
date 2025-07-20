@@ -86,7 +86,7 @@ data class DataItem(
 	val userRate: Any? = null,
 
     @field:SerializedName("latest_chapter_number")
-	val latestChapterNumber: Int? = null,
+	val latestChapterNumber: Any? = null,
 
     @field:SerializedName("is_recommended")
 	val isRecommended: Boolean? = null,

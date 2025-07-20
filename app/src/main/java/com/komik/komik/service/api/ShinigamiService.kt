@@ -1,7 +1,10 @@
 package com.komik.komik.service.api
 
+import com.komik.komik.service.api.model.ChapterResponseSHinigami
+import com.komik.komik.service.api.model.DetailShinigamiResponse
 import com.komik.komik.service.api.model.ShinigamiHomeExplore
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ShinigamiService {
@@ -15,4 +18,18 @@ interface ShinigamiService {
         @Query("sort_order") sortOrder:String= "desc",
         @Query("sort") sortBy:String,
     ): ShinigamiHomeExplore
+
+    @GET("v1/manga/detail/{id}")
+    suspend fun getMangaDetail(
+        @Path("id") id:String,
+    ): DetailShinigamiResponse
+
+    @GET("v1/chapter/{id}/list")
+    suspend fun getChapter(
+        @Path("id") id:String,
+        @Query("page") page:Int=1,
+        @Query("page_size") pageSize:Int,
+        @Query("sort_by") sortBy:String = "chapter_number",
+        @Query("sort_order") sortOrder:String= "desc",
+    ): ChapterResponseSHinigami
 }

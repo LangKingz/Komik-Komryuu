@@ -53,6 +53,15 @@ class Image(private val client: client) : RepositoryImage {
                 pageData
             }
 
+            sourceType.manhwaindo -> {
+                val html = client.Ikiru.getHtml(url)
+                val document = Jsoup.parse(html)
+                val pageData = ImageParser.manhwaIndoParse(document)
+
+                Log.d(TAG, "getImage: $pageData")
+                pageData
+            }
+
             else -> emptyList()
         }
     }

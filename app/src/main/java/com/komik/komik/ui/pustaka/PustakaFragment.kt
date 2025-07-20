@@ -5,56 +5,80 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.recyclerview.widget.GridLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import com.komik.komik.R
+import com.komik.komik.databinding.FragmentPustakaBinding
+import com.komik.komik.service.adapter.AdapterPustaka
+import com.komik.komik.service.data.Database.DatabaseRiwayats
+import com.komik.komik.service.data.dao.LibraryDao
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [PustakaFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class PustakaFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private var _binding: FragmentPustakaBinding? = null
+    val binding get() = _binding!!
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
+    private lateinit var adapter: AdapterPustaka
+
+    private lateinit var db: DatabaseRiwayats
+    private lateinit var library: LibraryDao
+
+    private lateinit var viewmodel: PustakaViewmodel
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_pustaka, container, false)
+        _binding = FragmentPustakaBinding.inflate(inflater, container, false)
+        val root = binding.root
+
+        init()
+
+        binding.listPustaka.layoutManager = GridLayoutManager(requireContext(), 3)
+        adapter = AdapterPustaka(mutableListOf())
+
+        return root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment PustakaFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            PustakaFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        fetchLiveData()
+    }
+
+    private fun fetchLiveData() {
+        binding.loading.visibility = View.VISIBLE
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = library.getLibrary()
+            withContext(Dispatchers.Main) {
+                data.observe(viewLifecycleOwner) {data ->
+                    if(data.isNotEmpty()){
+                        adapter.setData(data)
+                        binding.listPustaka.adapter = adapter
+                        binding.loading.visibility = View.GONE
+                    }else{
+                        binding.placeholder.visibility = View.VISIBLE
+                    }
                 }
             }
+        }
     }
+
+
+    fun init() {
+        db = DatabaseRiwayats.getDatabase(requireContext())
+        library = db.libraryDao()
+
+        viewmodel = ViewModelProvider(this, PustakaProvider(library))[PustakaViewmodel::class]
+    }
+
 }

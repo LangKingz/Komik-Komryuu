@@ -77,6 +77,8 @@ class sourceActivity : AppCompatActivity() {
             "komikcast" -> viewmodel.getSource(sourceType.komikcast)
             "kiryuu" -> viewmodel.getSource(sourceType.kiryuu)
             "komiku" -> viewmodel.getSource(sourceType.komiku)
+            "manhwaindo"-> viewmodel.getSource(sourceType.manhwaindo)
+            "batoto-all" -> viewmodel.getSource(sourceType.batoto_all)
             else -> viewmodel.getSource(sourceType.ikiru)
         }
 
@@ -163,24 +165,7 @@ class sourceActivity : AppCompatActivity() {
     }
 
 
-    fun scrapeTest  (url: String) {
 
-        CoroutineScope(Dispatchers.IO).launch {
-
-            val html = client.Ikiru.getHtml("https://kiryuu02.com/manga/?page=1&order=update")
-            val document = Jsoup.parse(html)
-
-            val pageData = SourceParser.parseKiryuu(document)
-
-
-            Log.d(TAG, "scrapeTest: ${pageData.size}")
-
-//            withContext(Dispatchers.Main) {
-//                binding.listSource.adapter = AdapterManhwa(pageData as MutableList<getListUpdate>)
-//            }
-        }
-
-    }
 
     companion object {
         const val TAG = "sourceActivity"

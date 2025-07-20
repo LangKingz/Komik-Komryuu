@@ -25,7 +25,7 @@ interface ComicDao {
     suspend fun insertChapter(chapter: List<Chapter>)
 
     @Query("SELECT * FROM comic WHERE url = :url")
-    fun getComicByUrl(url: String): Comic?
+    fun getComicByUrl(url: String): Comic
 
     @Query("DELETE FROM comic ")
     fun deleteAllComic()
@@ -46,17 +46,6 @@ interface ComicDao {
         insertChapter(newChapters)
     }
 
-//    @Transaction
-//    @Query("SELECT * FROM Library ORDER BY createdAt DESC")
-//    fun getLibrary(): LiveData<List<LibraryDetail>>
-//
-//    @Insert(onConflict = OnConflictStrategy.IGNORE)
-//    suspend fun insertLibrary(library: Library)
-//
-//    @Query("DELETE FROM Library WHERE comicId = :title")
-//    suspend fun deleteLibrary(title: Int)
-//
-//    @Query("SELECT * FROM Library WHERE comicId = :comicId")
-//    suspend fun getLibraryByComicId(comicId: Int): Library?
+
 
 }

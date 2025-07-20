@@ -16,6 +16,7 @@
         android:title="webview"
         android:icon="@drawable/globe_hemisphere_west__1_"
         app:showAsAction="ifRoom"
+        android:menuCategory="container"
         android:iconTint="@color/white"
         />
 

@@ -24,6 +24,8 @@ class AdapterRiwayatSource(private val list: MutableList<RiwayatSource>): Recycl
                 "komikcast" -> "https://komikcast.li/wp-content/uploads/2021/02/cropped-logo-kc-32x32.png"
                 "kiryuu" -> "https://kiryuu02.com/wp-content/uploads/2021/10/cropped-logo-icon-kiryuu-1-456248-udlqjluy-194445-3fNc9Wlc-32x32.png"
                 "komiku" -> "https://komikindo.rip/"
+                "manhwaindo"-> "https://manhwaindo.com/wp-content/uploads/2024/02/cropped-android-chrome-512x512-1-192x192.png"
+                "batoto-all"-> "https://bato.si/static-assets/img/bato-favicon.ico?v2"
                 else -> ""
             }
 
