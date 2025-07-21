@@ -23,4 +23,15 @@ interface LibraryDao {
 
     @Query("SELECT * FROM Library WHERE comicId = :comicId")
     suspend fun getLibraryByComicId(comicId: Int): Library?
+
+    @Transaction
+    @Query("""
+        SELECT * FROM Library
+        INNER JOIN Comic ON Library.comicId = Comic.id
+        WHERE (Comic.title LIKE '%' || :query || '%' OR Comic.alternativeTitle LIKE '%' || :query || '%')
+        AND Library.isFavorite = :isFavorite
+        ORDER BY Library.createdAt DESC
+    """)
+    fun searchFavoriteLibraryComics(query: String, isFavorite: Boolean): LiveData<List<LibraryDetail>>
+
 }

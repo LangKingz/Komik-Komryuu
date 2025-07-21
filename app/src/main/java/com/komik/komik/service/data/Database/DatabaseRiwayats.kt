@@ -18,7 +18,7 @@ import com.komik.komik.service.data.model.Riwayats
 
 @Database(
     entities = [Riwayats::class, Comic::class, Chapter::class, Genre::class,Library::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class DatabaseRiwayats : RoomDatabase() {
@@ -51,6 +51,7 @@ abstract class DatabaseRiwayats : RoomDatabase() {
                 // 5. Tambah kolom isRead ke tabel RiwayatRelasi.
                 // Tipe data INTEGER, tidak boleh null, defaultnya 0 (false).
                 db.execSQL("ALTER TABLE RiwayatRelasi ADD COLUMN isRead INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE Library ADD COLUMN imageLokal TEXT")
             }
         }
 

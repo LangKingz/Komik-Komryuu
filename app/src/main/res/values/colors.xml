@@ -55,6 +55,8 @@
     <color name="dark_onSurface">#FFFFFFFF</color>
     <color name="searchbar_element_color">#616161</color>
     <color name="background_utama">#121212</color>
+    <color name="transparent">#40000000</color>
+
     <color name="bottom_navbar">#23262B</color>
     <color name="content_background">#1A1D21</color>
     <color name="gray_400">#9CA3AF</color>

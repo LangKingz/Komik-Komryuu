@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.komik.komik.R
 import com.komik.komik.databinding.CardDailyBinding
 import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.LibraryDetail
@@ -14,8 +15,19 @@ class AdapterPustaka(private val list : MutableList<LibraryDetail>) : RecyclerVi
     class ViewHolder(private val binding: CardDailyBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(data: LibraryDetail){
             binding.judul.text = data.comic.title
+
+            val finalpath: String
+            val comic = data.library
+
+            if(comic.imageLokal != null){
+                finalpath = comic.imageLokal
+            }else{
+                finalpath = data.comic.imageUrl
+            }
+
             Glide.with(itemView.context)
-                .load(data.comic.imageUrl)
+                .load(finalpath)
+                .error(R.drawable.placeholder)
                 .into(binding.coverUrl)
         }
     }

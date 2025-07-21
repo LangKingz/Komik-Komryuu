@@ -2,6 +2,9 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.Komik" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:fontFamily">@font/interreguler</item>
+
+        <item name="colorPrimary">@color/primary_button</item>
+        <item name="colorOnPrimary">@color/white</item>
 <!--&lt;!&ndash;         Warna utama brand kamu. Biasanya buat tombol, header, atau elemen penting lainnya.&ndash;&gt;-->
 <!--        <item name="colorPrimary">@color/light_primary</item>-->
 <!--&lt;!&ndash;        Warna teks atau ikon yang ada di atas colorPrimary.&ndash;&gt;-->

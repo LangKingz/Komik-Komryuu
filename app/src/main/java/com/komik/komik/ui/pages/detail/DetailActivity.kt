@@ -31,6 +31,8 @@ import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.Riwayats
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.repository.Detail
+import com.komik.komik.service.utils.downloadAndSaveImage
+import com.komik.komik.service.utils.genereteId
 import com.komik.komik.ui.pages.read.ReadActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +61,8 @@ class DetailActivity : AppCompatActivity() {
 
     private var sources: sourceType? = null
 
+    private var urlResume: String? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -73,8 +77,7 @@ class DetailActivity : AppCompatActivity() {
         val url = intent.getStringExtra(URL)
         val location = intent.getStringExtra(LOCATION)
         locations = location
-
-//        Snackbar.make(binding.root, location.toString(), Snackbar.LENGTH_LONG).show()
+        urlResume = url
 
         val source = when (location) {
             "ikiru" -> sourceType.ikiru
@@ -92,16 +95,6 @@ class DetailActivity : AppCompatActivity() {
 
         loadData(url.toString(), source)
 
-
-        viewModel.loading.observe(this) { loading ->
-            if (loading) {
-                binding.loading.visibility = View.VISIBLE
-            } else {
-                binding.loading.visibility = View.GONE
-//                binding.nestedScrollView.visibility = View.VISIBLE
-            }
-        }
-
         viewModel.error.observe(this) { error ->
             if (error != null) {
                 Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show()
@@ -116,46 +109,65 @@ class DetailActivity : AppCompatActivity() {
 
     }
 
-    fun loadData(url: String, type: sourceType) {
-        CoroutineScope(Dispatchers.IO).launch {
-            binding.loading.visibility = View.VISIBLE
-            val dataDetail = comicDao.getComicByUrl(url)
+    private fun loadData(url: String, type: sourceType) {
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                binding.loading.visibility = View.VISIBLE
+                val dataDetail = comicDao.getComicByUrl(url)
 
-            if (dataDetail != null) {
-                detail(url)
-                binding.loading.visibility = View.GONE
-                binding.nestedScrollView.visibility = View.VISIBLE
-            } else {
-
-                withContext(Dispatchers.Main) {
-                    viewModel.getDetail(type, url)
-                    delay(3000)
-
+                if (dataDetail != null) {
                     detail(url)
+                } else {
+                    withContext(Dispatchers.Main) {
+                        viewModel.getDetail(type, url)
+                        delay(3000)
+                        detail(url)
+
+                    }
 
                 }
 
             }
-
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d(TAG, "loadData: ${e.localizedMessage}")
+            Snackbar.make(binding.root, "Gagal Memuat Data", Snackbar.LENGTH_LONG).show()
         }
     }
 
-    fun insertPustaka(chapterId: Int) {
-        CoroutineScope(Dispatchers.IO).launch {
-            libraryDao.insertLibrary(
-                Library(
-                    comicId = chapterId
-                )
-            )
+    private fun insertPustaka(chapterId: Int, imageUrl: String? = null) {
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                val id = genereteId()
+                val dataPathImage =
+                    downloadAndSaveImage(this@DetailActivity, imageUrl.toString(), id.toLong())
 
-            withContext(Dispatchers.Main) {
-                isFavorite = true
-                binding.button2.setImageResource(R.drawable.bookmark_simple_fill)
+                if (dataPathImage != null) {
+                    libraryDao.insertLibrary(
+                        Library(
+                            comicId = chapterId,
+                            imageLokal = dataPathImage
+                        )
+                    )
+
+                    withContext(Dispatchers.Main) {
+                        isFavorite = true
+                        binding.button2.setImageResource(R.drawable.bookmark_simple_fill)
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Snackbar.make(binding.root, "Gagal Memuat Gambar", Snackbar.LENGTH_LONG)
+                            .show()
+                    }
+                }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d(TAG, "insertPustaka: ${e.localizedMessage}")
         }
     }
 
-    fun deletePustaka(chapterId: Int) {
+    private fun deletePustaka(chapterId: Int) {
         CoroutineScope(Dispatchers.IO).launch {
             libraryDao.deleteLibrary(chapterId)
 
@@ -166,7 +178,7 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
-    fun checkPustaka(chapterId: Int) {
+    private fun checkPustaka(chapterId: Int) {
         CoroutineScope(Dispatchers.IO).launch {
             val data = libraryDao.getLibraryByComicId(chapterId)
             if (data != null) {
@@ -179,24 +191,46 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        val url = intent.getStringExtra(URL) ?: urlResume
+        detail(url = url.toString())
+    }
 
-    fun detail(url: String) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val data = comicDao.getComicByUrl(url)
-            val genre = genreDao.getGenreByComicTitle(data.title)
-            val chapter = chapterDao.getChaptersForComic(data.title)
-            Log.d(TAG, "detail: $chapter")
+//    suspend fun checkRiwayat(chapterId: Int){
+//        val data = riwayatRelationDao.(chapterId)
+//    }
 
-            withContext(Dispatchers.Main) {
 
-                checkPustaka(data.id)
-                try {
-                    binding.loading.visibility = View.GONE
-                    binding.nestedScrollView.visibility = View.VISIBLE
+    private fun detail(url: String) {
+        try {
+            CoroutineScope(Dispatchers.IO).launch {
+                val data = comicDao.getComicByUrl(url)
+                val genre = genreDao.getGenreByComicTitle(data.title)
+                val chapter = chapterDao.getChaptersForComicLiveData(data.title)
+                val dataChapter = chapterDao.getChaptersForComic(data.title)
+
+                withContext(Dispatchers.Main) {
+                    checkPustaka(data.id)
+
+                    chapter.observe(this@DetailActivity) { chapter ->
+                        binding.btnBaca.setOnClickListener {
+                            val intent = Intent(this@DetailActivity, ReadActivity::class.java)
+                            intent.putExtra(ReadActivity.EXTRA_URL, chapter.first().link)
+                            startActivity(intent)
+                        }
+                    }
+
+                    binding.chapter.adapter =
+                        data.let { AdapterChapter(dataChapter, it) }
+
+                    binding.genre.adapter = AdapterGenre(genre)
 
                     binding.back.setOnClickListener {
                         finish()
                     }
+
+                    binding.textView12.text = "${dataChapter.size} Chapter"
 
                     Glide.with(this@DetailActivity)
                         .load(data.imageUrl)
@@ -213,11 +247,6 @@ class DetailActivity : AppCompatActivity() {
                     binding.status.text = data.status
                     binding.sinopsis.text = data.description
 
-                    binding.textView12.text = "${chapter.size} Chapter"
-
-                    binding.genre.adapter = AdapterGenre(genre)
-                    binding.chapter.adapter = data.let { AdapterChapter(chapter, it) }
-
                     binding.selengkap.setOnClickListener {
                         isSelengkap = !isSelengkap!!
                         if (isSelengkap == true) {
@@ -229,35 +258,32 @@ class DetailActivity : AppCompatActivity() {
                         }
                     }
 
-                    binding.btnBaca.setOnClickListener {
-                        val intent = Intent(this@DetailActivity, ReadActivity::class.java)
-                        intent.putExtra(ReadActivity.EXTRA_URL, chapter.first().link)
-                        startActivity(intent)
-                    }
-
                     binding.button2.setOnClickListener {
                         if (isFavorite) {
                             deletePustaka(data.id)
                         } else {
-                            insertPustaka(data.id)
+                            insertPustaka(data.id, data.imageUrl)
                         }
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    Log.d(TAG, "detail: ${e.localizedMessage}")
-                    Snackbar.make(binding.root, "Gagal memuat Konten", Snackbar.LENGTH_LONG)
-                        .setAction("Coba Lagi") {
-                            loadData(url, sources ?: sourceType.ikiru)
-                        }
-                        .show()
+
+                    binding.loading.visibility = View.GONE
+                    binding.nestedScrollView.visibility = View.VISIBLE
                 }
 
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d(TAG, "detail: ${e.localizedMessage}")
+            Snackbar.make(binding.root, "Gagal memuat Konten", Snackbar.LENGTH_LONG)
+                .setAction("Coba Lagi") {
+                    loadData(url, sources ?: sourceType.ikiru)
+                }
+                .show()
         }
     }
 
 
-    fun initViewmodel() {
+    private fun initViewmodel() {
         val repository = Detail(
             comicDao = comicDao,
             client = client
@@ -267,16 +293,21 @@ class DetailActivity : AppCompatActivity() {
 
     }
 
-    fun initDatabase() {
-        dbUtama = DatabaseRiwayats.getDatabase(this)
-        riwayatRelationDao = dbUtama.riwayatdao()
-        comicDao = dbUtama.comicdao()
-        chapterDao = dbUtama.chapterdao()
-        genreDao = dbUtama.genreDao()
-        libraryDao = dbUtama.libraryDao()
+    private fun initDatabase() {
+        try {
+            dbUtama = DatabaseRiwayats.getDatabase(this)
+            riwayatRelationDao = dbUtama.riwayatdao()
+            comicDao = dbUtama.comicdao()
+            chapterDao = dbUtama.chapterdao()
+            genreDao = dbUtama.genreDao()
+            libraryDao = dbUtama.libraryDao()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.d(TAG, "initDatabase: ${e.localizedMessage}")
+        }
     }
 
-    fun viewCompatPadding() {
+    private fun viewCompatPadding() {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
@@ -291,7 +322,7 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
-    fun initRecycleview() {
+    private fun initRecycleview() {
         binding.genre.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.chapter.layoutManager =

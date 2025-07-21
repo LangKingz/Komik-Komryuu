@@ -24,6 +24,8 @@ class AdapterGenre(private val list: List<Genre>):RecyclerView.Adapter<AdapterGe
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(list[position])
+        if(list[position].genre.isNotEmpty()){
+            holder.bind(list[position])
+        }
     }
 }

@@ -154,6 +154,7 @@ data class RiwayatDetail(
 data class Library(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val comicId: Int,
+    val imageLokal: String? = null,
     val isSelected: Boolean = false,
     val isFavorite: Boolean = false,
     val isRead: Boolean = false,
