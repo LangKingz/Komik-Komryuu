@@ -23,7 +23,7 @@ interface chapterDao {
     @Query("SELECT * FROM Chapter WHERE  comicTitle = :comicTitle ORDER BY id ASC")
     fun getChaptersForComic(comicTitle: String): List<Chapter>
 
-    @Query("SELECT * FROM Chapter WHERE comicTitle = :comicTitle ORDER BY id ASC")
+    @Query("SELECT * FROM Chapter WHERE comicTitle = :comicTitle ORDER BY numChapter DESC")
     fun getChaptersForComicLiveData(comicTitle: String): LiveData<List<Chapter>>
 
     @Query("SELECT * FROM Chapter WHERE title = :comicTitle AND link = :link")

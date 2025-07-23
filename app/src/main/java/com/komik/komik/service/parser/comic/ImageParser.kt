@@ -1,6 +1,12 @@
 package com.komik.komik.service.parser.comic
 
 import com.komik.komik.service.parser.model.getImages
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.FormBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
 object ImageParser {
@@ -64,6 +70,49 @@ object ImageParser {
                 index = index,
                 image = element.attr("src"),
             )
+        }
+    }
+
+    suspend fun doujindesuParseAsync(document: Document, url: String): List<getImages> {
+        val id = document.select("main").attr("data-id")
+
+        // Pindahkan operasi jaringan ke IO Dispatcher (background thread khusus I/O)
+        return withContext(Dispatchers.IO) { // Ini yang penting!
+            val client = OkHttpClient()
+            val formBuilder = FormBody.Builder()
+                .add("id", id)
+                .build()
+
+            val request = Request.Builder()
+                .url("https://doujindesu.tv/themes/ajax/ch.php")
+                .post(formBuilder)
+                .header(
+                    "Referer", url
+                )
+                .header(
+                    "X-Requested-With", "XMLHttpRequest"
+                )
+                .header(
+                    "Accept", "image/avif,image/webp,*/*"
+                ).build()
+
+            val result = client.newCall(request).execute() // <-- Sekarang ini berjalan di background thread
+
+            val body = result.body?.string()
+
+            if (body != null) {
+                val doc = Jsoup.parse(body)
+                val imageParser = doc.select("img").mapIndexed { index, element ->
+                    getImages(
+                        index = index,
+                        image = element.attr("src"),
+                    )
+                }
+
+                println("imageParser: $imageParser")
+                return@withContext imageParser // Gunakan return@withContext untuk mengembalikan nilai dari block
+            }
+            emptyList() // Kembalikan list kosong jika body null
         }
     }
 }

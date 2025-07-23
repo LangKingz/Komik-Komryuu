@@ -22,6 +22,9 @@ class sourceViewmodel: ViewModel() {
     private var _error = MutableLiveData<String>()
     val error: MutableLiveData<String> get() = _error
 
+    private var _search = MutableLiveData<List<getListUpdate>>()
+    val search: MutableLiveData<List<getListUpdate>> get() = _search
+
 
     val repository : Comic = Comic(client)
 
@@ -49,8 +52,9 @@ class sourceViewmodel: ViewModel() {
         viewModelScope.launch {
             try {
                 val response = repository.getSearch(type,query)
-                _source.postValue(response)
+                _search.postValue(response)
                 _loading.postValue(false)
+
             }catch (e:Exception){
                 e.printStackTrace()
                 _error.postValue(e.message)

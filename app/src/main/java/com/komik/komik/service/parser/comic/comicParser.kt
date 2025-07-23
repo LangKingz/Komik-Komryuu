@@ -5,21 +5,22 @@ import com.komik.komik.service.client
 import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.Genre
 import com.komik.komik.service.parser.model.ParsedData
+import com.komik.komik.service.utils.parsechapterToInt
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
 object comicParser {
 
-    suspend fun parseShinigami(id:String,client:client,page:Int):ParsedData{
+    suspend fun parseShinigami(id: String, client: client, page: Int): ParsedData {
 
         val response = client.Shinigami.getMangaDetail(id)
         val data = response.data
 
         val dataChapter = mutableListOf<DataIteme>()
 
-        for (page in 1..10){
+        for (page in 1..10) {
             val resChapter = client.Shinigami.getChapter(id, pageSize = 40, page = page)
-            val chapter  = resChapter.data
+            val chapter = resChapter.data
             dataChapter.add(chapter as DataIteme)
         }
 
@@ -34,7 +35,7 @@ object comicParser {
         val status = data?.status
 
         val genre = data?.taxonomy?.genre
-        val genres = genre?.mapIndexed{ index, genre ->
+        val genres = genre?.mapIndexed { index, genre ->
             Genre(
                 comicTitle = title.toString(),
                 genre = genre?.name.toString(),
@@ -59,14 +60,15 @@ object comicParser {
             description = description.toString(),
             author = author.toString(),
             location = "shinigami",
-            chapters = chapters?: emptyList(),
-            genres = genres?: emptyList(),
+            chapters = chapters ?: emptyList(),
+            genres = genres ?: emptyList(),
             alternativeTitle = alternativeTitle,
             type = type,
             rating = rating.toString(),
             status = status.toString()
         )
     }
+
 
     fun parseKiryuu(document: Document, url: String): ParsedData {
         val title = document.select("h1.entry-title").text()
@@ -84,6 +86,7 @@ object comicParser {
                 title = it.select("a .chapternum").text(),
                 link = it.select("a").attr("href"),
                 comicTitle = title,
+                numChapter = it.attr("data-num").toDouble(),
                 date = it.select("a .chapterdate").text(),
                 location = "kiryuu"
             )
@@ -112,20 +115,22 @@ object comicParser {
         )
     }
 
-    fun parseKomikcast(document: Document,url:String):ParsedData{
+    fun parseKomikcast(document: Document, url: String): ParsedData {
         val title = document.select(".komik_info-content-body-title")[0].text()
         val imageUrl = document.select(".komik_info-content-thumbnail img").attr("src")
         val deskripsitable = document.select(".komik_info-description-sinopsis p").text()
         val author = document.select("span.komik_info-content-info").text()
 
-        val alternativeTitle= document.select("span.komik_info-content-native")
+        val alternativeTitle = document.select("span.komik_info-content-native")
         val rating = document.select("div.data-rating").attr("data-ratingkomik")
 
         val chapters = document.select("ul li.komik_info-chapters-item ").map {
+            val chapter = it.select("a.chapter-link-item").text()
             Chapter(
-                title = it.select("a.chapter-link-item").text(),
+                title = chapter,
                 link = it.select("a.chapter-link-item").attr("href"),
                 comicTitle = title,
+                numChapter = parsechapterToInt(chapter),
                 date = it.select(".chapter-link-time").text(),
                 location = "komikcast"
             )
@@ -161,12 +166,13 @@ object comicParser {
         val mangaId =
             bodyClasses.firstOrNull { it.startsWith("postid-") }?.removePrefix("postid-")
 
-        val idparser = client.Ikiru.getHtml("https://id.ikiru.wtf/ajax-call?manga_id=${mangaId}&page=1&action=chapter_list")
+        val idparser =
+            client.Ikiru.getHtml("https://id.ikiru.wtf/ajax-call?manga_id=${mangaId}&page=1&action=chapter_list")
         val document2 = Jsoup.parse(idparser)
 
         val title = document.select(".flex h1.text-2xl")[0].text()
         val imageUrl = document.select(".contents img").attr("src")
-        val deskripsitable = document.select("div").attr("itemprop", "description").text()
+        val deskripsitable = document.select("div.p-4").attr("itemprop", "description").text()
         val author = document.select("span.komik_info-content-info").text()
 
         val rating = document.select("span.to-accent-2").text()
@@ -176,11 +182,12 @@ object comicParser {
 
 
         val chapters =
-            document2.select("div#chapter-list div.cursor-pointer a.cursor-pointer").map {
+            document2.select("div#chapter-list div.cursor-pointer").map {
                 Chapter(
                     title = it.select("span").text(),
-                    link = it.attr("href"),
+                    link = it.select("a").attr("href"),
                     comicTitle = title,
+                    numChapter = it.attr("data-chapter-number").toDouble(),
                     date = it.select("time").text(),
                     location = "ikiru"
                 )
@@ -257,15 +264,15 @@ object comicParser {
         val alternativeTitle = "#"
         val rating = document.select(".num").text()
         val type = document.select(".tsinfo .imptdt")[1].select(" a").text() ?: ""
-        val status = document.select(".tsinfo .imptdt")[0].select("a").text() ?:""
+        val status = document.select(".tsinfo .imptdt")[0].select("a").text() ?: ""
 
 
-
-        val chapters = document.select("ul li .chbox").map {
+        val chapters = document.select("ul.clstyle li ").map {
             Chapter(
                 title = it.select(".eph-num a span")[0].text(),
                 link = it.select(".eph-num a").attr("href"),
                 comicTitle = title,
+                numChapter = it.attr("data-num").toDouble(),
                 date = it.select(".eph-num a span")[1].text(),
                 location = "comicscan"
             )
@@ -283,7 +290,7 @@ object comicParser {
             title = title,
             imageUrl = imageUrl,
             description = description,
-            author =author,
+            author = author,
             location = "comicscan",
             chapters = chapters,
             genres = genres,
@@ -294,7 +301,55 @@ object comicParser {
         )
     }
 
-    fun parsemanhwaIndo(document: Document,url: String): ParsedData{
+    fun parseDoujinDesu(document: Document, url: String): ParsedData {
+        val title = document.select("h1.title").text() ?: ""
+        val imageUrl = document.select("a.permalink img").attr("src") ?: ""
+        val description = document.select(".metadata .pb-2 p").text() ?: ""
+        val author = document.select("tr.pages td").select("i").text() ?: ""
+
+        val alternativeTitle = document.select(".alter i").text()
+        val rating = document.select(".rating-prc").text()
+        val type = document.select(".magazines td")[1].select(" a").text() ?: "Manhwa"
+        val status = document.select(".metadata tr")[0].select("td")[1].text() ?: "onGoing"
+
+        val BASE_URL = "https://doujindesu.tv"
+
+        val chapters = document.select(".bxcl ul li").map {
+            val chapter = it.select(".epsright a").attr("title")
+            Chapter(
+                title = it.select("span.lchx a").text(),
+                link = BASE_URL + it.select("a").attr("href"),
+                comicTitle = title,
+                numChapter = parsechapterToInt(chapter),
+                date = it.select("span.date").text(),
+                location = "dd"
+            )
+        }
+
+        val genres = document.select(".tags a").map {
+            Genre(
+                comicTitle = title,
+                genre = it.text()
+            )
+        }
+
+        return ParsedData(
+            url = url,
+            title = title,
+            imageUrl = imageUrl,
+            description = description,
+            author = author,
+            location = "dd",
+            chapters = chapters,
+            genres = genres,
+            alternativeTitle = alternativeTitle,
+            rating = rating,
+            type = type,
+            status = status
+        )
+    }
+
+    fun parsemanhwaIndo(document: Document, url: String): ParsedData {
         val title = document.select("h1.entry-title").text() ?: ""
         val imageUrl = document.select(".thumb  img").attr("src") ?: ""
         val description = document.select(".wd-full .entry-content p").text() ?: ""
@@ -303,15 +358,15 @@ object comicParser {
         val alternativeTitle = "#"
         val rating = document.select(".num").text()
         val type = document.select(".tsinfo .imptdt")[1].select(" a").text() ?: "Manhwa"
-        val status = document.select(".tsinfo .imptdt")[0].select("a").text() ?:"onGoing"
+        val status = document.select(".tsinfo .imptdt")[0].select("a").text() ?: "onGoing"
 
 
-
-        val chapters = document.select("ul li .chbox").map {
+        val chapters = document.select("ul li").map {
             Chapter(
                 title = it.select(".eph-num a span")[0].text(),
                 link = it.select(".eph-num a").attr("href"),
                 comicTitle = title,
+                numChapter = it.attr("data-num").toDouble(),
                 date = it.select(".eph-num a span")[1].text(),
                 location = "manhwaindo"
             )
@@ -329,7 +384,7 @@ object comicParser {
             title = title,
             imageUrl = imageUrl,
             description = description,
-            author =author,
+            author = author,
             location = "manhwaindo",
             chapters = chapters,
             genres = genres,

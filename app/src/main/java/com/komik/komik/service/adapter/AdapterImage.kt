@@ -8,54 +8,111 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.model.GlideUrl
+import com.bumptech.glide.load.model.LazyHeaders
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.komik.komik.R
 import com.komik.komik.databinding.ImagelayoutBinding
+import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getImages
 
-class AdapterImage(private val list: List<getImages>): RecyclerView.Adapter<AdapterImage.ViewHolder>() {
-    class ViewHolder(val binding: ImagelayoutBinding) : RecyclerView.ViewHolder(binding.root) {
+class AdapterImage(
+    private val list: List<getImages>,
+    private val type: sourceType,
+    val refererUrl: String? = null
+) :
+    RecyclerView.Adapter<AdapterImage.ViewHolder>() {
+    class ViewHolder(
+        val binding: ImagelayoutBinding,
+        val type: sourceType,
+        val refererUrl: String
+    ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(data: getImages) {
-            Glide.with(itemView.context)
-                .load(data.image)
-                .listener(object : RequestListener<Drawable>{
-                    override fun onLoadFailed(
-                        e: GlideException?,
-                        model: Any?,
-                        target: Target<Drawable>,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        binding.loading.visibility = View.GONE
-                        binding.imagechapter.setImageResource(R.drawable.placeholder)
-                        return false
-                    }
+            when (type) {
+                sourceType.doujindesu -> {
+                    val headers = LazyHeaders.Builder()
+                        .addHeader("Referer", refererUrl)
+                        .addHeader(
+                            "User-Agent",
+                            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6_1; like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+                        )
+                        .addHeader("X-Requested-With", "XMLHttpRequest")
+                        .build()
 
-                    override fun onResourceReady(
-                        resource: Drawable,
-                        model: Any,
-                        target: Target<Drawable>?,
-                        dataSource: DataSource,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        binding.loading.visibility = View.GONE
-                        return false
-                    }
-                })
-                .override(Target.SIZE_ORIGINAL)
-                .into(binding.imagechapter)
+                    val glideUrl = GlideUrl(data.image, headers)
+                    Glide.with(itemView.context)
+                        .load(glideUrl)
+                        .listener(object : RequestListener<Drawable> {
+                            override fun onLoadFailed(
+                                e: GlideException?,
+                                model: Any?,
+                                target: Target<Drawable>,
+                                isFirstResource: Boolean
+                            ): Boolean {
+                                binding.loading.visibility = View.GONE
+                                binding.imagechapter.setImageResource(R.drawable.placeholder)
+                                return false
+                            }
+
+                            override fun onResourceReady(
+                                resource: Drawable,
+                                model: Any,
+                                target: Target<Drawable>?,
+                                dataSource: DataSource,
+                                isFirstResource: Boolean
+                            ): Boolean {
+                                binding.loading.visibility = View.GONE
+                                return false
+                            }
+                        })
+                        .override(Target.SIZE_ORIGINAL)
+                        .into(binding.imagechapter)
+                }
+
+                else -> {
+                    Glide.with(itemView.context)
+                        .load(data.image)
+                        .listener(object : RequestListener<Drawable> {
+                            override fun onLoadFailed(
+                                e: GlideException?,
+                                model: Any?,
+                                target: Target<Drawable>,
+                                isFirstResource: Boolean
+                            ): Boolean {
+                                binding.loading.visibility = View.GONE
+                                binding.imagechapter.setImageResource(R.drawable.placeholder)
+                                return false
+                            }
+
+                            override fun onResourceReady(
+                                resource: Drawable,
+                                model: Any,
+                                target: Target<Drawable>?,
+                                dataSource: DataSource,
+                                isFirstResource: Boolean
+                            ): Boolean {
+                                binding.loading.visibility = View.GONE
+                                return false
+                            }
+                        })
+                        .override(Target.SIZE_ORIGINAL)
+                        .into(binding.imagechapter)
+                }
+
+            }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ImagelayoutBinding.inflate(LayoutInflater.from(parent.context),parent,false)
-        return ViewHolder(binding)
+        val binding = ImagelayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ViewHolder(binding, type, refererUrl.toString())
     }
 
     override fun getItemCount(): Int = list.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-       holder.bind(list[position])
+        holder.bind(list[position])
     }
 
 }

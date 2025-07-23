@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.Comic
 import com.komik.komik.service.data.model.Genre
@@ -24,11 +25,20 @@ interface ComicDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertChapter(chapter: List<Chapter>)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertLatestChapter(chapter: List<Chapter>)
+
+    @Query("SELECT * FROM Chapter WHERE comicTitle = :comicTitle AND location = :location")
+    suspend fun getChapterByLink(comicTitle: String,location: String): List<Chapter>
+
     @Query("SELECT * FROM comic WHERE url = :url")
     fun getComicByUrl(url: String): Comic
 
     @Query("DELETE FROM comic ")
     fun deleteAllComic()
+
+    @Update
+    suspend fun updateComic(comic: Comic)
 
     @Transaction
     suspend fun insertComicwithChapterAndgenre(comic: Comic,genre: List<Genre>,chapter: List<Chapter>){
@@ -44,6 +54,7 @@ interface ComicDao {
     suspend fun updateChaptersForComic(comicTitle: String, newChapters: List<Chapter>,location: String) {
         deleteChaptersByTitle(comicTitle)
         insertChapter(newChapters)
+
     }
 
 

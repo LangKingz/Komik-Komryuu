@@ -16,6 +16,7 @@ import com.komik.komik.databinding.ActivityMainBinding
 import com.komik.komik.service.client
 import com.komik.komik.service.parser.comic.SourceParser
 import com.komik.komik.service.parser.model.getImages
+import com.komik.komik.service.parser.model.getListUpdate
 import com.komik.komik.service.utils.generateFakeCookie
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,35 +53,12 @@ class MainActivity : AppCompatActivity() {
         nav?.setupWithNavController(navController)
         navRail?.setupWithNavController(navController)
 
-        scrapeTest("")
-    }
-
-    fun scrapeTest(url: String) {
-
-        CoroutineScope(Dispatchers.IO).launch {
-
-            val html =
-                client.ScrapeDataImage.getHtml("https://bato.si/v4x-latest/1")
-            val document = Jsoup.parse(html)
-
-            val pageData = SourceParser.parseBatoto(document)
-
-            val data =
-                document.select(".cursor-pointer img").mapIndexed { index, element ->
-                    getImages(
-                        index = index,
-                        image = element.attr("src"),
-                    )
-                }
-
-            Log.d(TAG, "scrapeTest: ${pageData.size}")
-//            Log.d(TAG, "fakecookie: ${generateFakeCookie()}")
-
-        }
 
     }
 
-    companion object{
+
+
+    companion object {
         const val TAG = "MainActivity"
     }
 

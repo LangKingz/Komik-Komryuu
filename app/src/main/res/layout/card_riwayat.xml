@@ -25,7 +25,7 @@
         android:clipToOutline="true"
         android:focusable="true"
         android:foreground="?attr/selectableItemBackground"
-        android:src="@drawable/dots_three_outline_vertical_fill"
+        android:src="@drawable/ic_trash"
         app:layout_constraintBottom_toBottomOf="@+id/linearLayout2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/linearLayout2"

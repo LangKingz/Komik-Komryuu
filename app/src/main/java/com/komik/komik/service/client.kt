@@ -131,7 +131,6 @@ object client {
             .addConverterFactory(ScalarsConverterFactory.create())
             .build()
             .create(Scrape::class.java)
-
     }
 
 

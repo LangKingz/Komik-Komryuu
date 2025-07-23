@@ -8,7 +8,11 @@ object SearchParser {
 
     fun parseIkiru(document: Document): List<getListUpdate> {
 
-        return document.select("div#searchResults a").mapIndexed{index,item ->
+        return document.select("div#searchResults a")
+            .filter {it ->
+                it.select("img").isNotEmpty()
+            }
+            .mapIndexed{index,item ->
             getListUpdate(
                 index= index,
                 title = item.select("h3").text(),

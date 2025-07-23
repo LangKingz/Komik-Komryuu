@@ -25,6 +25,7 @@ class Detail(
             sourceType.comicscan -> client.Comicscan.getHtml(url)
             sourceType.shinigami -> ""
             sourceType.manhwaindo -> client.Ikiru.getHtml(url)
+            sourceType.doujindesu -> client.Ikiru.getHtml(url)
             else -> ""
         }
 
@@ -37,10 +38,11 @@ class Detail(
             sourceType.comicscan -> comicParser.parseComictoon(document, url)
             sourceType.shinigami -> comicParser.parseShinigami(url, client, 150)
             sourceType.manhwaindo -> comicParser.parsemanhwaIndo(document, url)
+            sourceType.doujindesu -> comicParser.parseDoujinDesu(document, url)
             else -> null
         }
 
-        Log.d(TAG, "getDetail: ${parsedData}")
+//        Log.d(TAG, "getDetail: ${parsedData}")
 
         saveDataToDatabase(parsedData!!)
 
@@ -83,11 +85,43 @@ class Detail(
                     parsedData.chapters
                 )
             } else {
-                comicDao.updateChaptersForComic(
-                    parsedData.title,
-                    parsedData.chapters,
-                    parsedData.location
+//                comicDao.updateChaptersForComic(
+//                    parsedData.title,
+//                    parsedData.chapters,
+//                    parsedData.location
+//                )
+
+                comicDao.updateComic(
+                    existingComic.copy(
+                        status = parsedData.status,
+                        description = parsedData.description,
+                        rating = parsedData.rating.toString(),
+                        location = parsedData.location
+                    )
                 )
+
+                val chapter = parsedData.chapters
+                val existingChapters = comicDao.getChapterByLink(parsedData.title,parsedData.location)
+
+                val existingChapterLinks = existingChapters.map { it.link }.toSet()
+
+                val chapterInsert = chapter.filter { news ->
+                    !existingChapterLinks.contains(news.link)
+                }.map { newChapter ->
+                    newChapter.copy(
+                        comicTitle = parsedData.title,
+                    )
+                }
+
+                if(chapterInsert.isNotEmpty()){
+                    comicDao.insertLatestChapter(chapterInsert)
+                    Log.d(TAG, "saveDataToDatabase: Chapter Di Simpan")
+                }else{
+                    Log.d(TAG, "saveDataToDatabase: Chapter Kosong")
+                }
+
+
+
             }
 
         }

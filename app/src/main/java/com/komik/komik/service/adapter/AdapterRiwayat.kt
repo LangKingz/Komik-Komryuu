@@ -9,10 +9,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.komik.komik.R
 import com.komik.komik.databinding.CardRiwayatBinding
+import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.model.RiwayatDetail
 import com.komik.komik.service.utils.formatWaktuLalu
 import com.komik.komik.ui.pages.detail.DetailActivity
 import com.komik.komik.ui.pages.read.ReadActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,6 +44,16 @@ class AdapterRiwayat(private val list: List<RiwayatDetail>) :
     class ItemViewHolder(private val binding: CardRiwayatBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
+        val context = itemView.context
+        val db = DatabaseRiwayats.getDatabase(context)
+        val riwayatDao = db.riwayatdao()
+
+        fun delete(id: Int) {
+            CoroutineScope(Dispatchers.IO).launch {
+                riwayatDao.deleteRiwayatRelasi(id)
+            }
+        }
+
         fun bind(riwayatDetail: RiwayatDetail) {
             binding.time.text =
                 "dari ${riwayatDetail.comic.location} • ${formatWaktuLalu(riwayatDetail.riwayat.readAt)}"
@@ -54,6 +68,10 @@ class AdapterRiwayat(private val list: List<RiwayatDetail>) :
                 intent.putExtra(DetailActivity.URL, riwayatDetail.comic.url)
                 intent.putExtra(DetailActivity.LOCATION, riwayatDetail.comic.location)
                 itemView.context.startActivity(intent)
+            }
+
+            binding.imageButton.setOnClickListener {
+                delete(riwayatDetail.riwayat.id)
             }
         }
 

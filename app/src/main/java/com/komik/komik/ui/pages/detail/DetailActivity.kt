@@ -88,6 +88,7 @@ class DetailActivity : AppCompatActivity() {
             "shinigami" -> sourceType.shinigami
             "manhwaindo" -> sourceType.manhwaindo
             "batoto-all" -> sourceType.batoto_all
+            "dd" -> sourceType.doujindesu
             else -> sourceType.ikiru
         }
 
@@ -104,6 +105,7 @@ class DetailActivity : AppCompatActivity() {
 
         binding.swipeRefreshLayout.setOnRefreshListener {
             viewModel.getDetail(type = source, url = url.toString())
+            detail(url.toString())
             binding.swipeRefreshLayout.isRefreshing = false
         }
 
@@ -191,17 +193,6 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        val url = intent.getStringExtra(URL) ?: urlResume
-        detail(url = url.toString())
-    }
-
-//    suspend fun checkRiwayat(chapterId: Int){
-//        val data = riwayatRelationDao.(chapterId)
-//    }
-
-
     private fun detail(url: String) {
         try {
             CoroutineScope(Dispatchers.IO).launch {
@@ -209,6 +200,7 @@ class DetailActivity : AppCompatActivity() {
                 val genre = genreDao.getGenreByComicTitle(data.title)
                 val chapter = chapterDao.getChaptersForComicLiveData(data.title)
                 val dataChapter = chapterDao.getChaptersForComic(data.title)
+
 
                 withContext(Dispatchers.Main) {
                     checkPustaka(data.id)
@@ -219,10 +211,13 @@ class DetailActivity : AppCompatActivity() {
                             intent.putExtra(ReadActivity.EXTRA_URL, chapter.first().link)
                             startActivity(intent)
                         }
+                        Log.d(TAG, "detail: $chapter")
+
+                        binding.chapter.adapter =
+                            data.let { AdapterChapter(dataChapter, it) }
                     }
 
-                    binding.chapter.adapter =
-                        data.let { AdapterChapter(dataChapter, it) }
+
 
                     binding.genre.adapter = AdapterGenre(genre)
 
@@ -329,67 +324,6 @@ class DetailActivity : AppCompatActivity() {
             LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
 
     }
-
-    fun testScrape() {
-        CoroutineScope(Dispatchers.IO).launch {
-
-            val html = client.Ikiru.getHtml("https://id.ikiru.wtf/manga/golden-print/")
-            val document = Jsoup.parse(html)
-
-            val bodyClasses = document.body().className().split(" ")
-            val mangaId =
-                bodyClasses.firstOrNull { it.startsWith("postid-") }?.removePrefix("postid-")
-
-            val idparser =
-                client.Ikiru.getHtml("https://id.ikiru.wtf/ajax-call?manga_id=${mangaId}&page=1&action=chapter_list")
-            val document2 = Jsoup.parse(idparser)
-
-            val title = document.select(".flex h1.text-2xl")[0].text()
-            val imageUrl = document.select(".contents img").attr("src")
-            val deskripsitable = document.select("div").attr("itemprop", "description").text()
-            val author = document.select("span.komik_info-content-info").text()
-
-            val rating = document.select("span.to-accent-2").text()
-            val type = document.select("p.ml-1").text()
-            val alternative = document.select("div.text-text").text()
-
-
-            val chapters =
-                document2.select("div#chapter-list div.cursor-pointer a.cursor-pointer").map {
-                    Chapter(
-                        title = it.select("span").text(),
-                        link = it.attr("href"),
-                        comicTitle = title,
-                        date = it.select("time").text()
-                    )
-                }
-
-
-            val genres = document.select("span.text-inherit")
-                .map {
-                    Genre(
-                        comicTitle = title,
-                        genre = it.text()
-                    )
-                }
-
-            Log.d(TAG, "genres: $genres")
-            Log.d(TAG, "chapters: ${chapters}")
-
-            Log.d(TAG, "title: ${title}")
-            Log.d(TAG, "imageUrl: ${imageUrl}")
-            Log.d(TAG, "deskripsitable: ${deskripsitable}")
-            Log.d(TAG, "author: ${author}")
-            Log.d(TAG, "id: ${mangaId}")
-
-            Log.d(TAG, "rating: ${rating}")
-            Log.d(TAG, "type: ${type}")
-            Log.d(TAG, "alternative: ${alternative}")
-
-
-        }
-    }
-
 
     companion object {
         const val TAG = "DetailActivity"

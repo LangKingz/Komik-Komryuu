@@ -125,5 +125,19 @@ object SourceParser {
             }
     }
 
+    fun parseDoujindesu(document: Document) : List<getListUpdate>{
+        val baseurl = "https://doujindesu.tv"
+
+        return document.select(".entries article").mapIndexed { index, element ->
+            getListUpdate(
+                index = index,
+                title = element.select(".entry a").attr("title"),
+                urlImage = element.select(".thumbnail img").attr("src"),
+                link =baseurl+ element.select(".entry a").attr("href"),
+                location = "dd"
+                )
+        }
+    }
+
 
 }

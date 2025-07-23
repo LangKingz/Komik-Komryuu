@@ -126,6 +126,20 @@ class Comic(val client: client) : RepositroyComic {
                     result
                 }
 
+                sourceType.doujindesu -> {
+                    val result = mutableListOf<getListUpdate>()
+
+                    for(page in 1..10){
+                        val html = client.Ikiru.getHtml("https://doujindesu.tv/manhwa/page/$page/")
+                        val document = Jsoup.parse(html)
+                        val pageData = SourceParser.parseDoujindesu(document)
+
+                        result.addAll(pageData)
+                    }
+
+                    result
+                }
+
                 else -> emptyList() // Default case, kembalikan list kosong
             }
         }
@@ -145,7 +159,7 @@ class Comic(val client: client) : RepositroyComic {
                         .build()
 
                     val request = Request.Builder()
-                        .url("https://id.ikiru.wtf/ajax-call?nonce=91595ea9cd&action=search")
+                        .url("https://id.ikiru.wtf/ajax-call?nonce=d33262ad29&action=search")
                         .post(formBody) // Tentukan metode POST dengan body yang sudah dibuat
                         .header(
                             "User-Agent",
@@ -156,17 +170,14 @@ class Comic(val client: client) : RepositroyComic {
                     try {
                         // 4. Eksekusi request dan dapatkan response
                         val response = client.newCall(request).execute()
-                        // 'use' akan otomatis menutup response setelah selesai, ini penting!
                         response.use {
                             if (!it.isSuccessful) {
                                 Log.e(TAG, "Request Gagal! Kode: ${it.code}")
                                 return@withContext emptyList<getListUpdate>()
                             }
-                            // 5. Ambil body response sebagai String (HTML mentah)
                             val htmlString = it.body?.string()
 
                             if (htmlString != null) {
-                                // 6. Parsing HTML menggunakan Jsoup
                                 val doc = Jsoup.parse(htmlString)
                                 val pageData = SearchParser.parseIkiru(doc)
                                 Log.d(TAG, "OkHttp & Jsoup: Ditemukan ${pageData.size} item.")

@@ -79,6 +79,7 @@ class sourceActivity : AppCompatActivity() {
             "komiku" -> viewmodel.getSource(sourceType.komiku)
             "manhwaindo"-> viewmodel.getSource(sourceType.manhwaindo)
             "batoto-all" -> viewmodel.getSource(sourceType.batoto_all)
+            "dd" -> viewmodel.getSource(sourceType.doujindesu)
             else -> viewmodel.getSource(sourceType.ikiru)
         }
 
@@ -113,6 +114,10 @@ class sourceActivity : AppCompatActivity() {
             }
         }
 
+        viewmodel.search.observe(this){ search ->
+            adapterManhwa.updateData(search)
+        }
+
         binding.appbar.setNavigationOnClickListener {
             finish()
         }
@@ -126,8 +131,6 @@ class sourceActivity : AppCompatActivity() {
                     .show()
             }
         }
-
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -139,13 +142,7 @@ class sourceActivity : AppCompatActivity() {
 
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
-            override fun onQueryTextChange(newText: String?): Boolean {
-                return false
-            }
-            override fun onQueryTextSubmit(query: String?): Boolean {
-
-                adapterManhwa.clear()
-
+            override fun onQueryTextChange(query: String?): Boolean {
                 when(locations){
                     "ikiru" -> viewmodel.search(sourceType.ikiru,query.toString())
                     "comicscan" -> viewmodel.search(sourceType.comicscan,query.toString())
@@ -156,8 +153,10 @@ class sourceActivity : AppCompatActivity() {
                     else -> viewmodel.search(sourceType.ikiru,query.toString())
                 }
 
-
                 return true
+            }
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
             }
         })
 

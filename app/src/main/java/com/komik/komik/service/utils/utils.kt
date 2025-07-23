@@ -135,3 +135,14 @@ fun genereteId(): String {
     return "$timestamp"
 
 }
+
+
+fun parsechapterToInt(chapter: String): Double {
+    val regex = Regex("\\d+")
+    val matchResult = regex.find(chapter)
+
+    if (matchResult != null) {
+        return matchResult.value.toDouble()
+    }
+    return 0.0
+}

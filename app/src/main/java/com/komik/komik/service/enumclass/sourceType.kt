@@ -8,5 +8,6 @@ enum class sourceType {
     kiryuu,
     komiku,
     manhwaindo,
-    batoto_all
+    batoto_all,
+    doujindesu
 }

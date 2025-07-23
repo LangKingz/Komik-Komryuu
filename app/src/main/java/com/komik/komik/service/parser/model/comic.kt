@@ -20,6 +20,8 @@ data class ParsedData(
     val description: String,
     val author: String? = null,
     val location: String,
+    val tags : String? = null,
+    val totalView : String? = null,
     val type: String = "Manhwa",
     val status: String = "Ongoing",
     val rating: String? = null,

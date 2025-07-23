@@ -34,24 +34,15 @@ abstract class DatabaseRiwayats : RoomDatabase() {
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // 1. Tambah kolom isFavorite ke tabel Library.
-                // Tipe datanya INTEGER (representasi Boolean di SQLite), tidak boleh null, dan defaultnya 0 (false).
                 db.execSQL("ALTER TABLE Library ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0")
-                // 2. Tambah kolom isRead ke tabel Library.
-                // Logikanya sama seperti isFavorite.
                 db.execSQL("ALTER TABLE Library ADD COLUMN isRead INTEGER NOT NULL DEFAULT 0")
-                // 3. Tambah kolom pageRead ke tabel RiwayatRelasi.
-                // Tipe datanya INTEGER dan boleh null, jadi tidak perlu default value.
                 db.execSQL("ALTER TABLE RiwayatRelasi ADD COLUMN pageRead INTEGER")
-
-                // 4. Tambah kolom totalPage ke tabel RiwayatRelasi.
-                // Sama seperti pageRead, boleh null.
                 db.execSQL("ALTER TABLE RiwayatRelasi ADD COLUMN totalPage INTEGER")
-
-                // 5. Tambah kolom isRead ke tabel RiwayatRelasi.
-                // Tipe data INTEGER, tidak boleh null, defaultnya 0 (false).
                 db.execSQL("ALTER TABLE RiwayatRelasi ADD COLUMN isRead INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE Library ADD COLUMN imageLokal TEXT")
+                db.execSQL("ALTER TABLE Chapter ADD COLUMN numChapter INTEGER DEFAULT 0")
+                db.execSQL("ALTER TABLE comic ADD COLUMN tags TEXT")
+                db.execSQL("ALTER TABLE comic ADD COLUMN totalView TEXT")
             }
         }
 
@@ -65,7 +56,7 @@ abstract class DatabaseRiwayats : RoomDatabase() {
                     DatabaseRiwayats::class.java,
                     "riwayat_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+//                    .addMigrations(MIGRATION_1_2)
                     .build()
                 INSTANCE = instance
                 instance

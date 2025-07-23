@@ -26,6 +26,7 @@ data class Chapter(
     val comicTitle: String,
     val location: String?=null,
     val date: String,
+    val numChapter : Double = 0.0,
     val isRead: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )
@@ -72,6 +73,8 @@ data class Comic(
     val imageUrl: String,
     val author: String,
     val type: String? = null,
+    val tags : String? = null,
+    val totalView : String? = null,
     val status: String? = null,
     val location: String,
     val createdAt: Long = System.currentTimeMillis(),

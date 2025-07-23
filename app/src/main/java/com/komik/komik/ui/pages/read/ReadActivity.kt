@@ -44,6 +44,8 @@ class ReadActivity : AppCompatActivity() {
         val type = intent.getStringExtra(EXTRA_TYPE).toString()
         val id = intent.getStringExtra(EXTRA_ID)
 
+
+
         when (type) {
             "ikiru" -> viewmodel.setImage(sourceType.ikiru, url)
             "comicscan" -> viewmodel.setImage(sourceType.comicscan, url)
@@ -52,11 +54,24 @@ class ReadActivity : AppCompatActivity() {
             "kiryuu" -> viewmodel.setImage(sourceType.kiryuu, url)
             "komiku" -> viewmodel.setImage(sourceType.komiku, url)
             "manhwaindo" -> viewmodel.setImage(sourceType.manhwaindo, url)
+            "dd" -> viewmodel.setImage(sourceType.doujindesu, url)
             else -> viewmodel.setImage(sourceType.ikiru, url)
         }
 
+        val location = when(type){
+            "ikiru" -> sourceType.ikiru
+            "comicscan" -> sourceType.comicscan
+            "shinigami" -> sourceType.shinigami
+            "komikcast" -> sourceType.komikcast
+            "kiryuu" -> sourceType.kiryuu
+            "komiku" -> sourceType.komiku
+            "manhwaindo" -> sourceType.manhwaindo
+            "dd" -> sourceType.doujindesu
+            else -> sourceType.ikiru
+        }
+
         viewmodel.image.observe(this) { list ->
-            binding.listImage.adapter = AdapterImage(list)
+            binding.listImage.adapter = AdapterImage(list,location,url)
             binding.slider.valueFrom = 0f
             binding.slider.valueTo = list.size.toFloat()
             binding.slider.setValues(0f) // Set nilai awal menjadi 0

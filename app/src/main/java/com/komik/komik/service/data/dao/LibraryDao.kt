@@ -27,11 +27,10 @@ interface LibraryDao {
     @Transaction
     @Query("""
         SELECT * FROM Library
-        INNER JOIN Comic ON Library.comicId = Comic.id
-        WHERE (Comic.title LIKE '%' || :query || '%' OR Comic.alternativeTitle LIKE '%' || :query || '%')
-        AND Library.isFavorite = :isFavorite
+        INNER JOIN comic ON Library.comicId = Comic.id
+        WHERE (comic.title LIKE '%' || :query || '%')
         ORDER BY Library.createdAt DESC
     """)
-    fun searchFavoriteLibraryComics(query: String, isFavorite: Boolean): LiveData<List<LibraryDetail>>
+    fun searchFavoriteLibraryComics(query: String): LiveData<List<LibraryDetail>>
 
 }
