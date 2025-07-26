@@ -60,7 +60,7 @@ class AdapterRiwayat(private val list: List<RiwayatDetail>) :
             binding.NameKomik.text = riwayatDetail.comic.title
             binding.Chapter.text = riwayatDetail.chapter.title
             Glide.with(itemView.context)
-                .load(riwayatDetail.comic.imageUrl)
+                .load(riwayatDetail.comic.localImageUri)
                 .into(binding.Gambar)
 
             binding.Gambar.setOnClickListener {
@@ -128,6 +128,10 @@ class AdapterRiwayat(private val list: List<RiwayatDetail>) :
                     putExtra(
                         ReadActivity.EXTRA_ID,
                         (groupItems[position] as RiwayatDetail).chapter.id
+                    )
+                    putExtra(
+                        "num",
+                        (groupItems[position] as RiwayatDetail).chapter.numChapter
                     )
                 }
                 holder.itemView.context.startActivity(intent)

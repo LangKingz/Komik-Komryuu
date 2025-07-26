@@ -97,6 +97,7 @@ class AdapterChapter(
             intent.putExtra(ReadActivity.EXTRA_TITLE, list[position].comicTitle)
             intent.putExtra(ReadActivity.EXTRA_TYPE, list[position].location)
             intent.putExtra(ReadActivity.EXTRA_ID, list[position].id)
+            intent.putExtra("num", list[position].numChapter)
             holder.itemView.context.startActivity(intent)
         }
     }

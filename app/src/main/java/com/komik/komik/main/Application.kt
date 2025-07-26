@@ -8,6 +8,7 @@ class ApplicationAndroid : Application() {
     override fun onCreate() {
         super.onCreate()
         genereteCookie()
+        settingView()
     }
 
     private fun genereteCookie(){
@@ -18,5 +19,14 @@ class ApplicationAndroid : Application() {
 
         editor.putString("cookie",cookie)
         editor.apply()
+    }
+
+    private fun settingView(){
+        val pref = getSharedPreferences("app_settings", MODE_PRIVATE)
+        val edit = pref.edit()
+
+        edit.putBoolean("fullscreen",true)
+        edit.apply()
+
     }
 }

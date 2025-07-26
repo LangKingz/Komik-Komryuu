@@ -17,6 +17,23 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
+// === FUNGSI PEMBANTU BARU UNTUK EKSTRAKSI ANGKA ===
+fun extractNumberFromDataNum(dataNumString: String): Double {
+    // Regex: \d+(\.\d+)?
+    // \d+   : Mencocokkan satu atau lebih digit (0-9)
+    // (\.\d+)?: Opsional (?), cocokkan satu titik (.) diikuti satu atau lebih digit
+    // Ini akan menangkap "314", "316", "1.5", dll., tapi mengabaikan " Fix"
+    val regex = Regex("""\d+(\.\d+)?""")
+
+    val matchResult = regex.find(dataNumString) // Cari pola angka di dalam string `dataNumString`
+
+    // Ambil nilai yang cocok (misalnya "314" dari "314 Fix")
+    val numberString = matchResult?.value
+
+    // Konversi ke Double. Jika tidak ada angka yang cocok atau konversi gagal, return 0.0.
+    return numberString?.toDoubleOrNull() ?: 0.0
+}
+
 fun formatWaktuLalu(createdAt: Long): String {
     val sekarang = System.currentTimeMillis()
     if (createdAt > sekarang || createdAt <= 0) {

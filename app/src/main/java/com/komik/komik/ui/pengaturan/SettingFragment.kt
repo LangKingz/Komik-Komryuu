@@ -29,8 +29,23 @@ class SettingFragment : Fragment() {
 
         val pref = requireActivity().getSharedPreferences("app_settings",Context.MODE_PRIVATE)
         val cookie = pref.getString("cookie","-")
+        val fullscreen = pref.getBoolean("fullscreen",false)
 
         binding.subCookie.text = cookie
+        binding.fullscreen.isChecked = fullscreen
+
+        binding.fullscreen.setOnCheckedChangeListener { _, isChecked ->
+            val editor = pref.edit()
+            editor.putBoolean("fullscreen",isChecked)
+            editor.apply()
+        }
+
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+
 
     }
 

@@ -1,10 +1,15 @@
 package com.komik.komik.service.parser.comic
 
+import android.content.Context
 import com.komik.komik.service.api.model.DataIteme
 import com.komik.komik.service.client
 import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.Genre
 import com.komik.komik.service.parser.model.ParsedData
+import com.komik.komik.service.utils.downloadAndSaveImage
+import com.komik.komik.service.utils.extractNumberFromDataNum
+import com.komik.komik.service.utils.formatWaktuLalu
+import com.komik.komik.service.utils.genereteId
 import com.komik.komik.service.utils.parsechapterToInt
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -70,7 +75,7 @@ object comicParser {
     }
 
 
-    fun parseKiryuu(document: Document, url: String): ParsedData {
+    suspend fun parseKiryuu(document: Document, url: String, context: Context): ParsedData {
         val title = document.select("h1.entry-title").text()
         val imageUrl = document.select(".thumb img").attr("src")
         val description = document.select(".seriestuhead p").text()
@@ -99,6 +104,8 @@ object comicParser {
             )
         }
 
+        val localImage = downloadAndSaveImage(context, imageUrl, genereteId().toLong())
+
         return ParsedData(
             url = url,
             title = title,
@@ -106,6 +113,7 @@ object comicParser {
             description = description,
             author = author,
             location = "kiryuu",
+            localImageUri = localImage,
             chapters = chapters,
             genres = genres,
             alternativeTitle = alternativeTitle,
@@ -115,7 +123,7 @@ object comicParser {
         )
     }
 
-    fun parseKomikcast(document: Document, url: String): ParsedData {
+    suspend fun parseKomikcast(document: Document, url: String, context: Context): ParsedData {
         val title = document.select(".komik_info-content-body-title")[0].text()
         val imageUrl = document.select(".komik_info-content-thumbnail img").attr("src")
         val deskripsitable = document.select(".komik_info-description-sinopsis p").text()
@@ -144,6 +152,9 @@ object comicParser {
             )
         }
 
+        val localImage = downloadAndSaveImage(context, imageUrl, genereteId().toLong())
+
+
         return ParsedData(
             url = url,
             title = title,
@@ -151,6 +162,7 @@ object comicParser {
             description = deskripsitable,
             author = author,
             location = "komikcast",
+            localImageUri = localImage,
             chapters = chapters,
             genres = genres,
             alternativeTitle = alternativeTitle.toString(),
@@ -161,7 +173,7 @@ object comicParser {
     }
 
 
-    suspend fun parseIkiru(document: Document, url: String): ParsedData {
+    suspend fun parseIkiru(document: Document, url: String, context: Context): ParsedData {
         val bodyClasses = document.body().className().split(" ")
         val mangaId =
             bodyClasses.firstOrNull { it.startsWith("postid-") }?.removePrefix("postid-")
@@ -207,6 +219,7 @@ object comicParser {
             title = title,
             alternativeTitle = alternative,
             imageUrl = imageUrl,
+            localImageUri = downloadAndSaveImage(context, imageUrl, genereteId().toLong()),
             description = deskripsitable,
             rating = rating,
             type = type,
@@ -255,24 +268,25 @@ object comicParser {
         )
     }
 
-    fun parseComictoon(document: Document, url: String): ParsedData {
+    suspend fun parseComictoon(document: Document, url: String, context: Context): ParsedData {
         val title = document.select(".bigcontent .infox h1").text() ?: ""
         val imageUrl = document.select(".bigcontent .thumbook .thumb  img").attr("src") ?: ""
         val description = document.select(".bigcontent .infox .entry-content p").text() ?: ""
         val author = document.select(".bigcontent .infox .flex-wrap span")[1].text() ?: ""
 
-        val alternativeTitle = "#"
+        val alternativeTitle = "ALternative title Tidak Tersedia"
         val rating = document.select(".num").text()
         val type = document.select(".tsinfo .imptdt")[1].select(" a").text() ?: ""
-        val status = document.select(".tsinfo .imptdt")[0].select("a").text() ?: ""
+        val status = document.select(".tsinfo .imptdt")[0].select("1").text() ?: ""
 
 
         val chapters = document.select("ul.clstyle li ").map {
+            val num = it.attr("data-num")
             Chapter(
                 title = it.select(".eph-num a span")[0].text(),
                 link = it.select(".eph-num a").attr("href"),
                 comicTitle = title,
-                numChapter = it.attr("data-num").toDouble(),
+                numChapter = extractNumberFromDataNum(num),
                 date = it.select(".eph-num a span")[1].text(),
                 location = "comicscan"
             )
@@ -285,6 +299,9 @@ object comicParser {
             )
         }
 
+        val localImage = downloadAndSaveImage(context, imageUrl, genereteId().toLong())
+
+
         return ParsedData(
             url = url,
             title = title,
@@ -292,6 +309,7 @@ object comicParser {
             description = description,
             author = author,
             location = "comicscan",
+            localImageUri = localImage,
             chapters = chapters,
             genres = genres,
             alternativeTitle = alternativeTitle,
@@ -301,7 +319,7 @@ object comicParser {
         )
     }
 
-    fun parseDoujinDesu(document: Document, url: String): ParsedData {
+    suspend fun parseDoujinDesu(document: Document, url: String, context: Context): ParsedData {
         val title = document.select("h1.title").text() ?: ""
         val imageUrl = document.select("a.permalink img").attr("src") ?: ""
         val description = document.select(".metadata .pb-2 p").text() ?: ""
@@ -333,6 +351,8 @@ object comicParser {
             )
         }
 
+        val localImage = downloadAndSaveImage(context, imageUrl, genereteId().toLong())
+
         return ParsedData(
             url = url,
             title = title,
@@ -340,6 +360,7 @@ object comicParser {
             description = description,
             author = author,
             location = "dd",
+            localImageUri = localImage,
             chapters = chapters,
             genres = genres,
             alternativeTitle = alternativeTitle,
@@ -349,7 +370,7 @@ object comicParser {
         )
     }
 
-    fun parsemanhwaIndo(document: Document, url: String): ParsedData {
+    suspend fun parsemanhwaIndo(document: Document, url: String, context: Context): ParsedData {
         val title = document.select("h1.entry-title").text() ?: ""
         val imageUrl = document.select(".thumb  img").attr("src") ?: ""
         val description = document.select(".wd-full .entry-content p").text() ?: ""
@@ -378,6 +399,8 @@ object comicParser {
                 genre = it.text()
             )
         }
+        val localImage = downloadAndSaveImage(context, imageUrl, genereteId().toLong())
+
 
         return ParsedData(
             url = url,
@@ -387,6 +410,87 @@ object comicParser {
             author = author,
             location = "manhwaindo",
             chapters = chapters,
+            localImageUri = localImage,
+            genres = genres,
+            alternativeTitle = alternativeTitle,
+            rating = rating,
+            type = type,
+            status = status
+        )
+    }
+
+    suspend fun parseBatoto(document: Document, url: String, context: Context): ParsedData {
+
+        val baseURL = "https://bato.si"
+
+        val title = document.select("h3.text-lg a.link-hover").text() ?: ""
+        val imageUrl =
+            baseURL + document.select("div.w-24").attr("q:key", "4X_2").select("img").attr("src")
+        val description = document.select(".limit-html-p").text() ?: ""
+        val author =
+            document.select("div.text-sm").attr("q:key", "k6_4").select("a")[0].text() ?: ""
+
+        val alternativeTitle =
+            document.select(".grow .mt-1").attr("q:key", "k6_2").select("span").text()
+                ?: "Tidak Ada Alternative"
+        val rating = "-"
+        val type = "Manhwa"
+        val status = document.select("div").attr("q:key", "0S_9").select("span.text-success").text()
+            ?: "onGoing"
+
+
+        val chapters =
+            document.select("div").attr("data-name", "chapter-list").select(".space-y-3 .group div")
+                .attr("q:key", "N0_9")
+                .filter { chapterItem -> // <-- Setiap `chapterItem` adalah satu `<li>`
+                    val chapterLinkElement = chapterItem.selectFirst("div.space-x-1 a.link-hover.link-primary")
+                    val dateElement = chapterItem.selectFirst("div.ml-auto time")
+
+                    // Memastikan elemen link chapter dan elemen tanggal ada
+                    // DAN TEKS LINK CHAPTER MENGANDUNG KATA "Chapter" (case-insensitive)
+                    chapterLinkElement != null &&
+                            dateElement != null &&
+                            chapterLinkElement.text().contains("Chapter", ignoreCase = true) // <-- FILTER BARU INI!
+                }
+                .map {
+
+                    val number = it.select(".space-x-1 a").text()
+                    val date = it.select(".ml-auto time").attr("data-time")
+
+                    val time = formatWaktuLalu(date.toLong())
+
+                    val chapterLink = it.select(".space-x-1 a").attr("href")
+
+                    Chapter(
+                        title = it.select("div.space-x-1 a.link-hover.link-primary").text(),
+                        link = baseURL+ chapterLink,
+                        comicTitle = title,
+                        numChapter = parsechapterToInt(number),
+                        date = time,
+                        location = "batoto-all"
+                    )
+                }
+
+        val genres =
+            document.select("div").attr("q:key", "5P_2").select("span span.whitespace-nowrap")
+                .map {
+                Genre(
+                    comicTitle = title,
+                    genre = it.text()
+                )
+            }
+        val localImage = downloadAndSaveImage(context, imageUrl, genereteId().toLong())
+
+
+        return ParsedData(
+            url = url,
+            title = title,
+            imageUrl = imageUrl,
+            description = description,
+            author = author,
+            location = "batoto-all",
+            chapters = chapters,
+            localImageUri = localImage,
             genres = genres,
             alternativeTitle = alternativeTitle,
             rating = rating,

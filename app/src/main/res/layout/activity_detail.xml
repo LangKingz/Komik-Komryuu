@@ -7,6 +7,20 @@
     android:layout_height="match_parent"
     tools:context=".ui.pages.detail.DetailActivity">
 
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/baca"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:clickable="true"
+        android:text=""
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:icon="@drawable/play_circle_fill__1_"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:layout_width="0dp"
         android:id="@+id/swipeRefreshLayout"
@@ -141,7 +155,7 @@
                     android:focusable="true"
                     android:fontFamily="@font/interbold"
                     android:foreground="?attr/selectableItemBackground"
-                    android:text="Baca Chapter 1"
+                    android:text="Baca Sekarang"
                     android:textStyle="bold"
                     app:layout_constraintEnd_toStartOf="@+id/button2"
                     app:layout_constraintHorizontal_bias="1.0"

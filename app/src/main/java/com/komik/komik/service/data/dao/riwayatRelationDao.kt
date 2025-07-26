@@ -30,5 +30,10 @@ interface riwayatRelationDao {
     @Query("SELECT * FROM RiwayatRelasi ORDER BY readAt DESC LIMIT 1")
      fun getLastRiwayats(): LiveData<RiwayatDetail>
 
+     @Query("SELECT * FROM RiwayatRelasi WHERE comicId = :comicId ORDER BY readAt DESC LIMIT 1")
+     fun getLastRiwayatsByComicId(comicId: Int): LiveData<RiwayatDetail>
+
+
+
 
 }

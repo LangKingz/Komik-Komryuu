@@ -1,5 +1,6 @@
 package com.komik.komik.service
 
+import android.content.Context
 import com.komik.komik.service.api.Scrape
 import com.komik.komik.service.api.ScrapeComicscan
 import com.komik.komik.service.api.ScrapeIkiru
@@ -109,6 +110,8 @@ object client {
             .create(ScrapeComicscan::class.java)
     }
 
+    val cookie = generateFakeCookie()
+
     val ScrapeDataImage: Scrape by lazy {
         Retrofit.Builder()
             .baseUrl(IkiruUrl)
@@ -121,7 +124,7 @@ object client {
                         )
                         .header(
                             "Cookie",
-                            generateFakeCookie()
+                            cookie
                         )
                         .build()
                     chain.proceed(request)

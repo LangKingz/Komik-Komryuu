@@ -6,7 +6,7 @@ import org.jsoup.nodes.Document
 
 object SourceParser {
 
-    fun parseComicscan(document: Document): List<getListUpdate> {
+     fun parseComicscan(document: Document): List<getListUpdate> {
         return document.select(".bs .bsx")
             .mapIndexed { index, it ->
                 getListUpdate(

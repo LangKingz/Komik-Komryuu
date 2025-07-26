@@ -17,6 +17,7 @@ data class ParsedData(
     val title: String,
     val alternativeTitle: String? = null,
     val imageUrl: String,
+    val localImageUri: String? = null,
     val description: String,
     val author: String? = null,
     val location: String,

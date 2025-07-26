@@ -127,7 +127,7 @@ class homefragment : Fragment() {
                         binding.judulManhwa.text = riwayat.comic.title
                         binding.chapter.text = riwayat.chapter.title
                         Glide.with(requireContext())
-                            .load(riwayat.comic.imageUrl)
+                            .load(riwayat.comic.localImageUri)
                             .error(R.drawable.placeholder)
                             .into(binding.imageHistory)
 
@@ -135,6 +135,9 @@ class homefragment : Fragment() {
                             val intent = Intent(requireContext(), ReadActivity::class.java)
                             intent.putExtra(ReadActivity.EXTRA_URL, riwayat.chapter.link)
                             intent.putExtra(ReadActivity.EXTRA_TYPE, riwayat.comic.location)
+                            intent.putExtra("num", riwayat.chapter.numChapter)
+                            intent.putExtra(ReadActivity.EXTRA_ID, riwayat.chapter.id)
+                            intent.putExtra(ReadActivity.EXTRA_TITLE, riwayat.comic.title)
                             requireContext().startActivity(intent)
                         }
                     }else{

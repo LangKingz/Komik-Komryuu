@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.NestedScrollView
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
@@ -52,6 +53,8 @@ class DetailActivity : AppCompatActivity() {
     private lateinit var dbUtama: DatabaseRiwayats
     private lateinit var riwayatRelationDao: riwayatRelationDao
     private lateinit var libraryDao: LibraryDao
+
+    private val SCROLL_THRESHOLD = 200 // Jarak scroll dalam piksel untuk memunculkan teks
 
     private var isFavorite: Boolean = false
 
@@ -122,7 +125,7 @@ class DetailActivity : AppCompatActivity() {
                 } else {
                     withContext(Dispatchers.Main) {
                         viewModel.getDetail(type, url)
-                        delay(3000)
+                        delay(5000)
                         detail(url)
 
                     }
@@ -201,6 +204,7 @@ class DetailActivity : AppCompatActivity() {
                 val chapter = chapterDao.getChaptersForComicLiveData(data.title)
                 val dataChapter = chapterDao.getChaptersForComic(data.title)
 
+                CheckLatestRead(data.id)
 
                 withContext(Dispatchers.Main) {
                     checkPustaka(data.id)
@@ -228,12 +232,12 @@ class DetailActivity : AppCompatActivity() {
                     binding.textView12.text = "${dataChapter.size} Chapter"
 
                     Glide.with(this@DetailActivity)
-                        .load(data.imageUrl)
+                        .load(data.localImageUri)
                         .error(R.drawable.placeholder)
                         .into(binding.banner)
 
                     Glide.with(this@DetailActivity)
-                        .load(data.imageUrl)
+                        .load(data.localImageUri)
                         .error(R.drawable.placeholder)
                         .into(binding.imageView3)
 
@@ -252,6 +256,14 @@ class DetailActivity : AppCompatActivity() {
                             binding.selengkap.text = "Selengkapnya"
                         }
                     }
+
+                    binding.nestedScrollView.setOnScrollChangeListener(NestedScrollView.OnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
+                        if (scrollY > SCROLL_THRESHOLD) {
+                            binding.baca.text = "Baca"
+                        } else {
+                            binding.baca.text = ""
+                        }
+                    })
 
                     binding.button2.setOnClickListener {
                         if (isFavorite) {
@@ -277,11 +289,39 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+    }
+
+    suspend fun CheckLatestRead(comidId: Int) {
+        val data = riwayatRelationDao.getLastRiwayatsByComicId(comidId)
+
+        withContext(Dispatchers.Main) {
+            data.observe(this@DetailActivity) { chapter ->
+                if (chapter != null) {
+                    Log.d(TAG, "CheckLatestRead: ${chapter.riwayat.readAt}")
+                    binding.btnBaca.text = "Lanjut Baca ${chapter.chapter.title}"
+                    binding.btnBaca.setOnClickListener {
+                        val intent = Intent(this@DetailActivity, ReadActivity::class.java)
+                        intent.putExtra(ReadActivity.EXTRA_URL, chapter.chapter.link)
+                        intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.comic.title)
+                        intent.putExtra(ReadActivity.EXTRA_TYPE, chapter.chapter.location)
+                        intent.putExtra(ReadActivity.EXTRA_ID, chapter.chapter.id)
+                        intent.putExtra("num", chapter.chapter.numChapter)
+                        startActivity(intent)
+                    }
+                }
+            }
+        }
+    }
+
 
     private fun initViewmodel() {
         val repository = Detail(
             comicDao = comicDao,
-            client = client
+            client = client,
+            this@DetailActivity
         )
 
         viewModel = ViewModelProvider(this, Providerviewmodel(repository))[DetailViewmodel::class]
@@ -299,6 +339,7 @@ class DetailActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             Log.d(TAG, "initDatabase: ${e.localizedMessage}")
+
         }
     }
 

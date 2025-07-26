@@ -1,5 +1,6 @@
 package com.komik.komik.service.repository
 
+import android.content.Context
 import android.util.Log
 import com.komik.komik.service.client
 import com.komik.komik.service.data.dao.ComicDao
@@ -8,13 +9,15 @@ import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.modelrepository.RepositoryDetail
 import com.komik.komik.service.parser.comic.comicParser
 import com.komik.komik.service.parser.model.ParsedData
+import com.komik.komik.service.utils.downloadAndSaveImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 
 class Detail(
     private val comicDao: ComicDao,
-    private val client: client
+    private val client: client,
+    private val applicationContext: Context
 ) : RepositoryDetail {
     override suspend fun getDetail(type: sourceType, url: String): Comic {
         val html = when (type) {
@@ -26,23 +29,25 @@ class Detail(
             sourceType.shinigami -> ""
             sourceType.manhwaindo -> client.Ikiru.getHtml(url)
             sourceType.doujindesu -> client.Ikiru.getHtml(url)
+            sourceType.batoto_all -> client.ScrapeDataImage.getHtml(url)
             else -> ""
         }
 
         val document = Jsoup.parse(html)
 
         val parsedData = when (type) {
-            sourceType.ikiru -> comicParser.parseIkiru(document, url)
-            sourceType.komikcast -> comicParser.parseKomikcast(document, url)
-            sourceType.kiryuu -> comicParser.parseKiryuu(document, url)
-            sourceType.comicscan -> comicParser.parseComictoon(document, url)
+            sourceType.ikiru -> comicParser.parseIkiru(document, url,applicationContext)
+            sourceType.komikcast -> comicParser.parseKomikcast(document, url ,applicationContext)
+            sourceType.kiryuu -> comicParser.parseKiryuu(document, url,applicationContext)
+            sourceType.comicscan -> comicParser.parseComictoon(document, url,applicationContext)
             sourceType.shinigami -> comicParser.parseShinigami(url, client, 150)
-            sourceType.manhwaindo -> comicParser.parsemanhwaIndo(document, url)
-            sourceType.doujindesu -> comicParser.parseDoujinDesu(document, url)
+            sourceType.manhwaindo -> comicParser.parsemanhwaIndo(document, url, applicationContext)
+            sourceType.doujindesu -> comicParser.parseDoujinDesu(document, url, applicationContext)
+            sourceType.batoto_all -> comicParser.parseBatoto(document, url, applicationContext)
             else -> null
         }
 
-//        Log.d(TAG, "getDetail: ${parsedData}")
+        Log.d(TAG, "getDetail: ${parsedData}")
 
         saveDataToDatabase(parsedData!!)
 
@@ -52,6 +57,7 @@ class Detail(
             imageUrl = parsedData.imageUrl,
             url = parsedData.url,
             type = parsedData.type,
+            localImageUri = parsedData.localImageUri,
             rating = parsedData.rating.toString(),
             status = parsedData.status,
             description = parsedData.description,
@@ -70,6 +76,7 @@ class Detail(
                 alternativeTitle = parsedData.alternativeTitle,
                 url = parsedData.url,
                 imageUrl = parsedData.imageUrl,
+                localImageUri = parsedData.localImageUri,
                 description = parsedData.description,
                 author = parsedData.author.toString(),
                 location = parsedData.location,
@@ -96,7 +103,8 @@ class Detail(
                         status = parsedData.status,
                         description = parsedData.description,
                         rating = parsedData.rating.toString(),
-                        location = parsedData.location
+                        location = parsedData.location,
+//                        localImageUri = parsedData.localImageUri
                     )
                 )
 

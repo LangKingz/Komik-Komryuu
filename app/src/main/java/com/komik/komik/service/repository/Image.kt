@@ -70,6 +70,14 @@ class Image(private val client: client) : RepositoryImage {
                 pageData
             }
 
+            sourceType.batoto_all -> {
+                val html = client.ScrapeDataImage.getHtml(url)
+                val document = Jsoup.parse(html)
+                val pageData = ImageParser.batotoParse(document)
+                Log.d(TAG, "getImage: $pageData")
+                pageData
+            }
+
             else -> emptyList()
         }
     }

@@ -6,6 +6,7 @@ import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.modelrepository.RepositroyComic
 import com.komik.komik.service.parser.comic.SearchParser
 import com.komik.komik.service.parser.comic.SourceParser
+import com.komik.komik.service.parser.comic.comicParser
 import com.komik.komik.service.parser.model.getListUpdate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -123,6 +124,8 @@ class Comic(val client: client) : RepositroyComic {
                         result.addAll(pageData)
                     }
 
+                    Log.d(TAG, "getComic: ${result}")
+
                     result
                 }
 
@@ -149,7 +152,15 @@ class Comic(val client: client) : RepositroyComic {
     override suspend fun getSearch(type: sourceType, query: String): List<getListUpdate> {
         val result = mutableListOf<getListUpdate>()
         return when (type) {
-            sourceType.komikcast,
+            sourceType.komikcast -> {
+                val url = "https://komikcast.li/?s=$query"
+                val html = client.Komikcast.getHtml(url)
+                val document = Jsoup.parse(html)
+                val page = SourceParser.parseKomikcast(document)
+                result.addAll(page)
+                Log.d(TAG, "getSearch: ${result.size}")
+                result
+            }
             sourceType.ikiru -> {
                 withContext(Dispatchers.IO) {
                     val client = OkHttpClient()
@@ -196,8 +207,28 @@ class Comic(val client: client) : RepositroyComic {
             }
 
             sourceType.shinigami,
-            sourceType.comicscan,
-            sourceType.kiryuu,
+            sourceType.comicscan -> {
+                val url = "https://lc3.cosmicscans.asia/?s=$query"
+                val html = client.Comicscan.getHtml(url)
+
+                val document = Jsoup.parse(html)
+                val pagedata = SourceParser.parseComicscan(document)
+                result.addAll(pagedata)
+
+                Log.d(TAG, "getSearch: ${result.size}")
+
+                result
+            }
+            sourceType.kiryuu -> {
+                val url = "https://kiryuu02.com/?s=$query"
+                val html = client.Comicscan.getHtml(url)
+                val document = Jsoup.parse(html)
+                val page = SourceParser.parseKiryuu(document)
+                result.addAll(page)
+                Log.d(TAG, "getSearch: ${result.size}")
+
+                result
+            }
             sourceType.komiku -> {
                 result
             }

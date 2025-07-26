@@ -7,7 +7,7 @@
 
     <item
         android:id="@+id/pustakaFragment"
-        android:icon="@drawable/open_book"
+        android:icon="@drawable/baseline_bookmarks_24"
         android:title="pustaka" />
     <item
         android:id="@+id/searchFragment"
@@ -20,6 +20,6 @@
 
     <item
         android:id="@+id/settingFragment"
-        android:icon="@drawable/settings"
+        android:icon="@drawable/baseline_settings_24"
         android:title="pengaturan" />
 </menu>

@@ -69,6 +69,7 @@ data class Comic(
     val alternativeTitle: String? = null,
     val url: String,
     val rating: String,
+    val localImageUri: String? = null,
     val description: String,
     val imageUrl: String,
     val author: String,
