@@ -2,6 +2,7 @@ package com.komik.komik.service.api
 
 import com.komik.komik.service.api.model.ChapterResponseSHinigami
 import com.komik.komik.service.api.model.DetailShinigamiResponse
+import com.komik.komik.service.api.model.ImageResponsShinigami
 import com.komik.komik.service.api.model.ShinigamiHomeExplore
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -32,4 +33,9 @@ interface ShinigamiService {
         @Query("sort_by") sortBy:String = "chapter_number",
         @Query("sort_order") sortOrder:String= "desc",
     ): ChapterResponseSHinigami
+
+    @GET("v1/chapter/detail/{id}")
+    suspend fun getChapterDetail(
+        @Path("id") id:String,
+    ): ImageResponsShinigami
 }

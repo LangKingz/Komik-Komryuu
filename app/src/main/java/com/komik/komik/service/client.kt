@@ -33,6 +33,15 @@ object client {
                             "User-Agent",
                             "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
                         )
+                        .header(
+                            "Referer", "https://06.shinigami.asia/"
+                        )
+                        .header(
+                            "Origin", "https://06.shinigami.asia"
+                        ).header(
+                            "Accept",
+                            "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+                        )
                         .build()
                     chain.proceed(request)
                 }

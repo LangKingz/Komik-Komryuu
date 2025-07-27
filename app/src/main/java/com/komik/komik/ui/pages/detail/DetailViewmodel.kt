@@ -47,30 +47,8 @@ class DetailViewmodel(
     private var _loading = MutableLiveData<Boolean>()
     val loading: MutableLiveData<Boolean> = _loading
 
-    fun getDetail(type: sourceType, url: String) {
-        _loading.value = true
-        viewModelScope.launch {
-            try {
-                withContext(Dispatchers.IO){
-                    val data = comicDao.getComicByUrl(url)
-                    if(data == null){
-                        val parsedData = repository.getDetail(type, url)
-                        saveDataToDatabase(parsedData)
-                        delay(5000)
-                    }else{
-                        getChapters(type, url)
-                    }
-                }
-
-                _loading.value = false
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _error.value = e.message
-                Log.d(TAG, "getDetail: ${e.localizedMessage}")
-
-            }
-        }
-    }
+    private var _updateChapter = MutableLiveData<String>()
+    val updateChapter: LiveData<String> = _updateChapter
 
     fun refreshData(type: sourceType, url: String) {
         _loading.value = true
@@ -78,12 +56,18 @@ class DetailViewmodel(
             try {
                 val parsedData = repository.getDetail(type, url)
                 saveDataToDatabase(parsedData)
-                delay(5000)
                 _loading.value = false
+                withContext(Dispatchers.IO){
+                    Log.d(TAG, "refreshData: ${parsedData.title}")
+                    val data = chapterDao.getChaptersForComic(parsedData.title)
+                    _dataChapter.postValue(data)
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 _error.value = e.message
                 Log.d(TAG, "getDetail: ${e.localizedMessage}")
+            }finally {
+                _loading.value = false
             }
         }
     }
@@ -134,6 +118,7 @@ class DetailViewmodel(
                 location = parsedData.location,
                 rating = parsedData.rating.toString(),
                 type = parsedData.type,
+                tags = parsedData.tags,
                 status = parsedData.status
             )
 
@@ -182,8 +167,16 @@ class DetailViewmodel(
 
                 if (chapterInsert.isNotEmpty()) {
                     comicDao.insertLatestChapter(chapterInsert)
+
                     Log.d(TAG, "saveDataToDatabase: Chapter Di Simpan")
+
+                    withContext(Dispatchers.Main){
+                        _updateChapter.value = "${chapterInsert.size} Chapter Di Simpan"
+                    }
                 } else {
+                    withContext(Dispatchers.Main){
+                        _updateChapter.value = "Tidak ada chapter"
+                    }
                     Log.d(TAG, "saveDataToDatabase: Chapter Kosong")
                 }
 

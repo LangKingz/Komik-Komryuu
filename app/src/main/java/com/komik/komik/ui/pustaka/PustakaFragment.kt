@@ -34,6 +34,8 @@ class PustakaFragment : Fragment() {
 
     private lateinit var viewmodel: PustakaViewmodel
 
+    private var isGrid :Boolean = false
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -106,6 +108,8 @@ class PustakaFragment : Fragment() {
         inflater.inflate(R.menu.menu_pustaka, menu)
 
         val searchItem = menu.findItem(R.id.search_pustaka)
+        val filter = menu.findItem(R.id.filter)
+        val grid = menu.findItem(R.id.grid_layout)
         val searchView = searchItem.actionView as androidx.appcompat.widget.SearchView
 
         searchView.apply {
@@ -120,6 +124,23 @@ class PustakaFragment : Fragment() {
                     return false
                 }
             })
+        }
+
+        filter.setOnMenuItemClickListener {
+            Snackbar.make(binding.root, "Coming Soon", Snackbar.LENGTH_SHORT).show()
+            false
+        }
+
+        grid.setOnMenuItemClickListener {
+            isGrid = !isGrid
+            if(isGrid){
+                binding.listPustaka.layoutManager = GridLayoutManager(requireContext(), 2)
+            }else{
+                binding.listPustaka.layoutManager = GridLayoutManager(requireContext(), 3)
+            }
+
+//            Snackbar.make(binding.root, "Coming Soon", Snackbar.LENGTH_SHORT).show()
+            false
         }
     }
 

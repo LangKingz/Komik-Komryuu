@@ -114,7 +114,9 @@ class DetailActivity : AppCompatActivity() {
             }
         }
 
-
+        viewModel.updateChapter.observe(this){info ->
+            Snackbar.make(binding.root, info, Snackbar.LENGTH_LONG).show()
+        }
 
         binding.swipeRefreshLayout.setOnRefreshListener {
             binding.swipeRefreshLayout.isRefreshing = false

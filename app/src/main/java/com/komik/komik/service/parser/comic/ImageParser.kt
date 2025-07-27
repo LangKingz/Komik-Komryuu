@@ -1,5 +1,6 @@
 package com.komik.komik.service.parser.comic
 
+import com.komik.komik.service.client
 import com.komik.komik.service.parser.model.getImages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -114,5 +115,22 @@ object ImageParser {
             }
             emptyList() // Kembalikan list kosong jika body null
         }
+    }
+
+    suspend fun parseShinigami(client : client,id:String):List<getImages>{
+        val response = client.Shinigami.getChapterDetail(id)
+        val data = response.data
+
+        val baseurl = data?.baseUrl
+        val chapterPath = data?.chapter?.path
+        val photo = data?.chapter?.data
+
+        return photo?.mapIndexed { index, s ->
+            getImages(
+                index = index,
+                image = "$baseurl$chapterPath$s"
+            )
+        }!!
+
     }
 }

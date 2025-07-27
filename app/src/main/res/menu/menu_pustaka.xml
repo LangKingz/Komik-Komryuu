@@ -12,7 +12,7 @@
         />
 
     <item
-        android:id="@+id/menu"
+        android:id="@+id/filter"
         android:title="filter"
         android:icon="@drawable/baseline_filter_list_24"
         app:showAsAction="ifRoom"

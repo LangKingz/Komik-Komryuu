@@ -11,8 +11,11 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.net.URL
+import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.Base64
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -162,4 +165,30 @@ fun parsechapterToInt(chapter: String): Double {
         return matchResult.value.toDouble()
     }
     return 0.0
+}
+
+
+fun parseDate(dateString: String): String {
+    // 1. Definisikan format INPUT sesuai dengan string yang masuk
+    // yyyy-MM-dd'T'HH:mm:ssX -> Ini adalah format ISO 8601
+    val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
+
+    // 2. Definisikan format OUTPUT yang kamu inginkan
+    val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+    try {
+        // 3. Parse string input menjadi sebuah objek Date
+        val dateObject = inputFormat.parse(dateString)
+
+        // 4. Format objek Date tadi menjadi string dengan format baru
+        // Pastikan dateObject tidak null sebelum memformat
+        return if (dateObject != null) {
+            outputFormat.format(dateObject)
+        } else {
+            "Invalid Date"
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        return "Error Parsing Date" // Kembalikan pesan error jika parsing gagal
+    }
 }

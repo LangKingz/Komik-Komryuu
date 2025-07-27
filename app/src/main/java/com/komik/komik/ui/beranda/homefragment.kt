@@ -130,8 +130,16 @@ class homefragment : Fragment() {
                             .error(R.drawable.placeholder)
                             .into(binding.imageHistory)
 
-                        val progressPresentace = (50.0 / 100.0)*100
-                        binding.progressBaca.progress = progressPresentace.toInt()
+                        val pageRead = riwayat.riwayat.pageRead
+                        val totalPage = riwayat.riwayat.totalPage
+
+// Cek dulu semua kemungkinan
+                        val progressPercentage = if (pageRead != null && totalPage != null && totalPage > 0) {
+                            (pageRead.toDouble() / totalPage.toDouble()) * 100
+                        } else {
+                            0
+                        }
+                        binding.progressBaca.progress = progressPercentage.toInt()
 
 
                         binding.frameDragon.setOnClickListener {
@@ -142,6 +150,7 @@ class homefragment : Fragment() {
                             intent.putExtra(ReadActivity.EXTRA_ID, riwayat.chapter.id)
                             intent.putExtra(ReadActivity.EXTRA_TITLE, riwayat.comic.title)
                             intent.putExtra(ReadActivity.EXTRA_ID_COMIC, riwayat.comic.id)
+                            intent.putExtra("pageRead", pageRead)
                             requireContext().startActivity(intent)
                         }
                     }else{

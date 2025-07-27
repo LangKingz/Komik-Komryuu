@@ -41,12 +41,15 @@ class ReadActivity : AppCompatActivity() {
     private lateinit var dao: chapterDao
     private lateinit var riwayats: riwayatRelationDao
 
-    private var currentId: Int? = null
+    private var currentId: Int = 0
 
     private var currentChapter: Double = 0.0
 
     private var isLoadingNextChapter = false
     private var isLoadingPrevChapter = false
+
+    private var pageRead :Int = 1
+    private var totalPage :Int = 1
 
 
     private lateinit var AllChapter : List<Chapter>
@@ -68,10 +71,16 @@ class ReadActivity : AppCompatActivity() {
         val num = intent.getDoubleExtra("num", 0.0)
         val idComic = intent.getIntExtra(EXTRA_ID_COMIC, 0)
 
+        val lastPageread = intent.getIntExtra("pageRead", 0)
+
+        if(lastPageread != 0){
+            binding.listImage.scrollToPosition(lastPageread)
+        }
+
         Log.d(TAG, "onCreate: $idComic $num")
 
         currentChapter = num
-        currentId = id?.toIntOrNull()
+        currentId = idComic
 
         val pref = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         val pindahChapterOtomatis = pref.getBoolean("pindah",true)
@@ -132,6 +141,9 @@ class ReadActivity : AppCompatActivity() {
 
                 val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
 
+                pageRead = firstVisiblePosition + 1
+                totalPage = totalItem
+
                 binding.lis3.text = "${firstVisiblePosition + 1}/${totalItem}"
 
                 if (binding.slider.values.first() != firstVisiblePosition.toFloat()) {
@@ -188,6 +200,20 @@ class ReadActivity : AppCompatActivity() {
                     readAt = System.currentTimeMillis()
                 )
             )
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        simpanProgress()
+    }
+
+    private fun simpanProgress(){
+        if(currentId != null){
+            CoroutineScope(Dispatchers.IO).launch {
+                riwayats.updateProgress(currentId, pageRead, totalPage)
+                Log.d(TAG, "simpanProgress: $currentId $pageRead $totalPage")
+            }
         }
     }
 

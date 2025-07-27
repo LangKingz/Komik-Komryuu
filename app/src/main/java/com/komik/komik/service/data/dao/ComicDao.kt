@@ -2,6 +2,7 @@ package com.komik.komik.service.data.dao
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -59,6 +60,17 @@ interface ComicDao {
         insertChapter(newChapters)
 
     }
+
+    @Query("DELETE FROM comic WHERE id = :id")
+    suspend fun deleteComicByUrl(id:Int)
+
+    @Query("DELETE FROM genre WHERE comicTitle = :comicTitle")
+    suspend fun deleteGenreByTitle(comicTitle: String)
+
+    @Query("DELETE FROM chapter WHERE comicId = :id")
+    suspend fun deleteChapterById(id: Int)
+
+
 
 
 

@@ -10,27 +10,23 @@ import com.komik.komik.service.utils.downloadAndSaveImage
 import com.komik.komik.service.utils.extractNumberFromDataNum
 import com.komik.komik.service.utils.formatWaktuLalu
 import com.komik.komik.service.utils.genereteId
+import com.komik.komik.service.utils.parseDate
 import com.komik.komik.service.utils.parsechapterToInt
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
 object comicParser {
 
-    suspend fun parseShinigami(id: String, client: client, page: Int): ParsedData {
+    suspend fun parseShinigami(id: String, client: client,context: Context): ParsedData {
 
         val response = client.Shinigami.getMangaDetail(id)
         val data = response.data
 
-        val dataChapter = mutableListOf<DataIteme>()
-
-        for (page in 1..10) {
-            val resChapter = client.Shinigami.getChapter(id, pageSize = 40, page = page)
-            val chapter = resChapter.data
-            dataChapter.add(chapter as DataIteme)
-        }
+        val resChapter = client.Shinigami.getChapter(id, pageSize = 3000)
+        val chapter = resChapter.data
 
         val title = data?.title
-        val imageUrl = data?.coverPortraitUrl
+        val imageUrl = data?.coverImageUrl
         val description = data?.description
         val author = data?.taxonomy?.author
 
@@ -38,6 +34,12 @@ object comicParser {
         val rating = data?.userRate
         val type = "Manhwa"
         val status = data?.status
+
+        val statusManhwa = when(status){
+            0 -> "Complete"
+            1 -> "onGoing"
+            else -> "onGoing"
+        }
 
         val genre = data?.taxonomy?.genre
         val genres = genre?.mapIndexed { index, genre ->
@@ -48,21 +50,26 @@ object comicParser {
             )
         }
 
-        val chapters = dataChapter.map {
+        val chapters = chapter?.map {
+            val chapterString = "chapter ${it?.chapterNumber}"
+            val date = it?.releaseDate
             Chapter(
                 comicTitle = title.toString(),
-                title = "chapter ${it.chapterNumber}",
+                title = chapterString,
                 location = "shinigami",
-                link = it.chapterId.toString(),
-                date = it.releaseDate.toString(),
+                numChapter = extractNumberFromDataNum(chapterString),
+                link = it?.chapterId.toString(),
+                date = parseDate(date.toString()),
                 comicId = 0
-
             )
         }
+
+        val imageLokal = downloadAndSaveImage(context, imageUrl.toString(), genereteId().toLong())
 
         return ParsedData(
             url = id,
             title = title.toString(),
+            localImageUri = imageLokal,
             imageUrl = imageUrl.toString(),
             description = description.toString(),
             author = author.toString(),
@@ -72,7 +79,7 @@ object comicParser {
             alternativeTitle = alternativeTitle,
             type = type,
             rating = rating.toString(),
-            status = status.toString()
+            status = statusManhwa
         )
     }
 
@@ -302,7 +309,7 @@ object comicParser {
                 location = "comicscan",
                 comicId = 0
             )
-        }.distinctBy { it.title }
+        }.distinctBy { it.numChapter }
 
         val genres = document.select(".wd-full .mgen a").map {
             Genre(
@@ -374,6 +381,7 @@ object comicParser {
             description = description,
             author = author,
             location = "dd",
+            tags = "adult",
             localImageUri = localImage,
             chapters = chapters,
             genres = genres,
@@ -508,6 +516,7 @@ object comicParser {
             author = author,
             location = "batoto-all",
             chapters = chapters,
+            tags = "adult",
             localImageUri = localImage,
             genres = genres,
             alternativeTitle = alternativeTitle,

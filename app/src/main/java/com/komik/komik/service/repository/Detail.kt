@@ -20,38 +20,54 @@ class Detail(
     private val applicationContext: Context
 ) : RepositoryDetail {
     override suspend fun getDetail(type: sourceType, url: String): ParsedData {
-        val html = when (type) {
-            sourceType.komikcast -> client.Komikcast.getHtml(url)
-            sourceType.ikiru -> client.Ikiru.getHtml(url)
-            sourceType.kiryuu -> client.Ikiru.getHtml(url)
-            sourceType.komiku,
-            sourceType.comicscan -> client.Comicscan.getHtml(url)
-            sourceType.shinigami -> ""
-            sourceType.manhwaindo -> client.Ikiru.getHtml(url)
-            sourceType.doujindesu -> client.Ikiru.getHtml(url)
-            sourceType.batoto_all -> client.ScrapeDataImage.getHtml(url)
-            else -> ""
-        }
+        try {
+            val html = when (type) {
+                sourceType.komikcast -> client.Komikcast.getHtml(url)
+                sourceType.ikiru -> client.Ikiru.getHtml(url)
+                sourceType.kiryuu -> client.Ikiru.getHtml(url)
+                sourceType.komiku,
+                sourceType.comicscan -> client.Comicscan.getHtml(url)
+                sourceType.shinigami -> ""
+                sourceType.manhwaindo -> client.Ikiru.getHtml(url)
+                sourceType.doujindesu -> client.Ikiru.getHtml(url)
+                sourceType.batoto_all -> client.ScrapeDataImage.getHtml(url)
+                else -> ""
+            }
 
-        val document = Jsoup.parse(html)
+            val document = Jsoup.parse(html)
 
-        val parsedData = when (type) {
-            sourceType.ikiru -> comicParser.parseIkiru(document, url,applicationContext)
-            sourceType.komikcast -> comicParser.parseKomikcast(document, url ,applicationContext)
-            sourceType.kiryuu -> comicParser.parseKiryuu(document, url,applicationContext)
-            sourceType.comicscan -> comicParser.parseComictoon(document, url,applicationContext)
-            sourceType.shinigami -> comicParser.parseShinigami(url, client, 150)
-            sourceType.manhwaindo -> comicParser.parsemanhwaIndo(document, url, applicationContext)
-            sourceType.doujindesu -> comicParser.parseDoujinDesu(document, url, applicationContext)
-            sourceType.batoto_all -> comicParser.parseBatoto(document, url, applicationContext)
-            else -> null
-        }
+            val parsedData = when (type) {
+                sourceType.ikiru -> comicParser.parseIkiru(document, url,applicationContext)
+                sourceType.komikcast -> comicParser.parseKomikcast(document, url ,applicationContext)
+                sourceType.kiryuu -> comicParser.parseKiryuu(document, url,applicationContext)
+                sourceType.comicscan -> comicParser.parseComictoon(document, url,applicationContext)
+                sourceType.shinigami -> comicParser.parseShinigami(url, client,applicationContext)
+                sourceType.manhwaindo -> comicParser.parsemanhwaIndo(document, url, applicationContext)
+                sourceType.doujindesu -> comicParser.parseDoujinDesu(document, url, applicationContext)
+                sourceType.batoto_all -> comicParser.parseBatoto(document, url, applicationContext)
+                else -> null
+            }
 
-        Log.d(TAG, "getDetail: ${parsedData}")
+            Log.d(TAG, "getDetail: ${parsedData}")
 
 //        saveDataToDatabase(parsedData!!)
 
-        return parsedData!!
+            return parsedData!!
+        }catch (e:Exception){
+            Log.d(TAG, "getDetail: ${e.message}")
+            return ParsedData(
+                url = url,
+                title = "",
+                imageUrl = "",
+                description = "",
+                author = "",
+                location = type.name,
+                chapters = emptyList(),
+                genres = emptyList(),
+                alternativeTitle = "",
+                type = "",
+            )
+        }
 
     }
 
