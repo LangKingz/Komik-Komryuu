@@ -2,6 +2,7 @@ package com.komik.komik.service.modelrepository
 
 import com.komik.komik.service.data.model.Comic
 import com.komik.komik.service.enumclass.sourceType
+import com.komik.komik.service.parser.model.ParsedData
 import com.komik.komik.service.parser.model.getListUpdate
 
 interface RepositroyComic {
@@ -12,5 +13,5 @@ interface RepositroyComic {
 }
 
 interface RepositoryDetail {
-    suspend fun getDetail(type:sourceType,url:String): Comic?
+    suspend fun getDetail(type:sourceType,url:String): ParsedData?
 }

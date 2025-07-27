@@ -109,7 +109,6 @@ class homefragment : Fragment() {
             withContext(Dispatchers.Main) {
                 data.observe(viewLifecycleOwner, { riwayat ->
                     if (riwayat.isNotEmpty()) {
-
                         binding.latestopen.adapter =
                             AdapterRiwayatSource(riwayat as MutableList<RiwayatSource>)
                         binding.latestopen.visibility = View.VISIBLE
@@ -131,6 +130,10 @@ class homefragment : Fragment() {
                             .error(R.drawable.placeholder)
                             .into(binding.imageHistory)
 
+                        val progressPresentace = (50.0 / 100.0)*100
+                        binding.progressBaca.progress = progressPresentace.toInt()
+
+
                         binding.frameDragon.setOnClickListener {
                             val intent = Intent(requireContext(), ReadActivity::class.java)
                             intent.putExtra(ReadActivity.EXTRA_URL, riwayat.chapter.link)
@@ -138,6 +141,7 @@ class homefragment : Fragment() {
                             intent.putExtra("num", riwayat.chapter.numChapter)
                             intent.putExtra(ReadActivity.EXTRA_ID, riwayat.chapter.id)
                             intent.putExtra(ReadActivity.EXTRA_TITLE, riwayat.comic.title)
+                            intent.putExtra(ReadActivity.EXTRA_ID_COMIC, riwayat.comic.id)
                             requireContext().startActivity(intent)
                         }
                     }else{

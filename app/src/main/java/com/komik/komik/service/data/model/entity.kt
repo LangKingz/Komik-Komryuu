@@ -18,17 +18,37 @@ data class Pustaka(
     val createdAt: Long = System.currentTimeMillis()
 )
 
-@Entity(tableName = "Chapter")
+@Entity(
+    tableName = "Chapter",
+    foreignKeys = [
+        ForeignKey(
+            entity = Comic::class,
+            parentColumns = ["id"],
+            childColumns = ["comicId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
 data class Chapter(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val title: String,
     val link: String,
+    val comicId: Int,
     val comicTitle: String,
-    val location: String?=null,
+    val location: String? = null,
     val date: String,
-    val numChapter : Double = 0.0,
+    val numChapter: Double = 0.0,
     val isRead: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
+)
+
+data class ChapterwithComic(
+    @Embedded val chapter: Chapter,
+    @Relation(
+        parentColumn = "comicId",
+        entityColumn = "id"
+    )
+    val comic: Comic
 )
 
 @Entity(tableName = "Riwayat")
@@ -74,8 +94,8 @@ data class Comic(
     val imageUrl: String,
     val author: String,
     val type: String? = null,
-    val tags : String? = null,
-    val totalView : String? = null,
+    val tags: String? = null,
+    val totalView: String? = null,
     val status: String? = null,
     val location: String,
     val createdAt: Long = System.currentTimeMillis(),

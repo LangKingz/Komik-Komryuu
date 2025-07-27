@@ -31,7 +31,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/menu_bottom_navigation"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" >
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/floatingActionButton"
+            android:backgroundTint="@color/primary_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+
+            android:layout_gravity="center"
+            app:srcCompat="@drawable/chrome_fill" />
+    </com.google.android.material.bottomnavigation.BottomNavigationView>
 
 
 

@@ -4,60 +4,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-
     tools:context=".ui.beranda.homefragment">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="0dp"
-        android:clickable="true"
-        android:foreground="?attr/selectableItemBackground"
-        android:focusable="true"
-        android:clipToOutline="true"
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout3"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/search_background"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginVertical="10dp"
-            android:src="@drawable/baseline_search_24"
-            app:tint="@color/gray_400" />
-
-        <EditText
-            android:id="@+id/search"
+        <com.google.android.material.appbar.MaterialToolbar
             android:layout_width="match_parent"
+            app:title="@string/app_name"
+            app:titleTextColor="@color/white"
+            app:navigationIcon="@drawable/rb_komryuu_svg"
+            app:titleTextAppearance="@style/Toolbar.TitleText"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:enabled="false"
-            android:background="@android:color/transparent"
-            android:hint="Cari Extensi dan Komik"
-            android:imeOptions="actionSearch"
-            android:inputType="text"
-            android:maxLines="1"
-            android:textColor="@color/gray_400"
-            android:textColorHint="@color/gray_400" />
-
-        <ImageView
-            android:id="@+id/pp"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginVertical="10dp"
-            android:background="@drawable/oval_picture"
-            android:clipToOutline="true"
-            android:src="@drawable/ppanime" />
-
-    </LinearLayout>
+            app:menu="@menu/menu_appbar_home"
+            android:minHeight="?attr/actionBarSize" />
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
@@ -67,7 +33,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout3">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -83,7 +49,7 @@
                 android:text="📖 Extensi terakhir dibuka"
                 android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/latestopen"
@@ -177,17 +143,18 @@
                     android:background="#80000000"
                     android:gravity="bottom"
                     android:orientation="vertical"
-                    android:padding="6dp">
+                    android:padding="10dp">
 
                     <TextView
                         android:id="@+id/judulManhwa"
                         style="@style/Costumtitle"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
                         android:ellipsize="end"
-                        android:maxLines="2"
                         android:text="Judul Manhwa"
-                        android:textColor="@color/white" />
+                        android:textColor="@color/white"
+                        android:textSize="17sp" />
 
                     <TextView
                         android:id="@+id/chapter"
@@ -201,11 +168,69 @@
                     android:id="@+id/imageView2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
+                    android:layout_gravity="bottom|top"
                     android:layout_margin="10dp"
                     android:src="@drawable/play_circle_fill__1_" />
 
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/progressBaca"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+
+                    android:layout_gravity="bottom" />
+
             </FrameLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/search_background"
+                android:clickable="true"
+                android:clipToOutline="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:layout_editor_absoluteY="13dp">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginVertical="10dp"
+                    android:src="@drawable/baseline_search_24"
+                    app:tint="@color/gray_400" />
+
+                <EditText
+                    android:id="@+id/search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:enabled="false"
+                    android:hint="Cari Extensi dan Komik"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/gray_400"
+                    android:textColorHint="@color/gray_400" />
+
+                <ImageView
+                    android:id="@+id/pp"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginVertical="10dp"
+                    android:background="@drawable/oval_picture"
+                    android:clipToOutline="true"
+                    android:src="@drawable/ppanime" />
+
+            </LinearLayout>
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

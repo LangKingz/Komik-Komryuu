@@ -133,6 +133,10 @@ class AdapterRiwayat(private val list: List<RiwayatDetail>) :
                         "num",
                         (groupItems[position] as RiwayatDetail).chapter.numChapter
                     )
+                    putExtra(
+                        ReadActivity.EXTRA_ID_COMIC,
+                        (groupItems[position] as RiwayatDetail).comic.id
+                    )
                 }
                 holder.itemView.context.startActivity(intent)
             }

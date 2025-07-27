@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="beranda">beranda</string>
+    <string name="pustaka">pustaka</string>
+    <string name="cari">cari</string>
+    <string name="riwayat">riwayat</string>
+    <string name="pengaturan">pengaturan</string>
+</resources>

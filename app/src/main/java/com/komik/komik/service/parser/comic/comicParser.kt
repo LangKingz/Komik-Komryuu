@@ -54,7 +54,9 @@ object comicParser {
                 title = "chapter ${it.chapterNumber}",
                 location = "shinigami",
                 link = it.chapterId.toString(),
-                date = it.releaseDate.toString()
+                date = it.releaseDate.toString(),
+                comicId = 0
+
             )
         }
 
@@ -93,7 +95,9 @@ object comicParser {
                 comicTitle = title,
                 numChapter = it.attr("data-num").toDouble(),
                 date = it.select("a .chapterdate").text(),
-                location = "kiryuu"
+                location = "kiryuu",
+                comicId = 0
+
             )
         }
 
@@ -140,7 +144,9 @@ object comicParser {
                 comicTitle = title,
                 numChapter = parsechapterToInt(chapter),
                 date = it.select(".chapter-link-time").text(),
-                location = "komikcast"
+                location = "komikcast",
+                comicId = 0
+
             )
         }
 
@@ -201,7 +207,10 @@ object comicParser {
                     comicTitle = title,
                     numChapter = it.attr("data-chapter-number").toDouble(),
                     date = it.select("time").text(),
-                    location = "ikiru"
+                    location = "ikiru",
+                    comicId = 0
+
+
                 )
             }
 
@@ -245,7 +254,8 @@ object comicParser {
                 link = linkChapter,
                 comicTitle = title,
                 date = it.select("td.tanggalseries").text(),
-                location = "komiku"
+                location = "komiku",
+                comicId = 0
             )
         }
 
@@ -280,7 +290,8 @@ object comicParser {
         val status = document.select(".tsinfo .imptdt")[0].select("1").text() ?: ""
 
 
-        val chapters = document.select("ul.clstyle li ").map {
+        val chapters = document.select("ul.clstyle li ")
+            .map {
             val num = it.attr("data-num")
             Chapter(
                 title = it.select(".eph-num a span")[0].text(),
@@ -288,9 +299,10 @@ object comicParser {
                 comicTitle = title,
                 numChapter = extractNumberFromDataNum(num),
                 date = it.select(".eph-num a span")[1].text(),
-                location = "comicscan"
+                location = "comicscan",
+                comicId = 0
             )
-        }
+        }.distinctBy { it.title }
 
         val genres = document.select(".wd-full .mgen a").map {
             Genre(
@@ -340,7 +352,9 @@ object comicParser {
                 comicTitle = title,
                 numChapter = parsechapterToInt(chapter),
                 date = it.select("span.date").text(),
-                location = "dd"
+                location = "dd",
+                comicId = 0
+
             )
         }
 
@@ -389,7 +403,9 @@ object comicParser {
                 comicTitle = title,
                 numChapter = it.attr("data-num").toDouble(),
                 date = it.select(".eph-num a span")[1].text(),
-                location = "manhwaindo"
+                location = "manhwaindo",
+                comicId = 0
+
             )
         }
 
@@ -467,7 +483,9 @@ object comicParser {
                         comicTitle = title,
                         numChapter = parsechapterToInt(number),
                         date = time,
-                        location = "batoto-all"
+                        location = "batoto-all",
+                        comicId = 0
+
                     )
                 }
 

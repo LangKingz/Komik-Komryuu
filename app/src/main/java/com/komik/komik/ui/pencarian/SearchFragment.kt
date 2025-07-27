@@ -43,23 +43,23 @@ class SearchFragment : Fragment() {
         binding.rvCarousel.layoutManager = CarouselLayoutManager()
         binding.rvComicList.layoutManager = GridLayoutManager(requireContext(),2)
 
-        viewmodel.corousel.observe(viewLifecycleOwner,{data->
-            adapter = AdapterCorousel(data as List<DataItem>)
-            binding.rvCarousel.adapter = adapter
-        })
+//        viewmodel.corousel.observe(viewLifecycleOwner,{data->
+//            adapter = AdapterCorousel(data as List<DataItem>)
+//            binding.rvCarousel.adapter = adapter
+//        })
 
-        viewmodel.daily.observe(viewLifecycleOwner,{data->
-            val adapter = AdapterSource(data as MutableList<ListItem>)
-            binding.rvComicList.adapter = adapter
-        })
+//        viewmodel.daily.observe(viewLifecycleOwner,{data->
+//            val adapter = AdapterSource(data as MutableList<ListItem>)
+//            binding.rvComicList.adapter = adapter
+//        })
 
-        viewmodel.loading.observe(viewLifecycleOwner,{loading->
-            if(loading){
-                binding.loading.visibility = View.VISIBLE
-            }else{
-                binding.loading.visibility = View.GONE
-            }
-        })
+//        viewmodel.loading.observe(viewLifecycleOwner,{loading->
+//            if(loading){
+//                binding.loading.visibility = View.VISIBLE
+//            }else{
+//                binding.loading.visibility = View.GONE
+//            }
+//        })
     }
 
 }

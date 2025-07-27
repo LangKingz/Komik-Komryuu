@@ -22,6 +22,7 @@ import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.chapterDao
 import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.data.model.Chapter
+import com.komik.komik.service.data.model.Riwayats
 import com.komik.komik.service.enumclass.sourceType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,9 +66,15 @@ class ReadActivity : AppCompatActivity() {
         val type = intent.getStringExtra(EXTRA_TYPE).toString()
         val id = intent.getStringExtra(EXTRA_ID)
         val num = intent.getDoubleExtra("num", 0.0)
+        val idComic = intent.getIntExtra(EXTRA_ID_COMIC, 0)
+
+        Log.d(TAG, "onCreate: $idComic $num")
 
         currentChapter = num
         currentId = id?.toIntOrNull()
+
+        val pref = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        val pindahChapterOtomatis = pref.getBoolean("pindah",true)
 
 
         val location = when (type) {
@@ -83,9 +90,8 @@ class ReadActivity : AppCompatActivity() {
             else -> sourceType.ikiru
         }
 
-        setUpListener(location,type,title)
+        setUpListener(location,type,title,idComic)
 
-//        Toast.makeText(this, "$location,$type ", Toast.LENGTH_SHORT).show()
         viewmodel.setImage(location, url)
 
         viewmodel.image.observe(this) { list ->
@@ -96,7 +102,7 @@ class ReadActivity : AppCompatActivity() {
             binding.slider.stepSize = 1.0f
         }
 
-        binding.judulManhwa.text = title
+        binding.judulManhwa.text = "$title - Chapter ${num.toInt()}"
 
         binding.tapDetector.setOnClickListener {
             isTap = !isTap
@@ -132,28 +138,30 @@ class ReadActivity : AppCompatActivity() {
                     binding.slider.setValues(firstVisiblePosition.toFloat())
                 }
 
-                CoroutineScope(Dispatchers.IO).launch {
-                    val allChapter = dao.getChapterForRead(title.toString(), type)
-                    Log.d(TAG, "onCreate: $allChapter")
+                if(pindahChapterOtomatis){
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val allChapter = dao.getChapterForRead(title.toString(), type)
+                        Log.d(TAG, "onCreate: $allChapter")
 
-                    withContext(Dispatchers.Main) {
-                        if (dy > 0 && !isLoadingNextChapter) {
-                            //jika tidak bisa discroll kebawah
-                            if (!recyclerView.canScrollVertically(1)) {
-                                isLoadingNextChapter = true
-                                nextChapterButtonListener(allChapter, location)
+                        withContext(Dispatchers.Main) {
+                            if (dy > 0 && !isLoadingNextChapter) {
+                                //jika tidak bisa discroll kebawah
+                                if (!recyclerView.canScrollVertically(1)) {
+                                    isLoadingNextChapter = true
+                                    nextChapterButtonListener(allChapter, location,idComic)
+                                }
+                            }
+
+                            if (dy < 0 && !isLoadingPrevChapter) {
+                                //jika sudah tidak bisa discroll keatas
+                                if (!recyclerView.canScrollVertically(-1)) {
+                                    isLoadingPrevChapter = true
+                                    PrevChapterListerner(location,allChapter,idComic)
+                                }
                             }
                         }
 
-                        if (dy < 0 && !isLoadingPrevChapter) {
-                            //jika sudah tidak bisa discroll keatas
-                            if (!recyclerView.canScrollVertically(-1)) {
-                                isLoadingPrevChapter = true
-                                PrevChapterListerner(location,allChapter)
-                            }
-                        }
                     }
-
                 }
 
             }
@@ -163,111 +171,44 @@ class ReadActivity : AppCompatActivity() {
 
     }
 
-    private fun setUpListener(location: sourceType, type: String, title: String?){
+    suspend fun insertRiwayat(chapter_id:Int , comicId:Int){
+        val data = riwayats.getRiwayatByChapterId(comicId)
+        if(data == null){
+            riwayats.insertRiwayatRelasi(
+                Riwayats(
+                    chapterId = chapter_id,
+                    comicId = comicId
+                )
+            )
+        }else{
+            riwayats.updateRiwayatRelasi(
+                data.copy(
+                    chapterId = chapter_id,
+                    comicId = comicId,
+                    readAt = System.currentTimeMillis()
+                )
+            )
+        }
+    }
+
+    private fun setUpListener(location: sourceType, type: String, title: String?,comicId: Int){
         CoroutineScope(Dispatchers.IO).launch {
             val allChapter = dao.getChapterForRead(title.toString(), type)
             Log.d(TAG, "onCreate: $allChapter")
 
             withContext(Dispatchers.Main) {
                 binding.btnNextChapter.setOnClickListener {
-                    nextChapterButtonListener(allChapter, location)
+                    nextChapterButtonListener(allChapter, location,comicId)
                 }
 
                 binding.btnPrevChapter.setOnClickListener {
-                    PrevChapterListerner(location,allChapter)
+                    PrevChapterListerner(location,allChapter,comicId)
                 }
             }
 
         }
     }
 
-    private fun nextChapterButtonListener(allChapter: List<Chapter>, location: sourceType){
-        val nextChapter = nextChapter(currentChapter, allChapter)
-        if (nextChapter != null) {
-            viewmodel.setImage(location, nextChapter.link)
-            currentChapter = nextChapter.numChapter
-            Toast.makeText(this@ReadActivity, nextChapter.title, Toast.LENGTH_SHORT).show()
-            isLoadingNextChapter = false
-        } else {
-            Snackbar.make(
-                binding.root,
-                "Tidak ada chapter lagi",
-                Snackbar.LENGTH_SHORT
-            ).show()
-        }
-    }
-
-    private fun PrevChapterListerner(location: sourceType, allChapter: List<Chapter>){
-        val prev = getPreviousChapter(currentChapter, allChapter)
-        if (prev != null) {
-            viewmodel.setImage(location, prev.link)
-            currentChapter = prev.numChapter
-            Toast.makeText(this@ReadActivity, prev.title, Toast.LENGTH_SHORT).show()
-            isLoadingPrevChapter = false
-        } else {
-            Snackbar.make(
-                binding.root,
-                "Tidak ada chapter lagi",
-                Snackbar.LENGTH_SHORT
-            ).show()
-        }
-    }
-
-
-    private fun nextChapter(currentChapter: Double, allChapter: List<Chapter>): Chapter? {
-//         Ini bakal nyari chapter di dalam list allChapters yang punya numChapter sama dengan currentChapterNumber yang kita kasih. Dia bakal ngembaliin indeks (posisi) chapter itu di list. Kalau nggak ketemu, dia ngembaliin -1
-        val currentIndex = allChapter.indexOfFirst { it.numChapter == currentChapter }
-        Log.d(TAG, "nextChapter: $currentChapter, $currentIndex")
-//        jika tidak ada
-        if (currentIndex == -1) {
-            return null
-        }
-//        cek apakah currentIndex kalau ditambah 1 masi lebih kecil dari semua chapter
-        if (currentIndex + 1 < allChapter.size) {
-            return allChapter[currentIndex + 1]
-        } else {
-//            latest chapter
-            return null
-        }
-    }
-
-    private fun getPreviousChapter(currentChapter: Double, allChapter: List<Chapter>): Chapter? {
-        val currentIndex = allChapter.indexOfFirst { it.numChapter == currentChapter }
-
-        if (currentIndex == -1) {
-            return null
-        }
-        if (currentIndex - 1 >= 0) {
-            return allChapter[currentIndex - 1]
-        } else {
-            return null
-        }
-    }
-
-    private fun saveReadingProgress(id: Int) {
-        val layoutManager = binding.listImage.layoutManager as LinearLayoutManager
-        val lastVisiblePosition =
-            layoutManager.findFirstVisibleItemPosition() // Gunakan first visible untuk penanda
-        val totalItem = layoutManager.itemCount
-        CoroutineScope(Dispatchers.IO).launch {
-            val riwayat = riwayats.getRiwayatByChapterId(id)
-            if (riwayat != null) {
-                riwayats.updateRiwayatRelasi(
-                    riwayat.copy(
-                        pageRead = lastVisiblePosition,
-                        totalPage = totalItem
-                    )
-                )
-            }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        currentId?.let { id ->
-            saveReadingProgress(id)
-        }
-    }
 
     fun initRecyclerView() {
         binding.listImage.layoutManager =
@@ -316,11 +257,92 @@ class ReadActivity : AppCompatActivity() {
                 )
     }
 
+    private fun nextChapterButtonListener(allChapter: List<Chapter>, location: sourceType,ComidID: Int){
+        val nextChapter = nextChapter(currentChapter, allChapter)
+        if (nextChapter != null) {
+
+            CoroutineScope(Dispatchers.IO).launch {
+                insertRiwayat(nextChapter.id, ComidID)
+                withContext(Dispatchers.Main){
+                    viewmodel.setImage(location, nextChapter.link)
+                    currentChapter = nextChapter.numChapter
+                    Toast.makeText(this@ReadActivity, nextChapter.title, Toast.LENGTH_SHORT).show()
+                    isLoadingNextChapter = false
+                    isLoadingPrevChapter = false
+                    binding.judulManhwa.text = "${nextChapter.comicTitle} - ${nextChapter.title}"
+                }
+            }
+
+
+        } else {
+            Snackbar.make(
+                binding.root,
+                "Tidak ada chapter lagi",
+                Snackbar.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun PrevChapterListerner(location: sourceType, allChapter: List<Chapter>,ComidID: Int){
+        val prev = getPreviousChapter(currentChapter, allChapter)
+        if (prev != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                insertRiwayat(prev.id, ComidID)
+                withContext(Dispatchers.Main){
+                    viewmodel.setImage(location, prev.link)
+                    currentChapter = prev.numChapter
+                    Toast.makeText(this@ReadActivity, prev.title, Toast.LENGTH_SHORT).show()
+                    isLoadingPrevChapter = false
+                    isLoadingNextChapter = false
+                    binding.judulManhwa.text = "${prev.comicTitle} - ${prev.title}"
+                }
+            }
+        } else {
+            Snackbar.make(
+                binding.root,
+                "Tidak ada chapter lagi",
+                Snackbar.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun nextChapter(currentChapter: Double, allChapter: List<Chapter>): Chapter? {
+//         Ini bakal nyari chapter di dalam list allChapters yang punya numChapter sama dengan currentChapterNumber yang kita kasih. Dia bakal ngembaliin indeks (posisi) chapter itu di list. Kalau nggak ketemu, dia ngembaliin -1
+        val currentIndex = allChapter.indexOfFirst { it.numChapter == currentChapter }
+        Log.d(TAG, "nextChapter: $currentChapter, $currentIndex")
+//        jika tidak ada
+        if (currentIndex == -1) {
+            return null
+        }
+//        cek apakah currentIndex kalau ditambah 1 masi lebih kecil dari semua chapter
+        if (currentIndex + 1 < allChapter.size) {
+            return allChapter[currentIndex + 1]
+        } else {
+//            latest chapter
+            return null
+        }
+    }
+
+    private fun getPreviousChapter(currentChapter: Double, allChapter: List<Chapter>): Chapter? {
+        val currentIndex = allChapter.indexOfFirst { it.numChapter == currentChapter }
+
+        if (currentIndex == -1) {
+            return null
+        }
+        if (currentIndex - 1 >= 0) {
+            return allChapter[currentIndex - 1]
+        } else {
+            return null
+        }
+    }
+
+
     companion object {
         const val EXTRA_URL = "extra_url"
         const val EXTRA_TITLE = "extra_title"
         const val EXTRA_TYPE = "extra_type"
         const val EXTRA_ID = "extra_id"
+        const val EXTRA_ID_COMIC = "extra_id_comic"
 
         const val TAG = "ReadActivity"
     }

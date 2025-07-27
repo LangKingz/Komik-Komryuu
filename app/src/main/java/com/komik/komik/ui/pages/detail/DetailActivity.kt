@@ -46,32 +46,25 @@ class DetailActivity : AppCompatActivity() {
 
     private lateinit var viewModel: DetailViewmodel
     private lateinit var binding: ActivityDetailBinding
-
     private lateinit var comicDao: ComicDao
     private lateinit var chapterDao: chapterDao
     private lateinit var genreDao: genreDao
     private lateinit var dbUtama: DatabaseRiwayats
     private lateinit var riwayatRelationDao: riwayatRelationDao
     private lateinit var libraryDao: LibraryDao
-
-    private val SCROLL_THRESHOLD = 200 // Jarak scroll dalam piksel untuk memunculkan teks
-
     private var isFavorite: Boolean = false
-
     private var isSelengkap: Boolean? = false
-
     private var locations: String? = null
-
     private var sources: sourceType? = null
-
     private var urlResume: String? = null
+    private lateinit var adapterChapter: AdapterChapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
-//        inisialize
+
         viewCompatPadding()
         initDatabase()
         initViewmodel()
@@ -81,6 +74,8 @@ class DetailActivity : AppCompatActivity() {
         val location = intent.getStringExtra(LOCATION)
         locations = location
         urlResume = url
+
+        val title = binding.title.text
 
         val source = when (location) {
             "ikiru" -> sourceType.ikiru
@@ -97,7 +92,21 @@ class DetailActivity : AppCompatActivity() {
 
         sources = source
 
-        loadData(url.toString(), source)
+        viewModel.getChapters(source,url.toString())
+
+        viewModel.loading.observe(this){loading ->
+            if(loading == true){
+                binding.loading.visibility = View.VISIBLE
+                binding.nestedScrollView.visibility = View.GONE
+                binding.swipeRefreshLayout.isRefreshing = loading
+            }else{
+                binding.loading.visibility = View.GONE
+                binding.nestedScrollView.visibility = View.VISIBLE
+                binding.swipeRefreshLayout.isRefreshing = loading
+            }
+        }
+
+        detail()
 
         viewModel.error.observe(this) { error ->
             if (error != null) {
@@ -106,39 +115,84 @@ class DetailActivity : AppCompatActivity() {
         }
 
 
+
         binding.swipeRefreshLayout.setOnRefreshListener {
-            viewModel.getDetail(type = source, url = url.toString())
-            detail(url.toString())
             binding.swipeRefreshLayout.isRefreshing = false
+            viewModel.refreshData(source, url.toString())
         }
 
-    }
 
-    private fun loadData(url: String, type: sourceType) {
-        try {
-            CoroutineScope(Dispatchers.IO).launch {
-                binding.loading.visibility = View.VISIBLE
-                val dataDetail = comicDao.getComicByUrl(url)
+        binding.back.setOnClickListener {
+            finish()
+        }
 
-                if (dataDetail != null) {
-                    detail(url)
-                } else {
-                    withContext(Dispatchers.Main) {
-                        viewModel.getDetail(type, url)
-                        delay(5000)
-                        detail(url)
-
-                    }
-
-                }
-
+        binding.selengkap.setOnClickListener {
+            isSelengkap = !isSelengkap!!
+            if (isSelengkap == true) {
+                binding.sinopsis.maxLines = Int.MAX_VALUE
+                binding.selengkap.text = "Sembunyikan"
+            } else {
+                binding.sinopsis.maxLines = 3
+                binding.selengkap.text = "Selengkapnya"
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.d(TAG, "loadData: ${e.localizedMessage}")
-            Snackbar.make(binding.root, "Gagal Memuat Data", Snackbar.LENGTH_LONG).show()
+        }
+
+    }
+
+    private fun detail(){
+        viewModel.dataChapterDetail.observe(this){data->
+
+            CheckLatestRead(data.id)
+
+
+            checkPustaka(data.id)
+
+            Glide.with(this@DetailActivity)
+                .load(data.localImageUri)
+                .error(R.drawable.placeholder)
+                .into(binding.banner)
+
+            Glide.with(this@DetailActivity)
+                .load(data.localImageUri)
+                .error(R.drawable.placeholder)
+                .into(binding.imageView3)
+
+            binding.title.text = data.title
+            binding.textView4.text = data.alternativeTitle
+            binding.status.text = data.status
+            binding.sinopsis.text = data.description
+
+            binding.button2.setOnClickListener {
+                if (isFavorite) {
+                    deletePustaka(data.id)
+                } else {
+                    insertPustaka(data.id, data.imageUrl)
+                }
+            }
+        }
+
+        viewModel.dataGenre.observe(this){data ->
+            binding.genre.adapter = AdapterGenre(data)
+        }
+
+        viewModel.dataChapter.observe(this){chapter ->
+            binding.textView12.text = "${chapter.size} Chapter"
+            adapterChapter.updateList(chapter)
+            binding.chapter.adapter = adapterChapter
+
+            binding.btnBaca.setOnClickListener {
+                val intent = Intent(this@DetailActivity, ReadActivity::class.java)
+                intent.putExtra(ReadActivity.EXTRA_URL, chapter.first().chapter.link)
+                intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.first().chapter.title)
+                intent.putExtra(ReadActivity.EXTRA_TYPE, chapter.first().chapter.location)
+                intent.putExtra(ReadActivity.EXTRA_ID, chapter.first().chapter.id)
+                intent.putExtra("num", chapter.first().chapter.numChapter)
+                startActivity(intent)
+            }
+
         }
     }
+
 
     private fun insertPustaka(chapterId: Int, imageUrl: String? = null) {
         try {
@@ -196,120 +250,28 @@ class DetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun detail(url: String) {
-        try {
-            CoroutineScope(Dispatchers.IO).launch {
-                val data = comicDao.getComicByUrl(url)
-                val genre = genreDao.getGenreByComicTitle(data.title)
-                val chapter = chapterDao.getChaptersForComicLiveData(data.title)
-                val dataChapter = chapterDao.getChaptersForComic(data.title)
-
-                CheckLatestRead(data.id)
-
-                withContext(Dispatchers.Main) {
-                    checkPustaka(data.id)
-
-                    chapter.observe(this@DetailActivity) { chapter ->
-                        binding.btnBaca.setOnClickListener {
-                            val intent = Intent(this@DetailActivity, ReadActivity::class.java)
-                            intent.putExtra(ReadActivity.EXTRA_URL, chapter.first().link)
-                            startActivity(intent)
-                        }
-                        Log.d(TAG, "detail: $chapter")
-
-                        binding.chapter.adapter =
-                            data.let { AdapterChapter(dataChapter, it) }
-                    }
-
-
-
-                    binding.genre.adapter = AdapterGenre(genre)
-
-                    binding.back.setOnClickListener {
-                        finish()
-                    }
-
-                    binding.textView12.text = "${dataChapter.size} Chapter"
-
-                    Glide.with(this@DetailActivity)
-                        .load(data.localImageUri)
-                        .error(R.drawable.placeholder)
-                        .into(binding.banner)
-
-                    Glide.with(this@DetailActivity)
-                        .load(data.localImageUri)
-                        .error(R.drawable.placeholder)
-                        .into(binding.imageView3)
-
-                    binding.title.text = data.title
-                    binding.textView4.text = data.alternativeTitle
-                    binding.status.text = data.status
-                    binding.sinopsis.text = data.description
-
-                    binding.selengkap.setOnClickListener {
-                        isSelengkap = !isSelengkap!!
-                        if (isSelengkap == true) {
-                            binding.sinopsis.maxLines = Int.MAX_VALUE
-                            binding.selengkap.text = "Sembunyikan"
-                        } else {
-                            binding.sinopsis.maxLines = 3
-                            binding.selengkap.text = "Selengkapnya"
-                        }
-                    }
-
-                    binding.nestedScrollView.setOnScrollChangeListener(NestedScrollView.OnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
-                        if (scrollY > SCROLL_THRESHOLD) {
-                            binding.baca.text = "Baca"
-                        } else {
-                            binding.baca.text = ""
-                        }
-                    })
-
-                    binding.button2.setOnClickListener {
-                        if (isFavorite) {
-                            deletePustaka(data.id)
-                        } else {
-                            insertPustaka(data.id, data.imageUrl)
-                        }
-                    }
-
-                    binding.loading.visibility = View.GONE
-                    binding.nestedScrollView.visibility = View.VISIBLE
-                }
-
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.d(TAG, "detail: ${e.localizedMessage}")
-            Snackbar.make(binding.root, "Gagal memuat Konten", Snackbar.LENGTH_LONG)
-                .setAction("Coba Lagi") {
-                    loadData(url, sources ?: sourceType.ikiru)
-                }
-                .show()
-        }
-    }
-
     override fun onResume() {
         super.onResume()
-
     }
 
-    suspend fun CheckLatestRead(comidId: Int) {
-        val data = riwayatRelationDao.getLastRiwayatsByComicId(comidId)
+    private fun CheckLatestRead(comidId: Int) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = riwayatRelationDao.getLastRiwayatsByComicId(comidId)
 
-        withContext(Dispatchers.Main) {
-            data.observe(this@DetailActivity) { chapter ->
-                if (chapter != null) {
-                    Log.d(TAG, "CheckLatestRead: ${chapter.riwayat.readAt}")
-                    binding.btnBaca.text = "Lanjut Baca ${chapter.chapter.title}"
-                    binding.btnBaca.setOnClickListener {
-                        val intent = Intent(this@DetailActivity, ReadActivity::class.java)
-                        intent.putExtra(ReadActivity.EXTRA_URL, chapter.chapter.link)
-                        intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.comic.title)
-                        intent.putExtra(ReadActivity.EXTRA_TYPE, chapter.chapter.location)
-                        intent.putExtra(ReadActivity.EXTRA_ID, chapter.chapter.id)
-                        intent.putExtra("num", chapter.chapter.numChapter)
-                        startActivity(intent)
+            withContext(Dispatchers.Main) {
+                data.observe(this@DetailActivity) { chapter ->
+                    if (chapter != null) {
+                        Log.d(TAG, "CheckLatestRead: ${chapter.riwayat.readAt}")
+                        binding.btnBaca.text = "Lanjut Baca ${chapter.chapter.title}"
+                        binding.btnBaca.setOnClickListener {
+                            val intent = Intent(this@DetailActivity, ReadActivity::class.java)
+                            intent.putExtra(ReadActivity.EXTRA_URL, chapter.chapter.link)
+                            intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.comic.title)
+                            intent.putExtra(ReadActivity.EXTRA_TYPE, chapter.chapter.location)
+                            intent.putExtra(ReadActivity.EXTRA_ID, chapter.chapter.id)
+                            intent.putExtra("num", chapter.chapter.numChapter)
+                            startActivity(intent)
+                        }
                     }
                 }
             }
@@ -324,7 +286,11 @@ class DetailActivity : AppCompatActivity() {
             this@DetailActivity
         )
 
-        viewModel = ViewModelProvider(this, Providerviewmodel(repository))[DetailViewmodel::class]
+        viewModel =
+            ViewModelProvider(
+                this,
+                Providerviewmodel(repository, comicDao, chapterDao,genreDao)
+            )[DetailViewmodel::class]
 
     }
 
@@ -364,6 +330,7 @@ class DetailActivity : AppCompatActivity() {
         binding.chapter.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
 
+        adapterChapter = AdapterChapter(mutableListOf())
     }
 
     companion object {

@@ -25,6 +25,10 @@ interface ComicDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertChapter(chapter: List<Chapter>)
 
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertComicId(comic: Comic): Long
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertLatestChapter(chapter: List<Chapter>)
 
@@ -41,8 +45,7 @@ interface ComicDao {
     suspend fun updateComic(comic: Comic)
 
     @Transaction
-    suspend fun insertComicwithChapterAndgenre(comic: Comic,genre: List<Genre>,chapter: List<Chapter>){
-        insertComic(comic)
+    suspend fun insertComicwithChapterAndgenre(genre: List<Genre>,chapter: List<Chapter>){
         insertGenre(genre)
         insertChapter(chapter)
     }

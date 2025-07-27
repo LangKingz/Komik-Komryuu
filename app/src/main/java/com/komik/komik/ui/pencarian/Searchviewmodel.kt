@@ -26,8 +26,7 @@ class Searchviewmodel:ViewModel() {
         get() = _loading
 
     init {
-        fetchCorouselData()
-        Extensi()
+
     }
 
     fun fetchCorouselData (){

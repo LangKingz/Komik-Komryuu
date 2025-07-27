@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.komik.komik.service.data.model.Chapter
+import com.komik.komik.service.data.model.ChapterwithComic
 
 
 @Dao
@@ -21,10 +22,10 @@ interface chapterDao {
     suspend fun updateIsRead(chapterId: Int, isRead: Boolean)
 
     @Query("SELECT * FROM Chapter WHERE  comicTitle = :comicTitle ORDER BY id ASC")
-    fun getChaptersForComic(comicTitle: String): List<Chapter>
+    fun getChaptersForComic(comicTitle: String): List<ChapterwithComic>
 
     @Query("SELECT * FROM Chapter WHERE comicTitle = :comicTitle ORDER BY numChapter DESC")
-    fun getChaptersForComicLiveData(comicTitle: String): LiveData<List<Chapter>>
+    fun getChaptersForComicLiveData(comicTitle: String): LiveData<List<ChapterwithComic>>
 
     @Query("SELECT * FROM Chapter WHERE title = :comicTitle AND link = :link")
     suspend fun getChapterByLink(comicTitle: String, link: String): Chapter?

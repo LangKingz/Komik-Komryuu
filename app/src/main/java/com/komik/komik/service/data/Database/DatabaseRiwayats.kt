@@ -18,7 +18,7 @@ import com.komik.komik.service.data.model.Riwayats
 
 @Database(
     entities = [Riwayats::class, Comic::class, Chapter::class, Genre::class,Library::class],
-    version = 3,
+    version = 1,
     exportSchema = false
 )
 abstract class DatabaseRiwayats : RoomDatabase() {

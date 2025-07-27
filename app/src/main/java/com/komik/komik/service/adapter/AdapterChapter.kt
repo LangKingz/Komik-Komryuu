@@ -8,6 +8,7 @@ import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.chapterDao
 import com.komik.komik.service.data.model.Chapter
+import com.komik.komik.service.data.model.ChapterwithComic
 import com.komik.komik.service.data.model.Comic
 import com.komik.komik.service.data.model.Riwayats
 import com.komik.komik.ui.pages.read.ReadActivity
@@ -16,8 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class AdapterChapter(
-    private val list: List<Chapter>,
-    private val data : Comic
+    private val list: MutableList<ChapterwithComic>
 ) :
     RecyclerView.Adapter<AdapterChapter.Holder>() {
     class Holder(private val binding: CardChapterBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -25,11 +25,11 @@ class AdapterChapter(
         val dao: riwayatRelationDao = db.riwayatdao()
         val chapterdao: chapterDao = db.chapterdao()
 
-        fun bind(chapter: Chapter) {
-            binding.chapter.text = chapter.title
-            binding.day.text = chapter.date
+        fun bind(chapter: ChapterwithComic) {
+            binding.chapter.text = chapter.chapter.title
+            binding.day.text = chapter.chapter.date
 
-            if(chapter.isRead){
+            if(chapter.chapter.isRead){
                 binding.cardChapter.setBackgroundColor(
                     itemView.context.resources.getColor(
                         com.komik.komik.R.color.transparent
@@ -87,18 +87,39 @@ class AdapterChapter(
         holder.itemView.setOnClickListener {
 
             holder.insertRiwayat(
-                list[position].id,
-                data.id
+                list[position].chapter.id,
+                list[position].chapter.comicId
             )
 
 //
             val intent = Intent(holder.itemView.context, ReadActivity::class.java)
-            intent.putExtra(ReadActivity.EXTRA_URL, list[position].link)
-            intent.putExtra(ReadActivity.EXTRA_TITLE, list[position].comicTitle)
-            intent.putExtra(ReadActivity.EXTRA_TYPE, list[position].location)
-            intent.putExtra(ReadActivity.EXTRA_ID, list[position].id)
-            intent.putExtra("num", list[position].numChapter)
+            intent.putExtra(ReadActivity.EXTRA_URL, list[position].chapter.link)
+            intent.putExtra(ReadActivity.EXTRA_TITLE, list[position].chapter.comicTitle)
+            intent.putExtra(ReadActivity.EXTRA_TYPE, list[position].chapter.location)
+            intent.putExtra(ReadActivity.EXTRA_ID, list[position].chapter.id)
+            intent.putExtra(ReadActivity.EXTRA_ID_COMIC, list[position].chapter.comicId)
+            intent.putExtra("num", list[position].chapter.numChapter)
             holder.itemView.context.startActivity(intent)
         }
+    }
+
+    fun updateList(newList: List<ChapterwithComic>) {
+        list.clear()
+        list.addAll(newList)
+        notifyDataSetChanged()
+    }
+
+    fun addData(newData: List<ChapterwithComic>) {
+        val startPosition = list.size
+        list.addAll(newData)
+        notifyItemRangeInserted(startPosition, newData.size)
+
+    }
+
+
+
+    fun clearData() {
+        list.clear()
+        notifyDataSetChanged()
     }
 }

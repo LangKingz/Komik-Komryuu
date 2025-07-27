@@ -26,6 +26,8 @@ class ApplicationAndroid : Application() {
         val edit = pref.edit()
 
         edit.putBoolean("fullscreen",true)
+        edit.putBoolean("update",false)
+        edit.putBoolean("pindah",true)
         edit.apply()
 
     }

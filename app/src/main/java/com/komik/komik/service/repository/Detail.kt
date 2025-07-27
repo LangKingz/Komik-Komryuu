@@ -19,7 +19,7 @@ class Detail(
     private val client: client,
     private val applicationContext: Context
 ) : RepositoryDetail {
-    override suspend fun getDetail(type: sourceType, url: String): Comic {
+    override suspend fun getDetail(type: sourceType, url: String): ParsedData {
         val html = when (type) {
             sourceType.komikcast -> client.Komikcast.getHtml(url)
             sourceType.ikiru -> client.Ikiru.getHtml(url)
@@ -49,91 +49,13 @@ class Detail(
 
         Log.d(TAG, "getDetail: ${parsedData}")
 
-        saveDataToDatabase(parsedData!!)
+//        saveDataToDatabase(parsedData!!)
 
-        return Comic(
-            alternativeTitle = parsedData.alternativeTitle,
-            title = parsedData.title,
-            imageUrl = parsedData.imageUrl,
-            url = parsedData.url,
-            type = parsedData.type,
-            localImageUri = parsedData.localImageUri,
-            rating = parsedData.rating.toString(),
-            status = parsedData.status,
-            description = parsedData.description,
-            author = parsedData.author.toString(),
-            location = parsedData.location
-        )
+        return parsedData!!
 
     }
 
-    private suspend fun saveDataToDatabase(parsedData: ParsedData) {
-        withContext(Dispatchers.IO) {
-            val existingComic = comicDao.getComicByUrl(parsedData.url)
 
-            val requestComic = Comic(
-                title = parsedData.title,
-                alternativeTitle = parsedData.alternativeTitle,
-                url = parsedData.url,
-                imageUrl = parsedData.imageUrl,
-                localImageUri = parsedData.localImageUri,
-                description = parsedData.description,
-                author = parsedData.author.toString(),
-                location = parsedData.location,
-                rating = parsedData.rating.toString(),
-                type = parsedData.type,
-                status = parsedData.status
-            )
-
-            if (existingComic == null) {
-                comicDao.insertComicwithChapterAndgenre(
-                    requestComic,
-                    parsedData.genres,
-                    parsedData.chapters
-                )
-            } else {
-//                comicDao.updateChaptersForComic(
-//                    parsedData.title,
-//                    parsedData.chapters,
-//                    parsedData.location
-//                )
-
-                comicDao.updateComic(
-                    existingComic.copy(
-                        status = parsedData.status,
-                        description = parsedData.description,
-                        rating = parsedData.rating.toString(),
-                        location = parsedData.location,
-//                        localImageUri = parsedData.localImageUri
-                    )
-                )
-
-                val chapter = parsedData.chapters
-                val existingChapters = comicDao.getChapterByLink(parsedData.title,parsedData.location)
-
-                val existingChapterLinks = existingChapters.map { it.link }.toSet()
-
-                val chapterInsert = chapter.filter { news ->
-                    !existingChapterLinks.contains(news.link)
-                }.map { newChapter ->
-                    newChapter.copy(
-                        comicTitle = parsedData.title,
-                    )
-                }
-
-                if(chapterInsert.isNotEmpty()){
-                    comicDao.insertLatestChapter(chapterInsert)
-                    Log.d(TAG, "saveDataToDatabase: Chapter Di Simpan")
-                }else{
-                    Log.d(TAG, "saveDataToDatabase: Chapter Kosong")
-                }
-
-
-
-            }
-
-        }
-    }
 
     companion object {
         const val TAG = "RepositoryDetail"
