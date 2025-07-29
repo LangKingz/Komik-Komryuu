@@ -3,6 +3,7 @@ package com.komik.komik.service.adapter
 import android.content.Intent
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
 import com.komik.komik.databinding.CardChapterBinding
 import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.data.Database.DatabaseRiwayats
@@ -11,6 +12,7 @@ import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.ChapterwithComic
 import com.komik.komik.service.data.model.Comic
 import com.komik.komik.service.data.model.Riwayats
+import com.komik.komik.service.utils.isNetworkAvaible
 import com.komik.komik.ui.pages.read.ReadActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +31,7 @@ class AdapterChapter(
             binding.chapter.text = chapter.chapter.title
             binding.day.text = chapter.chapter.date
 
-            if(chapter.chapter.isRead){
+            if (chapter.chapter.isRead) {
                 binding.cardChapter.setBackgroundColor(
                     itemView.context.resources.getColor(
                         com.komik.komik.R.color.transparent
@@ -83,6 +85,7 @@ class AdapterChapter(
     }
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
+        val context = holder.itemView.context
         holder.bind(list[position])
         holder.itemView.setOnClickListener {
 
@@ -92,14 +95,20 @@ class AdapterChapter(
             )
 
 //
-            val intent = Intent(holder.itemView.context, ReadActivity::class.java)
-            intent.putExtra(ReadActivity.EXTRA_URL, list[position].chapter.link)
-            intent.putExtra(ReadActivity.EXTRA_TITLE, list[position].chapter.comicTitle)
-            intent.putExtra(ReadActivity.EXTRA_TYPE, list[position].chapter.location)
-            intent.putExtra(ReadActivity.EXTRA_ID, list[position].chapter.id)
-            intent.putExtra(ReadActivity.EXTRA_ID_COMIC, list[position].chapter.comicId)
-            intent.putExtra("num", list[position].chapter.numChapter)
-            holder.itemView.context.startActivity(intent)
+            if (isNetworkAvaible(context)) {
+                val intent = Intent(holder.itemView.context, ReadActivity::class.java)
+                intent.putExtra(ReadActivity.EXTRA_URL, list[position].chapter.link)
+                intent.putExtra(ReadActivity.EXTRA_TITLE, list[position].chapter.comicTitle)
+                intent.putExtra(ReadActivity.EXTRA_TYPE, list[position].chapter.location)
+                intent.putExtra(ReadActivity.EXTRA_ID, list[position].chapter.id)
+                intent.putExtra(ReadActivity.EXTRA_ID_COMIC, list[position].chapter.comicId)
+                intent.putExtra("num", list[position].chapter.numChapter)
+                holder.itemView.context.startActivity(intent)
+            } else {
+                Snackbar.make(holder.itemView, "Tidak ada koneksi internet", Snackbar.LENGTH_SHORT)
+                    .setAction("Cancel", {})
+                    .show()
+            }
         }
     }
 
@@ -115,7 +124,6 @@ class AdapterChapter(
         notifyItemRangeInserted(startPosition, newData.size)
 
     }
-
 
 
     fun clearData() {

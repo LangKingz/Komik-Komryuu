@@ -57,7 +57,7 @@ class Comic(val client: client) : RepositroyComic {
                     val data = mutableListOf<getListUpdate>()
 
                     for (page in 1..10) {
-                        val result = SourceParser.parseShinigami(client, page)
+                        val result = SourceParser.parseShinigami(client, page,"")
                         Log.d(TAG, "getComic: ${result?.size}")
                         data.addAll(result!!)
                     }
@@ -159,7 +159,11 @@ class Comic(val client: client) : RepositroyComic {
                 val page = SourceParser.parseKomikcast(document)
                 result.addAll(page)
                 Log.d(TAG, "getSearch: ${result.size}")
-                result
+                if(result.isNotEmpty()){
+                    result
+                }else{
+                    emptyList()
+                }
             }
             sourceType.ikiru -> {
                 withContext(Dispatchers.IO) {
@@ -206,7 +210,19 @@ class Comic(val client: client) : RepositroyComic {
                 }
             }
 
-            sourceType.shinigami,
+            sourceType.shinigami -> {
+
+                val data = SourceParser.parseShinigami(client, 24,query)
+                Log.d(TAG, "getComic: ${data?.size}")
+                result.addAll(data!!)
+
+                if (result.isNotEmpty()){
+                    Log.d(TAG, "getSearch: ${result.size}")
+                    result
+                }else{
+                    emptyList()
+                }
+            }
             sourceType.comicscan -> {
                 val url = "https://lc3.cosmicscans.asia/?s=$query"
                 val html = client.Comicscan.getHtml(url)

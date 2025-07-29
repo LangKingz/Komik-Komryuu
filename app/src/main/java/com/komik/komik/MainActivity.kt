@@ -12,6 +12,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.material.snackbar.Snackbar
 import com.komik.komik.databinding.ActivityMainBinding
 import com.komik.komik.service.client
 import com.komik.komik.service.parser.comic.SourceParser
@@ -52,6 +53,11 @@ class MainActivity : AppCompatActivity() {
 
         nav?.setupWithNavController(navController)
         navRail?.setupWithNavController(navController)
+
+        binding.btnSearch?.setOnClickListener {
+            Snackbar.make(binding.root, "Coming Soon", Snackbar.LENGTH_SHORT).show()
+
+        }
 
 
     }

@@ -294,7 +294,7 @@ object comicParser {
         val alternativeTitle = "ALternative title Tidak Tersedia"
         val rating = document.select(".num").text()
         val type = document.select(".tsinfo .imptdt")[1].select(" a").text() ?: ""
-        val status = document.select(".tsinfo .imptdt")[0].select("1").text() ?: ""
+        val status = document.select(".tsinfo .imptdt")[0].select("i").text() ?: ""
 
 
         val chapters = document.select("ul.clstyle li ")

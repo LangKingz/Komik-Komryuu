@@ -27,11 +27,13 @@
     <TextView
         android:id="@+id/JudulExtensi"
         style="@style/Costumtitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
         android:text="Komiku"
+
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/imageButton2"
         app:layout_constraintHorizontal_bias="0.0"
@@ -41,25 +43,26 @@
     <TextView
         android:id="@+id/waktu"
         style="@style/Subtitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="5 menit yang lalu"
+        app:layout_constraintEnd_toEndOf="@+id/JudulExtensi"
         app:layout_constraintStart_toStartOf="@+id/JudulExtensi"
         app:layout_constraintTop_toBottomOf="@+id/JudulExtensi" />
 
     <ImageButton
         android:id="@+id/imageButton2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
         android:background="@android:color/transparent"
         android:clickable="true"
         android:clipToOutline="true"
         android:focusable="true"
-        app:tint="@color/white"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/dots_three_outline_vertical_fill" />
+        app:srcCompat="@drawable/globe_hemisphere_west__1_"
+        app:tint="@color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

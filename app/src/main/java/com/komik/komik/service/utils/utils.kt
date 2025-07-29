@@ -2,6 +2,8 @@ package com.komik.komik.service.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.core.view.WindowCompat
 import com.komik.komik.R
@@ -191,4 +193,15 @@ fun parseDate(dateString: String): String {
         e.printStackTrace()
         return "Error Parsing Date" // Kembalikan pesan error jika parsing gagal
     }
+}
+
+fun isNetworkAvaible (context: Context):Boolean{
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    
+    val network= connectivityManager.activeNetwork ?: return false
+    val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+
+    return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
 }

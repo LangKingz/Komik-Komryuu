@@ -50,8 +50,6 @@ class Detail(
 
             Log.d(TAG, "getDetail: ${parsedData}")
 
-//        saveDataToDatabase(parsedData!!)
-
             return parsedData!!
         }catch (e:Exception){
             Log.d(TAG, "getDetail: ${e.message}")
@@ -59,7 +57,7 @@ class Detail(
                 url = url,
                 title = "",
                 imageUrl = "",
-                description = "",
+                description = e.localizedMessage.toString(),
                 author = "",
                 location = type.name,
                 chapters = emptyList(),

@@ -137,6 +137,10 @@ class AdapterRiwayat(private val list: List<RiwayatDetail>) :
                         ReadActivity.EXTRA_ID_COMIC,
                         (groupItems[position] as RiwayatDetail).comic.id
                     )
+                    putExtra(
+                        "pageRead",
+                        (groupItems[position] as RiwayatDetail).riwayat.pageRead
+                    )
                 }
                 holder.itemView.context.startActivity(intent)
             }

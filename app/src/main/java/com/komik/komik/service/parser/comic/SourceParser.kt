@@ -33,8 +33,8 @@ object SourceParser {
             }
     }
 
-    suspend fun parseShinigami(client: client, page: Int): List<getListUpdate>? {
-        val response = client.Shinigami.getMangaList(pageSize = 24, page = page, sortBy = "latest")
+    suspend fun parseShinigami(client: client, page: Int,query: String): List<getListUpdate>? {
+        val response = client.Shinigami.getMangaList(pageSize = 24, page = page, sortBy = "latest", query = query)
         val pageData = response.data
 
         return pageData?.mapIndexed { index, item ->

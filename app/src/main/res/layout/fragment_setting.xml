@@ -3,13 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     tools:context=".ui.pengaturan.SettingFragment">
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -34,14 +34,15 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <LinearLayout
+                android:id="@+id/linearLayout3"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="44dp"
-                android:clipToOutline="true"
                 android:layout_marginEnd="16dp"
-                android:orientation="vertical"
                 android:background="@drawable/background_menu_setting"
+                android:clipToOutline="true"
+                android:orientation="vertical"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
@@ -50,37 +51,38 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:padding="10dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:clipToOutline="true"
-                    android:gravity="center_vertical"
-                    android:foreground="?attr/selectableItemBackground"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:clickable="true"
+                    android:clipToOutline="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
 
                     <ImageView
                         android:id="@+id/imageView6"
-                        android:layout_marginLeft="8dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
                         android:src="@drawable/cloud_off_line"
                         app:tint="@color/gray_400" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginHorizontal="16dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
+
                         <TextView
-                            style="@style/Costumtitle"
                             android:id="@+id/Cloud"
-                            android:textColor="@color/white"
+                            style="@style/Costumtitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Penyimpanan Cloud" />
+                            android:text="Penyimpanan Cloud"
+                            android:textColor="@color/white" />
 
                         <TextView
                             android:id="@+id/SubCloud"
@@ -100,47 +102,48 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:padding="10dp"
+                    android:layout_height="match_parent"
                     android:clickable="true"
                     android:clipToOutline="true"
                     android:focusable="true"
-                    android:gravity="center_vertical"
                     android:foreground="?attr/selectableItemBackground"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
 
                     <ImageView
                         android:id="@+id/ic_cookie"
-                        android:layout_marginLeft="8dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
                         android:src="@drawable/cookie"
                         app:tint="@color/gray_400" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginHorizontal="16dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
+
                         <TextView
-                            style="@style/Costumtitle"
                             android:id="@+id/Cookie"
-                            android:textColor="@color/white"
+                            style="@style/Costumtitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Cookie" />
+                            android:text="Cookie"
+                            android:textColor="@color/white" />
 
                         <TextView
                             android:id="@+id/subCookie"
                             android:layout_width="wrap_content"
-                            android:textColor="@color/gray_400"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:maxLines="2"
                             android:ellipsize="end"
-                            android:text="-" />
+                            android:maxLines="2"
+                            android:text="-"
+                            android:textColor="@color/gray_400" />
                     </LinearLayout>
 
                     <ImageView
@@ -153,37 +156,38 @@
 
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:padding="10dp"
+                    android:layout_height="match_parent"
                     android:clickable="true"
                     android:clipToOutline="true"
                     android:focusable="true"
-                    android:gravity="center_vertical"
                     android:foreground="?attr/selectableItemBackground"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
 
                     <ImageView
                         android:id="@+id/ic_akun"
-                        android:layout_marginLeft="8dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
                         android:src="@drawable/baseline_manage_accounts_24"
                         app:tint="@color/gray_400" />
 
                     <LinearLayout
                         android:layout_width="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginHorizontal="16dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="16dp"
+                        android:layout_weight="1"
                         android:orientation="vertical">
+
                         <TextView
-                            style="@style/Costumtitle"
                             android:id="@+id/Akun"
-                            android:textColor="@color/white"
+                            style="@style/Costumtitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Akun" />
+                            android:text="Akun"
+                            android:textColor="@color/white" />
 
                         <TextView
                             android:id="@+id/subAkun"
@@ -200,16 +204,17 @@
                         app:tint="@color/gray_400" />
 
                 </LinearLayout>
+
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:padding="10dp"
+                    android:layout_height="match_parent"
                     android:clickable="true"
                     android:clipToOutline="true"
                     android:focusable="true"
-                    android:gravity="center_vertical"
                     android:foreground="?attr/selectableItemBackground"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
 
                     <ImageView
                         android:id="@+id/setting_view"
@@ -221,25 +226,26 @@
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/fullscreen"
-                        android:layout_marginLeft="16dp"
                         style="@style/Costumtitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="16dp"
                         android:layout_weight="1"
                         android:text="Layar Penuh" />
 
 
                 </LinearLayout>
+
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:padding="10dp"
+                    android:layout_height="match_parent"
                     android:clickable="true"
                     android:clipToOutline="true"
                     android:focusable="true"
-                    android:gravity="center_vertical"
                     android:foreground="?attr/selectableItemBackground"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
 
                     <ImageView
                         android:id="@+id/setting_update"
@@ -251,25 +257,26 @@
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/update"
-                        android:layout_marginLeft="16dp"
                         style="@style/Costumtitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="16dp"
                         android:layout_weight="1"
                         android:text="Otomatis Update" />
 
 
                 </LinearLayout>
+
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:padding="10dp"
+                    android:layout_height="match_parent"
                     android:clickable="true"
                     android:clipToOutline="true"
                     android:focusable="true"
-                    android:gravity="center_vertical"
                     android:foreground="?attr/selectableItemBackground"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
 
                     <ImageView
                         android:id="@+id/setting_pindah"
@@ -281,10 +288,10 @@
 
                     <com.google.android.material.materialswitch.MaterialSwitch
                         android:id="@+id/pindah"
-                        android:layout_marginLeft="16dp"
                         style="@style/Costumtitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginLeft="16dp"
                         android:layout_weight="1"
                         android:text="Pindah Chapter" />
 
@@ -292,6 +299,116 @@
                 </LinearLayout>
 
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/dukunganControl"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="24dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginBottom="32dp"
+                android:background="@drawable/background_menu_setting"
+                android:clipToOutline="true"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout3">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:clipToOutline="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
+
+                    <ImageView
+                        android:id="@+id/imageView10"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
+                        android:src="@drawable/share_forward_box_fill"
+                        app:tint="@color/gray_400" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/Trakteer"
+                            style="@style/Costumtitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Trakteer Kami"
+                            android:textColor="@color/white" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/caret_right"
+                        app:tint="@color/gray_400" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:clipToOutline="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
+
+                    <ImageView
+                        android:id="@+id/imageView11"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
+                        android:src="@drawable/share_line"
+                        app:tint="@color/gray_400" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/About"
+                            style="@style/Costumtitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Tentang Kami"
+                            android:textColor="@color/white" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/caret_right"
+                        app:tint="@color/gray_400" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 

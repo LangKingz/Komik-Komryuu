@@ -26,7 +26,7 @@ data class DataIteme(
 	val releaseDate: String? = null,
 
 	@field:SerializedName("chapter_number")
-	val chapterNumber: Int? = null,
+	val chapterNumber: Double? = null,
 
 	@field:SerializedName("chapter_title")
 	val chapterTitle: String? = null,

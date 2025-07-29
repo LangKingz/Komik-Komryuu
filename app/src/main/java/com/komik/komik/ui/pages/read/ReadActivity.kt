@@ -197,9 +197,13 @@ class ReadActivity : AppCompatActivity() {
                 data.copy(
                     chapterId = chapter_id,
                     comicId = comicId,
+                    isRead = true,
                     readAt = System.currentTimeMillis()
                 )
             )
+
+            dao.updateIsRead(chapter_id, true)
+
         }
     }
 
@@ -286,7 +290,6 @@ class ReadActivity : AppCompatActivity() {
     private fun nextChapterButtonListener(allChapter: List<Chapter>, location: sourceType,ComidID: Int){
         val nextChapter = nextChapter(currentChapter, allChapter)
         if (nextChapter != null) {
-
             CoroutineScope(Dispatchers.IO).launch {
                 insertRiwayat(nextChapter.id, ComidID)
                 withContext(Dispatchers.Main){
@@ -296,6 +299,8 @@ class ReadActivity : AppCompatActivity() {
                     isLoadingNextChapter = false
                     isLoadingPrevChapter = false
                     binding.judulManhwa.text = "${nextChapter.comicTitle} - ${nextChapter.title}"
+                    binding.chapterControls.visibility = View.GONE
+
                 }
             }
 
@@ -321,6 +326,7 @@ class ReadActivity : AppCompatActivity() {
                     isLoadingPrevChapter = false
                     isLoadingNextChapter = false
                     binding.judulManhwa.text = "${prev.comicTitle} - ${prev.title}"
+                    binding.chapterControls.visibility = View.GONE
                 }
             }
         } else {
@@ -336,12 +342,13 @@ class ReadActivity : AppCompatActivity() {
 //         Ini bakal nyari chapter di dalam list allChapters yang punya numChapter sama dengan currentChapterNumber yang kita kasih. Dia bakal ngembaliin indeks (posisi) chapter itu di list. Kalau nggak ketemu, dia ngembaliin -1
         val currentIndex = allChapter.indexOfFirst { it.numChapter == currentChapter }
         Log.d(TAG, "nextChapter: $currentChapter, $currentIndex")
-//        jika tidak ada
+//        jika tidak ada, selalu ngereturn -1
         if (currentIndex == -1) {
             return null
         }
 //        cek apakah currentIndex kalau ditambah 1 masi lebih kecil dari semua chapter
         if (currentIndex + 1 < allChapter.size) {
+            // allchapter[posisi] begini maksudnya
             return allChapter[currentIndex + 1]
         } else {
 //            latest chapter

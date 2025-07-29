@@ -116,7 +116,7 @@ data class Data(
 	val userRate: Any? = null,
 
 	@field:SerializedName("latest_chapter_number")
-	val latestChapterNumber: Int? = null,
+	val latestChapterNumber: Double? = null,
 
 	@field:SerializedName("alternative_title")
 	val alternativeTitle: String? = null,

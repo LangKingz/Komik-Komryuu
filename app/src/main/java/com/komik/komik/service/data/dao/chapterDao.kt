@@ -46,5 +46,6 @@ interface chapterDao {
     @Query("SELECT * FROM Chapter WHERE comicTitle = :title AND location = :location ORDER BY numChapter ASC ")
     fun getChapterForRead(title: String, location: String): List<Chapter>
 
-
+    @Query("UPDATE Chapter SET isRead = :isRead WHERE id = :chapterId")
+    suspend fun updateIsReadChapter(chapterId: Int, isRead: Boolean)
 }

@@ -143,6 +143,12 @@ class sourceActivity : AppCompatActivity() {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextChange(query: String?): Boolean {
+
+
+                return false
+            }
+            override fun onQueryTextSubmit(query: String?): Boolean {
+
                 when(locations){
                     "ikiru" -> viewmodel.search(sourceType.ikiru,query.toString())
                     "comicscan" -> viewmodel.search(sourceType.comicscan,query.toString())
@@ -150,13 +156,12 @@ class sourceActivity : AppCompatActivity() {
                     "komikcast" -> viewmodel.search(sourceType.komikcast,query.toString())
                     "kiryuu" -> viewmodel.search(sourceType.kiryuu,query.toString())
                     "komiku" -> viewmodel.search(sourceType.komiku,query.toString())
+                    "manhwaindo"-> viewmodel.search(sourceType.manhwaindo,query.toString())
+                    "batoto-all" -> viewmodel.search(sourceType.batoto_all,query.toString())
+                    "dd" -> viewmodel.search(sourceType.doujindesu,query.toString())
                     else -> viewmodel.search(sourceType.ikiru,query.toString())
                 }
-
                 return true
-            }
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
             }
         })
 

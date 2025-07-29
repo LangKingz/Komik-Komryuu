@@ -3,6 +3,7 @@ package com.komik.komik.service.adapter
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.net.toUri
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.komik.komik.R
@@ -20,7 +21,7 @@ class AdapterRiwayatSource(private val list: MutableList<RiwayatSource>): Recycl
             val url = when(item.location){
                 "ikiru" -> "https://ikiru.id/favicon-32x32.png"
                 "comicscan" -> "https://lc3.cosmicscans.asia/wp-content/uploads/2024/03/logo_cosmic.png"
-                "shinigami" -> "https://06.shinigami.asia/favicon.png"
+                "shinigami" -> "https://cdn.jsdelivr.net/gh/shinigamiscans/static@latest/emotes/3.webp"
                 "komikcast" -> "https://komikcast.li/wp-content/uploads/2021/02/cropped-logo-kc-32x32.png"
                 "kiryuu" -> "https://kiryuu02.com/wp-content/uploads/2021/10/cropped-logo-icon-kiryuu-1-456248-udlqjluy-194445-3fNc9Wlc-32x32.png"
                 "komiku" -> "https://komikindo.rip/"
@@ -28,6 +29,11 @@ class AdapterRiwayatSource(private val list: MutableList<RiwayatSource>): Recycl
                 "batoto-all"-> "https://bato.si/static-assets/img/bato-favicon.ico?v2"
                 "dd"-> "https://doujindesu.tv/uploads/favicon.png"
                 else -> ""
+            }
+
+            binding.imageButton2.setOnClickListener {
+                val intent = Intent(Intent.ACTION_VIEW, item.url.toUri())
+                itemView.context.startActivity(intent)
             }
 
             Glide.with(itemView.context)

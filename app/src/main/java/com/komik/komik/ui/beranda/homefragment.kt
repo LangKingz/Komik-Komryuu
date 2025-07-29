@@ -76,8 +76,10 @@ class homefragment : Fragment() {
         viewmodel.loading.observe(viewLifecycleOwner, { loading ->
             if (loading) {
                 binding.loading.visibility = View.VISIBLE
+                binding.layoutRefresh.visibility = View.GONE
             } else {
                 binding.loading.visibility = View.GONE
+                binding.layoutRefresh.visibility = View.GONE
             }
         })
 
@@ -87,6 +89,10 @@ class homefragment : Fragment() {
                     .setTitleText("Terjadi Kesalahan")
                     .setContentText(error)
                     .show()
+
+                binding.loading.visibility = View.GONE
+
+                binding.layoutRefresh.visibility = View.VISIBLE
             }
         })
 
@@ -98,6 +104,10 @@ class homefragment : Fragment() {
         }
 
         loadLatest()
+
+        binding.refresh.setOnClickListener {
+            viewmodel.fetchSource()
+        }
 
     }
 

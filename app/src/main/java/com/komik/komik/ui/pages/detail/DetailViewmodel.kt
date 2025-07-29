@@ -55,38 +55,42 @@ class DetailViewmodel(
         viewModelScope.launch {
             try {
                 val parsedData = repository.getDetail(type, url)
+                val title = parsedData.title
                 saveDataToDatabase(parsedData)
                 _loading.value = false
-                withContext(Dispatchers.IO){
-                    Log.d(TAG, "refreshData: ${parsedData.title}")
-                    val data = chapterDao.getChaptersForComic(parsedData.title)
-                    _dataChapter.postValue(data)
+                if (title.isNotEmpty()) {
+                    withContext(Dispatchers.IO) {
+                        Log.d(TAG, "refreshData: ${parsedData.title}")
+                        val data = chapterDao.getChaptersForComic(parsedData.title)
+                        _dataChapter.postValue(data)
+                    }
+                }else{
+                    _error.value = parsedData.description
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 _error.value = e.message
                 Log.d(TAG, "getDetail: ${e.localizedMessage}")
-            }finally {
+            } finally {
                 _loading.value = false
             }
         }
     }
 
-    fun getChapters(sourceType: sourceType,url: String) {
+    fun getChapters(sourceType: sourceType, url: String) {
         _loading.value = true
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.IO){
+                withContext(Dispatchers.IO) {
                     var data = comicDao.getComicByUrl(url)
 
-                    if(data == null){
+                    if (data == null) {
                         val parsedData = repository.getDetail(sourceType, url)
                         saveDataToDatabase(parsedData)
-                        delay(5000)
                         data = comicDao.getComicByUrl(url)
                     }
 
-                    if(data != null){
+                    if (data != null) {
                         _dataChapterDetail.postValue(data)
                         val genre = genreDao.getGenreByComicTitle(data.title)
                         _dataGenre.postValue(genre)
@@ -95,7 +99,7 @@ class DetailViewmodel(
                     }
                 }
                 _loading.value = false
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
                 Log.d(TAG, "getChapters: ${e.localizedMessage}")
             }
@@ -118,14 +122,14 @@ class DetailViewmodel(
                 location = parsedData.location,
                 rating = parsedData.rating.toString(),
                 type = parsedData.type,
-                tags = parsedData.tags,
-                status = parsedData.status
+                tags = parsedData.tags ?: "safe",
+                status = parsedData.status ?: "Ongoing"
             )
 
             if (existingComic == null) {
 
                 val newComidId = comicDao.insertComicId(requestComic).toInt()
-                val chapterWithcomidId = parsedData.chapters.map { chapter->
+                val chapterWithcomidId = parsedData.chapters.map { chapter ->
                     chapter.copy(
                         comicId = newComidId
                     )
@@ -170,11 +174,11 @@ class DetailViewmodel(
 
                     Log.d(TAG, "saveDataToDatabase: Chapter Di Simpan")
 
-                    withContext(Dispatchers.Main){
+                    withContext(Dispatchers.Main) {
                         _updateChapter.value = "${chapterInsert.size} Chapter Di Simpan"
                     }
                 } else {
-                    withContext(Dispatchers.Main){
+                    withContext(Dispatchers.Main) {
                         _updateChapter.value = "Tidak ada chapter"
                     }
                     Log.d(TAG, "saveDataToDatabase: Chapter Kosong")
