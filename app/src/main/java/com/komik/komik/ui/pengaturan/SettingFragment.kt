@@ -32,11 +32,18 @@ class SettingFragment : Fragment() {
         val fullscreen = pref.getBoolean("fullscreen",false)
         val chapterPindah = pref.getBoolean("pindah",false)
         val otomatisUpdate = pref.getBoolean("update",false)
+        val safeMode = pref.getBoolean("safemode",false)
 
         binding.subCookie.text = cookie
         binding.fullscreen.isChecked = fullscreen
         binding.pindah.isChecked = chapterPindah
         binding.update.isChecked = otomatisUpdate
+
+        binding.safemode.setOnCheckedChangeListener { buttonView, isChecked ->
+            val editor = pref.edit()
+            editor.putBoolean("safemode",isChecked)
+            editor.apply()
+        }
 
 
         binding.fullscreen.setOnCheckedChangeListener { _, isChecked ->

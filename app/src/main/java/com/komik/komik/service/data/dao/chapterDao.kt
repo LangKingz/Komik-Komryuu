@@ -42,6 +42,9 @@ interface chapterDao {
     @Query("SELECT * FROM chapter")
     suspend fun getAllChapters(): List<Chapter>
 
+    @Query("SELECT * FROM Chapter WHERE comicId = :title AND location = :location ORDER BY numChapter DESC ")
+    fun getChapterForComic(title: Int, location: String): List<ChapterwithComic>
+
 
     @Query("SELECT * FROM Chapter WHERE comicTitle = :title AND location = :location ORDER BY numChapter ASC ")
     fun getChapterForRead(title: String, location: String): List<Chapter>

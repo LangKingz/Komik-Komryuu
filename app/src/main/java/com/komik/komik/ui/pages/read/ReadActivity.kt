@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
@@ -24,8 +25,11 @@ import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.Riwayats
 import com.komik.komik.service.enumclass.sourceType
+import com.komik.komik.service.parser.model.getImages
+import com.komik.komik.service.utils.typeSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -51,8 +55,7 @@ class ReadActivity : AppCompatActivity() {
     private var pageRead :Int = 1
     private var totalPage :Int = 1
 
-
-    private lateinit var AllChapter : List<Chapter>
+    private lateinit var adapter : AdapterImage
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,30 +88,36 @@ class ReadActivity : AppCompatActivity() {
         val pref = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         val pindahChapterOtomatis = pref.getBoolean("pindah",true)
 
+        val sourceLocation = typeSource.getSourceType(type)
 
-        val location = when (type) {
-            "ikiru" -> sourceType.ikiru
-            "comicscan" -> sourceType.comicscan
-            "shinigami" -> sourceType.shinigami
-            "komikcast" -> sourceType.komikcast
-            "kiryuu" -> sourceType.kiryuu
-            "komiku" -> sourceType.komiku
-            "manhwaindo" -> sourceType.manhwaindo
-            "dd" -> sourceType.doujindesu
-            "batoto-all" -> sourceType.batoto_all
-            else -> sourceType.ikiru
-        }
+        adapter =AdapterImage(mutableListOf(), sourceLocation, url)
+        binding.listImage.adapter = adapter
 
-        setUpListener(location,type,title,idComic)
 
-        viewmodel.setImage(location, url)
+        setUpListener(sourceLocation,type,title,idComic)
+
+        viewmodel.setImage(sourceLocation, url)
 
         viewmodel.image.observe(this) { list ->
-            binding.listImage.adapter = AdapterImage(list, location, url)
+            adapter.updateList(list as MutableList<getImages>)
+            binding.listImage.adapter = adapter
             binding.slider.valueFrom = 0f
             binding.slider.valueTo = list.size.toFloat()
             binding.slider.setValues(0f) // Set nilai awal menjadi 0
             binding.slider.stepSize = 1.0f
+
+        }
+
+        viewmodel.loading.observe(this){loading ->
+            if(loading){
+                binding.loading.visibility = View.VISIBLE
+            }else{
+                binding.loading.visibility = View.GONE
+            }
+        }
+
+        viewmodel.error.observe(this){error ->
+            Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
         }
 
         binding.judulManhwa.text = "$title - Chapter ${num.toInt()}"
@@ -141,6 +150,13 @@ class ReadActivity : AppCompatActivity() {
 
                 val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
 
+                if(firstVisiblePosition >= 3){
+                    isLoadingNextChapter = false
+                }
+
+                isLoadingPrevChapter = false
+
+
                 pageRead = firstVisiblePosition + 1
                 totalPage = totalItem
 
@@ -160,7 +176,7 @@ class ReadActivity : AppCompatActivity() {
                                 //jika tidak bisa discroll kebawah
                                 if (!recyclerView.canScrollVertically(1)) {
                                     isLoadingNextChapter = true
-                                    nextChapterButtonListener(allChapter, location,idComic)
+                                    nextChapterButtonListener(allChapter, sourceLocation,idComic)
                                 }
                             }
 
@@ -168,7 +184,7 @@ class ReadActivity : AppCompatActivity() {
                                 //jika sudah tidak bisa discroll keatas
                                 if (!recyclerView.canScrollVertically(-1)) {
                                     isLoadingPrevChapter = true
-                                    PrevChapterListerner(location,allChapter,idComic)
+                                    PrevChapterListerner(sourceLocation,allChapter,idComic)
                                 }
                             }
                         }
@@ -183,29 +199,7 @@ class ReadActivity : AppCompatActivity() {
 
     }
 
-    suspend fun insertRiwayat(chapter_id:Int , comicId:Int){
-        val data = riwayats.getRiwayatByChapterId(comicId)
-        if(data == null){
-            riwayats.insertRiwayatRelasi(
-                Riwayats(
-                    chapterId = chapter_id,
-                    comicId = comicId
-                )
-            )
-        }else{
-            riwayats.updateRiwayatRelasi(
-                data.copy(
-                    chapterId = chapter_id,
-                    comicId = comicId,
-                    isRead = true,
-                    readAt = System.currentTimeMillis()
-                )
-            )
 
-            dao.updateIsRead(chapter_id, true)
-
-        }
-    }
 
     override fun onPause() {
         super.onPause()
@@ -293,14 +287,12 @@ class ReadActivity : AppCompatActivity() {
             CoroutineScope(Dispatchers.IO).launch {
                 insertRiwayat(nextChapter.id, ComidID)
                 withContext(Dispatchers.Main){
+                    adapter.clear()
                     viewmodel.setImage(location, nextChapter.link)
                     currentChapter = nextChapter.numChapter
                     Toast.makeText(this@ReadActivity, nextChapter.title, Toast.LENGTH_SHORT).show()
-                    isLoadingNextChapter = false
-                    isLoadingPrevChapter = false
                     binding.judulManhwa.text = "${nextChapter.comicTitle} - ${nextChapter.title}"
                     binding.chapterControls.visibility = View.GONE
-
                 }
             }
 
@@ -320,11 +312,10 @@ class ReadActivity : AppCompatActivity() {
             CoroutineScope(Dispatchers.IO).launch {
                 insertRiwayat(prev.id, ComidID)
                 withContext(Dispatchers.Main){
+                    adapter.clear()
                     viewmodel.setImage(location, prev.link)
                     currentChapter = prev.numChapter
                     Toast.makeText(this@ReadActivity, prev.title, Toast.LENGTH_SHORT).show()
-                    isLoadingPrevChapter = false
-                    isLoadingNextChapter = false
                     binding.judulManhwa.text = "${prev.comicTitle} - ${prev.title}"
                     binding.chapterControls.visibility = View.GONE
                 }
@@ -366,6 +357,30 @@ class ReadActivity : AppCompatActivity() {
             return allChapter[currentIndex - 1]
         } else {
             return null
+        }
+    }
+
+    suspend fun insertRiwayat(chapter_id:Int , comicId:Int){
+        val data = riwayats.getRiwayatByChapterId(comicId)
+        if(data == null){
+            riwayats.insertRiwayatRelasi(
+                Riwayats(
+                    chapterId = chapter_id,
+                    comicId = comicId
+                )
+            )
+        }else{
+            riwayats.updateRiwayatRelasi(
+                data.copy(
+                    chapterId = chapter_id,
+                    comicId = comicId,
+                    isRead = true,
+                    readAt = System.currentTimeMillis()
+                )
+            )
+
+            dao.updateIsRead(chapter_id, true)
+
         }
     }
 

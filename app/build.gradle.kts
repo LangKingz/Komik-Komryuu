@@ -101,4 +101,6 @@ dependencies {
     implementation("cn.pedant.sweetalert:library:1.3")
 
     implementation("com.github.taimoorsultani:android-sweetalert2:2.0.2")
+
+    implementation("androidx.paging:paging-runtime-ktx:3.3.6")
 }

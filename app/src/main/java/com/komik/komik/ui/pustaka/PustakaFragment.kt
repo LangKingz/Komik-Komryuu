@@ -1,5 +1,6 @@
 package com.komik.komik.ui.pustaka
 
+import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -66,15 +67,31 @@ class PustakaFragment : Fragment() {
 
         CoroutineScope(Dispatchers.IO).launch {
             val data = library.getLibrary()
+            val pref = requireContext().getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+            val isSafe = pref.getBoolean("safemode", false)
             withContext(Dispatchers.Main) {
                 data.observe(viewLifecycleOwner) { data ->
-                    if (data.isNotEmpty()) {
-                        adapter.setData(data)
-                        binding.listPustaka.adapter = adapter
-                        binding.loading.visibility = View.GONE
-                    } else {
-                        binding.placeholder.visibility = View.VISIBLE
-                        binding.listPustaka.visibility = View.GONE
+                    if(isSafe){
+                        val filter = data.filter { it ->
+                            it.comic.tags != "adult"
+                        }
+                        if (filter.isNotEmpty()) {
+                            adapter.setData(filter)
+                            binding.listPustaka.adapter = adapter
+                            binding.loading.visibility = View.GONE
+                        } else {
+                            binding.placeholder.visibility = View.VISIBLE
+                            binding.listPustaka.visibility = View.GONE
+                        }
+                    }else{
+                        if (data.isNotEmpty()) {
+                            adapter.setData(data)
+                            binding.listPustaka.adapter = adapter
+                            binding.loading.visibility = View.GONE
+                        } else {
+                            binding.placeholder.visibility = View.VISIBLE
+                            binding.listPustaka.visibility = View.GONE
+                        }
                     }
                 }
             }

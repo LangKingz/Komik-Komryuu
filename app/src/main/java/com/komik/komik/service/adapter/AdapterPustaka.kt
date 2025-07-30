@@ -31,18 +31,12 @@ class AdapterPustaka(private val list : MutableList<LibraryDetail>) : RecyclerVi
             val comic = data.library
             val tag = data.comic.tags
 
-            if(comic.imageLokal != null){
-                finalpath = comic.imageLokal
-            }else{
-                finalpath = data.comic.imageUrl
-            }
-
             if (tag == "adult"){
                 binding.tagAdult.visibility = View.VISIBLE
             }
 
             Glide.with(itemView.context)
-                .load(finalpath)
+                .load(data.comic.localImageUri)
                 .error(R.drawable.placeholder)
                 .into(binding.coverUrl)
         }

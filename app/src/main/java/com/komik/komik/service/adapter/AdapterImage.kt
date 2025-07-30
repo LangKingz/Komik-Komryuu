@@ -4,6 +4,8 @@ import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.paging.PagingDataAdapter
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -18,7 +20,7 @@ import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getImages
 
 class AdapterImage(
-    private val list: List<getImages>,
+    private val list: MutableList<getImages>,
     private val type: sourceType,
     val refererUrl: String? = null
 ) :
@@ -113,6 +115,25 @@ class AdapterImage(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(list[position])
+    }
+
+    fun updateList(newList: List<getImages>) {
+        list.clear()
+        list.addAll(newList)
+        notifyDataSetChanged()
+    }
+
+    fun addList(newList: List<getImages>) {
+        val currentSize = list.size
+        list.addAll(newList)
+        notifyItemRangeInserted(currentSize, newList.size)
+    }
+
+    fun clear() {
+        val size = list.size
+        list.clear()
+        // Gunakan notifyItemRangeRemoved agar lebih efisien dan ada animasinya
+        notifyItemRangeRemoved(0, size)
     }
 
 }

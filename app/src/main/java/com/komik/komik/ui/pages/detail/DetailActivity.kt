@@ -34,6 +34,7 @@ import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.repository.Detail
 import com.komik.komik.service.utils.downloadAndSaveImage
 import com.komik.komik.service.utils.genereteId
+import com.komik.komik.service.utils.typeSource
 import com.komik.komik.ui.pages.read.ReadActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -77,18 +78,7 @@ class DetailActivity : AppCompatActivity() {
 
         val title = binding.title.text
 
-        val source = when (location) {
-            "ikiru" -> sourceType.ikiru
-            "komikcast" -> sourceType.komikcast
-            "kiryuu" -> sourceType.kiryuu
-            "komiku" -> sourceType.komiku
-            "comicscan" -> sourceType.comicscan
-            "shinigami" -> sourceType.shinigami
-            "manhwaindo" -> sourceType.manhwaindo
-            "batoto-all" -> sourceType.batoto_all
-            "dd" -> sourceType.doujindesu
-            else -> sourceType.ikiru
-        }
+        val source = typeSource.getSourceType(location.toString())
 
         sources = source
 
@@ -200,14 +190,13 @@ class DetailActivity : AppCompatActivity() {
         try {
             CoroutineScope(Dispatchers.IO).launch {
                 val id = genereteId()
-                val dataPathImage =
-                    downloadAndSaveImage(this@DetailActivity, imageUrl.toString(), id.toLong())
 
-                if (dataPathImage != null) {
+
+                if (imageUrl != null) {
                     libraryDao.insertLibrary(
                         Library(
                             comicId = chapterId,
-                            imageLokal = dataPathImage
+                            imageLokal = imageUrl
                         )
                     )
 

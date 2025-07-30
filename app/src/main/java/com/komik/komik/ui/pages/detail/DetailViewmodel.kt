@@ -94,7 +94,7 @@ class DetailViewmodel(
                         _dataChapterDetail.postValue(data)
                         val genre = genreDao.getGenreByComicTitle(data.title)
                         _dataGenre.postValue(genre)
-                        val chapter = chapterDao.getChaptersForComic(data.title)
+                        val chapter = chapterDao.getChapterForComic(data.id, data.location)
                         _dataChapter.postValue(chapter)
                     }
                 }
