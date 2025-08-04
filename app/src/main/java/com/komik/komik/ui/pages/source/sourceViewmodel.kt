@@ -29,12 +29,12 @@ class sourceViewmodel: ViewModel() {
     val repository : Comic = Comic(client)
 
 
-    fun getSource(type:sourceType){
+    fun getSource(type:sourceType,url:String,page:Int){
         _loading.postValue(true)
         viewModelScope.launch {
             try {
-                val result = repository.getComic(type,"")
-                Log.d("sourceViewmodel", "getSource: $result")
+                val result = repository.getComic(type,url,page)
+                Log.d("sourceViewmodel", "getSource: ${result.size}")
                 _source.value = result
                 _loading.postValue(false)
             }catch (e:Exception){
@@ -47,17 +47,16 @@ class sourceViewmodel: ViewModel() {
         }
     }
 
-    fun search (type: sourceType,query:String=""){
+    fun search (type: sourceType,query:String,url: String){
         _loading.postValue(true)
         viewModelScope.launch {
             try {
-                val response = repository.getSearch(type,query)
+                val response = repository.getSearch(type,query,url)
                 _search.postValue(response)
-                _loading.postValue(false)
-
             }catch (e:Exception){
                 e.printStackTrace()
                 _error.postValue(e.message)
+            }finally {
                 _loading.postValue(false)
             }
         }

@@ -4,6 +4,7 @@ import android.util.Log
 import com.komik.komik.service.client
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.modelrepository.RepositroyComic
+import com.komik.komik.service.parser.cinema.CinemaParser
 import com.komik.komik.service.parser.comic.SearchParser
 import com.komik.komik.service.parser.comic.SourceParser
 import com.komik.komik.service.parser.comic.comicParser
@@ -16,7 +17,7 @@ import okhttp3.Request
 import org.jsoup.Jsoup
 
 class Comic(val client: client) : RepositroyComic {
-    override suspend fun getComic(type: sourceType, url: String): List<getListUpdate> {
+    override suspend fun getComic(type: sourceType, url: String, pages: Int): List<getListUpdate> {
 
         return withContext(Dispatchers.IO) {
             when (type) {
@@ -24,9 +25,9 @@ class Comic(val client: client) : RepositroyComic {
 
                     val result = mutableListOf<getListUpdate>()
 
-                    for (page in 2..10) {
+                    for (page in 2..pages) {
                         val html =
-                            client.Komikcast.getHtml("https://komikcast.li/daftar-komik/page/$page/?sortby=update")
+                            client.Komikcast.getHtml("${url}daftar-komik/page/$page/?sortby=update")
                         val document = Jsoup.parse(html)
                         val pageData = SourceParser.parseKomikcast(document).toList()
                         result.addAll(pageData)
@@ -40,9 +41,9 @@ class Comic(val client: client) : RepositroyComic {
                 sourceType.ikiru -> {
 
                     val result = mutableListOf<getListUpdate>()
-                    for (page in 1..10) {
+                    for (page in 1..pages) {
                         val html =
-                            client.Ikiru.getHtml("https://id.ikiru.wtf/latest-update/?the_page=$page")
+                            client.Ikiru.getHtml("${url}latest-update/?the_page=$page")
                         val document = Jsoup.parse(html)
                         val pageData = SourceParser.parseIkiru(document).toList()
 
@@ -57,7 +58,7 @@ class Comic(val client: client) : RepositroyComic {
                     val data = mutableListOf<getListUpdate>()
 
                     for (page in 1..10) {
-                        val result = SourceParser.parseShinigami(client, page,"")
+                        val result = SourceParser.parseShinigami(client, page)
                         Log.d(TAG, "getComic: ${result?.size}")
                         data.addAll(result!!)
                     }
@@ -68,9 +69,9 @@ class Comic(val client: client) : RepositroyComic {
                 sourceType.comicscan -> {
                     val result = mutableListOf<getListUpdate>()
 
-                    for (page in 1..10) {
+                    for (page in 1..pages) {
                         val html =
-                            client.Comicscan.getHtml("https://lc3.cosmicscans.asia/manga/?page=$page&order=update")
+                            client.Comicscan.getHtml("${url}manga/?page=$page&order=update")
                         val document = Jsoup.parse(html)
                         val pageData = SourceParser.parseComicscan(document).toList()
                         result.addAll(pageData)
@@ -84,9 +85,9 @@ class Comic(val client: client) : RepositroyComic {
                 sourceType.kiryuu -> {
                     val result = mutableListOf<getListUpdate>()
 
-                    for (page in 1..10) {
+                    for (page in 1..pages) {
                         val html =
-                            com.komik.komik.service.client.Ikiru.getHtml("https://kiryuu02.com/manga/?page=$page&order=update")
+                            com.komik.komik.service.client.Ikiru.getHtml("${url}manga/?page=$page&order=update")
                         val document = Jsoup.parse(html)
 
                         val pageData = SourceParser.parseKiryuu(document)
@@ -98,9 +99,9 @@ class Comic(val client: client) : RepositroyComic {
                 sourceType.manhwaindo -> {
                     val result = mutableListOf<getListUpdate>()
 
-                    for (page in 1..10) {
+                    for (page in 1..pages) {
                         val html =
-                            client.Ikiru.getHtml("https://manhwaindo.com/series/?page=$page&order=update")
+                            client.Ikiru.getHtml("${url}series/?page=$page&order=update")
                         val document = Jsoup.parse(html)
                         val pageData = SourceParser.parseManhwaindo(document)
 
@@ -115,7 +116,7 @@ class Comic(val client: client) : RepositroyComic {
                 sourceType.batoto_all -> {
                     val result = mutableListOf<getListUpdate>()
 
-                    for (page in 1..10) {
+                    for (page in 1..pages) {
                         val html =
                             client.ScrapeDataImage.getHtml("https://bato.si/v4x-latest/$page")
                         val document = Jsoup.parse(html)
@@ -132,10 +133,24 @@ class Comic(val client: client) : RepositroyComic {
                 sourceType.doujindesu -> {
                     val result = mutableListOf<getListUpdate>()
 
-                    for(page in 1..10){
+                    for (page in 1..pages) {
                         val html = client.Ikiru.getHtml("https://doujindesu.tv/manhwa/page/$page/")
                         val document = Jsoup.parse(html)
                         val pageData = SourceParser.parseDoujindesu(document)
+
+                        result.addAll(pageData)
+                    }
+
+                    result
+                }
+
+                sourceType.otakudesu -> {
+                    val result = mutableListOf<getListUpdate>()
+
+                    for (page in 1..10) {
+                        val html = client.Ikiru.getHtml("${url}ongoing-anime/page/$page/")
+                        val document = Jsoup.parse(html)
+                        val pageData = CinemaParser.parswerOtakuDesu(document)
 
                         result.addAll(pageData)
                     }
@@ -149,22 +164,23 @@ class Comic(val client: client) : RepositroyComic {
 
     }
 
-    override suspend fun getSearch(type: sourceType, query: String): List<getListUpdate> {
+    override suspend fun getSearch(type: sourceType, query: String,url: String): List<getListUpdate> {
         val result = mutableListOf<getListUpdate>()
         return when (type) {
             sourceType.komikcast -> {
-                val url = "https://komikcast.li/?s=$query"
+                val url = "${url}?s=$query"
                 val html = client.Komikcast.getHtml(url)
                 val document = Jsoup.parse(html)
                 val page = SourceParser.parseKomikcast(document)
                 result.addAll(page)
                 Log.d(TAG, "getSearch: ${result.size}")
-                if(result.isNotEmpty()){
+                if (result.isNotEmpty()) {
                     result
-                }else{
+                } else {
                     emptyList()
                 }
             }
+
             sourceType.ikiru -> {
                 withContext(Dispatchers.IO) {
                     val client = OkHttpClient()
@@ -174,7 +190,7 @@ class Comic(val client: client) : RepositroyComic {
                         .build()
 
                     val request = Request.Builder()
-                        .url("https://id.ikiru.wtf/ajax-call?nonce=d33262ad29&action=search")
+                        .url("${url}ajax-call?nonce=145476235a&action=search")
                         .post(formBody) // Tentukan metode POST dengan body yang sudah dibuat
                         .header(
                             "User-Agent",
@@ -212,19 +228,16 @@ class Comic(val client: client) : RepositroyComic {
 
             sourceType.shinigami -> {
 
-                val data = SourceParser.parseShinigami(client, 24,query)
+                val data = SearchParser.parseShinigami(client, 24, query)
                 Log.d(TAG, "getComic: ${data?.size}")
-                result.addAll(data!!)
+                result.addAll(data ?: emptyList())
 
-                if (result.isNotEmpty()){
-                    Log.d(TAG, "getSearch: ${result.size}")
-                    result
-                }else{
-                    emptyList()
-                }
+                result
+
             }
+
             sourceType.comicscan -> {
-                val url = "https://lc3.cosmicscans.asia/?s=$query"
+                val url = "${url}?s=$query"
                 val html = client.Comicscan.getHtml(url)
 
                 val document = Jsoup.parse(html)
@@ -235,8 +248,9 @@ class Comic(val client: client) : RepositroyComic {
 
                 result
             }
+
             sourceType.kiryuu -> {
-                val url = "https://kiryuu02.com/?s=$query"
+                val url = "${url}?s=$query"
                 val html = client.Comicscan.getHtml(url)
                 val document = Jsoup.parse(html)
                 val page = SourceParser.parseKiryuu(document)
@@ -245,7 +259,30 @@ class Comic(val client: client) : RepositroyComic {
 
                 result
             }
+
             sourceType.komiku -> {
+                result
+            }
+
+            sourceType.manhwaindo -> {
+                val url = "${url}?s=$query"
+                val html = client.Ikiru.getHtml(url)
+                val document = Jsoup.parse(html)
+
+                val dataPaged = SourceParser.parseManhwaindo(document)
+                result.addAll(dataPaged)
+
+                result
+            }
+
+            sourceType.doujindesu -> {
+                val url = "${url}?s=$query"
+                val html = client.Ikiru.getHtml(url)
+                val document = Jsoup.parse(html)
+
+                val dataPaged = SourceParser.parseDoujindesu(document)
+                result.addAll(dataPaged)
+
                 result
             }
 

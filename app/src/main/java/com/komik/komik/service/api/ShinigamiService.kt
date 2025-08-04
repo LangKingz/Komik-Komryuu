@@ -18,7 +18,13 @@ interface ShinigamiService {
         @Query("genre_exclude_mode") genreExcludeMode:String= "or",
         @Query("sort_order") sortOrder:String= "desc",
         @Query("sort") sortBy:String,
-        @Query("q") query:String?=null,
+    ): ShinigamiHomeExplore
+
+    @GET("v1/manga/list")
+    suspend fun getSearchMangaList(
+        @Query("page") page:Int=1,
+        @Query("page_size") pageSize:Int=24,
+        @Query("q") query:String
     ): ShinigamiHomeExplore
 
     @GET("v1/manga/detail/{id}")

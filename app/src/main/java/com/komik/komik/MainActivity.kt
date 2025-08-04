@@ -12,6 +12,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.komik.komik.databinding.ActivityMainBinding
 import com.komik.komik.service.client
@@ -55,7 +56,13 @@ class MainActivity : AppCompatActivity() {
         navRail?.setupWithNavController(navController)
 
         binding.btnSearch?.setOnClickListener {
-            Snackbar.make(binding.root, "Coming Soon", Snackbar.LENGTH_SHORT).show()
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Cari Komik")
+                .setMessage("Cari komik yang kamu inginkan")
+                .setNeutralButton("cancel"){dialog,which ->
+                    dialog.dismiss()
+                }
+                .show()
 
         }
 

@@ -25,9 +25,12 @@ class ApplicationAndroid : Application() {
         val pref = getSharedPreferences("app_settings", MODE_PRIVATE)
         val edit = pref.edit()
 
+        val safe = pref.getBoolean("safemode",false)
+
         edit.putBoolean("fullscreen",true)
         edit.putBoolean("update",false)
         edit.putBoolean("pindah",true)
+        edit.putBoolean("safemode",safe)
         edit.apply()
 
     }

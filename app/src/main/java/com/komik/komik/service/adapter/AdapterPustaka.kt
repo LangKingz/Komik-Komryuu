@@ -6,8 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.komik.komik.R
 import com.komik.komik.databinding.CardDailyBinding
+import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.LibraryDetail
@@ -16,22 +18,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class AdapterPustaka(private val list : MutableList<LibraryDetail>) : RecyclerView.Adapter<AdapterPustaka.ViewHolder>() {
-    class ViewHolder(private val binding: CardDailyBinding) : RecyclerView.ViewHolder(binding.root) {
+class AdapterPustaka(private val list: MutableList<LibraryDetail>) :
+    RecyclerView.Adapter<AdapterPustaka.ViewHolder>() {
+    class ViewHolder(private val binding: CardDailyBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         val context = itemView.context
 
         val dbUtama = DatabaseRiwayats.getDatabase(context)
         val daoComic = dbUtama.comicdao()
         val libraryDao = dbUtama.libraryDao()
 
-        fun bind(data: LibraryDetail){
+        fun bind(data: LibraryDetail) {
             binding.judul.text = data.comic.title
 
             val finalpath: String
             val comic = data.library
             val tag = data.comic.tags
 
-            if (tag == "adult"){
+            if (tag == "adult") {
                 binding.tagAdult.visibility = View.VISIBLE
             }
 
@@ -41,18 +45,19 @@ class AdapterPustaka(private val list : MutableList<LibraryDetail>) : RecyclerVi
                 .into(binding.coverUrl)
         }
 
-         fun deleteComidData(comic_id:Int,comicTitle:String){
+        fun deleteComidData(comic_id: Int, comicTitle: String) {
             CoroutineScope(Dispatchers.IO).launch {
                 daoComic.deleteChapterById(comic_id)
                 daoComic.deleteGenreByTitle(comicTitle)
                 daoComic.deleteComicByUrl(comic_id)
                 libraryDao.deleteLibrary(comic_id)
+
             }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = CardDailyBinding.inflate(LayoutInflater.from(parent.context),parent,false)
+        val binding = CardDailyBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
     }
 
@@ -60,6 +65,8 @@ class AdapterPustaka(private val list : MutableList<LibraryDetail>) : RecyclerVi
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(list[position])
+
+        val context = holder.itemView.context
 
         holder.itemView.setOnClickListener {
             val intent = Intent(holder.itemView.context, DetailActivity::class.java).apply {
@@ -71,7 +78,19 @@ class AdapterPustaka(private val list : MutableList<LibraryDetail>) : RecyclerVi
         }
 
         holder.itemView.setOnLongClickListener {
-            holder.deleteComidData(list[position].comic.id,list[position].comic.title)
+            AlertDialogCostum(
+                context,
+                "Hapus",
+                "Yakin ingin menghapus ${list[position].comic.title}?",
+                onPositive = {dialog ->
+                    removeItemWithContext(holder.adapterPosition, context)
+                    dialog.dismiss()
+                },
+                onNegative = {
+                    it.dismiss()
+                }
+            ).show()
+
             true
         }
     }
@@ -96,5 +115,26 @@ class AdapterPustaka(private val list : MutableList<LibraryDetail>) : RecyclerVi
         list.clear()
         list.addAll(newData)
         notifyDataSetChanged()
+    }
+
+    // Dan fungsinya menjadi:
+    fun removeItemWithContext(position: Int, context: android.content.Context) {
+        if (position >= 0 && position < list.size) {
+            val itemToDelete = list[position]
+            val dbUtama = DatabaseRiwayats.getDatabase(context)
+            val daoComic = dbUtama.comicdao()
+            val libraryDao = dbUtama.libraryDao()
+
+            CoroutineScope(Dispatchers.IO).launch {
+                daoComic.deleteChapterById(itemToDelete.comic.id)
+                daoComic.deleteGenreByTitle(itemToDelete.comic.title)
+                daoComic.deleteComicByUrl(itemToDelete.comic.id)
+                libraryDao.deleteLibrary(itemToDelete.comic.id)
+            }
+
+            list.removeAt(position)
+            notifyItemRemoved(position)
+            notifyItemRangeChanged(position, list.size)
+        }
     }
 }

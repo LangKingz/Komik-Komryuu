@@ -16,8 +16,10 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.komik.komik.R
 import com.komik.komik.databinding.ImagelayoutBinding
+import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getImages
+import com.komik.komik.service.utils.downloadImageManager
 
 class AdapterImage(
     private val list: MutableList<getImages>,
@@ -30,6 +32,8 @@ class AdapterImage(
         val type: sourceType,
         val refererUrl: String
     ) : RecyclerView.ViewHolder(binding.root) {
+
+        val context = itemView.context
         fun bind(data: getImages) {
             when (type) {
                 sourceType.doujindesu -> {
@@ -103,6 +107,22 @@ class AdapterImage(
                 }
 
             }
+
+            binding.imagechapter.setOnLongClickListener {
+                AlertDialogCostum(
+                    context,
+                    "Unduh",
+                    "Apakah anda yakin ingin mendownload gambar ini?",
+                    onPositive = { dialog ->
+                        downloadImageManager(context, data.image)
+                    },
+                    onNegative = { dialog ->
+                        dialog.dismiss()
+                    }
+
+                )
+                true
+            }
         }
     }
 
@@ -115,6 +135,10 @@ class AdapterImage(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(list[position])
+
+        val context = holder.itemView.context
+
+
     }
 
     fun updateList(newList: List<getImages>) {

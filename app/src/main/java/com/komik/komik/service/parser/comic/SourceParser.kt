@@ -15,7 +15,8 @@ object SourceParser {
                     urlImage = it.select(".limit img").attr("src")
                         ?: "https://cosmic345.co/img/noimage.png",
                     link = it.select("a").attr("href"),
-                    location = "comicscan"
+                    location = "comicscan",
+                    tagModel = "komik"
                 )
             }
     }
@@ -28,13 +29,14 @@ object SourceParser {
                     title = it.select("a").attr("title"),
                     urlImage = it.select(".limit img").attr("src"),
                     link = it.select("a").attr("href"),
-                    location = "kiryuu"
+                    location = "kiryuu",
+                    tagModel = "komik"
                 )
             }
     }
 
-    suspend fun parseShinigami(client: client, page: Int,query: String): List<getListUpdate>? {
-        val response = client.Shinigami.getMangaList(pageSize = 24, page = page, sortBy = "latest", query = query)
+    suspend fun parseShinigami(client: client, page: Int): List<getListUpdate>? {
+        val response = client.Shinigami.getMangaList(pageSize = 24, page = page, sortBy = "latest")
         val pageData = response.data
 
         return pageData?.mapIndexed { index, item ->
@@ -43,7 +45,8 @@ object SourceParser {
                 title = item?.title.toString(),
                 urlImage = item?.coverImageUrl.toString(),
                 link = item?.mangaId.toString(),
-                location = "shinigami"
+                location = "shinigami",
+                tagModel = "komik"
 
             )
         }
@@ -60,7 +63,8 @@ object SourceParser {
                 urlImage = it.select("a.relative img").attr("src")
                     ?: "https://cosmic345.co/img/noimage.png",
                 link = it.select("a.relative").attr("href"),
-                location = "ikiru"
+                location = "ikiru",
+                tagModel = "komik"
             )
         }
     }
@@ -74,7 +78,8 @@ object SourceParser {
                     title = it.select(".list-update_item-info h3").text(),
                     urlImage = it.select(".list-update_item-image img").attr("src"),
                     link = link,
-                    location = "komikcast"
+                    location = "komikcast",
+                    tagModel = "komik"
                 )
             }
     }
@@ -88,7 +93,8 @@ object SourceParser {
                 title = it.select(".ls2j h3").text(),
                 urlImage = it.select(".ls2v a img").attr("data-src") ?: "",
                 link = link,
-                location = "komiku"
+                location = "komiku",
+                tagModel = "komik"
             )
         }
     }
@@ -102,7 +108,8 @@ object SourceParser {
                     urlImage = it.select(".limit img").attr("src")
                         ?: "https://cosmic345.co/img/noimage.png",
                     link = it.select("a").attr("href"),
-                    location = "manhwaindo"
+                    location = "manhwaindo",
+                    tagModel = "komik"
                 )
             }
     }
@@ -120,7 +127,8 @@ object SourceParser {
                     title = element.select("h3 a.link-hover span").text(),
                     urlImage = baseUrl + element.select(".shrink-0 .group img.rounded").attr("src"),
                     link = baseUrl + element.select(".group a").attr("href"),
-                    location = "batoto-all"
+                    location = "batoto-all",
+                    tagModel = "komik"
                 )
             }
     }
@@ -134,7 +142,8 @@ object SourceParser {
                 title = element.select(".entry a").attr("title"),
                 urlImage = element.select(".thumbnail img").attr("src"),
                 link =baseurl+ element.select(".entry a").attr("href"),
-                location = "dd"
+                location = "dd",
+                tagModel = "komik"
                 )
         }
     }

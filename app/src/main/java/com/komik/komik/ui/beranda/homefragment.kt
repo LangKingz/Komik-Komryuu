@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.bumptech.glide.Glide
@@ -15,6 +16,7 @@ import com.komik.komik.databinding.FragmentHomefragmentBinding
 import com.komik.komik.service.adapter.AdapterRiwayatSource
 import com.komik.komik.service.api.model.ListItem
 import com.komik.komik.service.adapter.AdapterSource
+import com.komik.komik.service.api.model.DataItems
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.riwayatDao
 import com.komik.komik.service.data.dao.riwayatRelationDao
@@ -54,7 +56,7 @@ class homefragment : Fragment() {
         dbUtama = DatabaseRiwayats.getDatabase(requireContext())
         riwayatdao = dbUtama.riwayatdao()
 
-
+        init()
 
         return root
     }
@@ -62,15 +64,25 @@ class homefragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-//        inisialisasi recyclerview
-        binding.latestopen.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        binding.listSource.layoutManager =
-            StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-
         viewmodel.source.observe(viewLifecycleOwner, { source ->
-            adapter = AdapterSource(source as MutableList<ListItem>)
+            adapter = AdapterSource(source as MutableList<DataItems>)
             binding.listSource.adapter = adapter
+
+            val spanCount = 2
+
+            val layoumanager = GridLayoutManager(requireContext(), spanCount)
+
+            layoumanager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup(){
+                override fun getSpanSize(position: Int): Int {
+                    return when(adapter.getItemViewType(position)){
+                        AdapterSource.VIEW_TYPE_HEADER -> spanCount
+                        AdapterSource.VIEW_TYPE_ITEM -> 1
+                        else -> 1
+                    }
+                }
+            }
+
+            binding.listSource.layoutManager = layoumanager
         })
 
         viewmodel.loading.observe(viewLifecycleOwner, { loading ->
@@ -171,6 +183,12 @@ class homefragment : Fragment() {
 
             }
         }
+    }
+
+    fun init (){
+        binding.latestopen.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+
     }
 
     override fun onDestroy() {

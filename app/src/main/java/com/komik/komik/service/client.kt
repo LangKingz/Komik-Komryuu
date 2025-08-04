@@ -7,6 +7,7 @@ import com.komik.komik.service.api.ScrapeIkiru
 import com.komik.komik.service.api.ScrapeKomikcast
 import com.komik.komik.service.api.ShinigamiService
 import com.komik.komik.service.api.SourceService
+import com.komik.komik.service.api.newSourceService
 import com.komik.komik.service.utils.generateFakeCookie
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -20,6 +21,8 @@ object client {
     private const val IkiruUrl = "https://id.ikiru.wtf/"
     private const val KomikcastUrl = "https://komikcast.li/"
     private const val ComicscanUrl = "https://lc3.cosmicscans.asia/"
+
+    private const val Komryuux ="https://komryuu-x.vercel.app/"
 
 
     val Shinigami: ShinigamiService by lazy {
@@ -143,6 +146,26 @@ object client {
             .addConverterFactory(ScalarsConverterFactory.create())
             .build()
             .create(Scrape::class.java)
+    }
+
+    val KomryuuxSource : newSourceService by lazy {
+        Retrofit.Builder()
+            .baseUrl(Komryuux)
+            .client(OkHttpClient.Builder()
+                .addInterceptor { chain ->
+                    val request = chain.request().newBuilder()
+                        .header(
+                            "User-Agent",
+                            "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1"
+                        )
+                        .build()
+                    chain.proceed(request)
+                }
+                .build()
+            )
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(newSourceService::class.java)
     }
 
 

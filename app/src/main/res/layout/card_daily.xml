@@ -60,4 +60,17 @@
         app:layout_constraintHorizontal_bias="0.965"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <TextView
+        android:id="@+id/chinema"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/text_slate_900"
+        android:padding="6dp"
+        android:text="Episode 18"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/judul"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

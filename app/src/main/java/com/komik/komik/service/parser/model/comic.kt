@@ -41,6 +41,8 @@ data class getListUpdate(
     val urlImage : String,
     val link : String,
     val location: String? = null,
+    val tagModel : String? = null,
+    val chapter : String? = null
 )
 
 data class getChapter(

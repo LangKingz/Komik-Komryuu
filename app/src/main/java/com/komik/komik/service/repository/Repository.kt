@@ -1,6 +1,7 @@
 package com.komik.komik.service.repository
 
 import com.komik.komik.service.api.model.DataItem
+import com.komik.komik.service.api.model.DataItems
 import com.komik.komik.service.api.model.ListItem
 import com.komik.komik.service.api.model.ShinigamiHomeExplore
 import com.komik.komik.service.client
@@ -18,11 +19,11 @@ class Repository(private val client:client): RepositorySource {
         return data
     }
 
-    override suspend fun getSourceExtension(): List<ListItem> {
-        val response = client.Source.getSource()
+    override suspend fun getSourceExtension(): List<DataItems> {
+        val response = client.KomryuuxSource.getSource()
 
-        val data = response.list
-        return data as List<ListItem>
+        val data = response.data
+        return data as List<DataItems>
     }
 
 }

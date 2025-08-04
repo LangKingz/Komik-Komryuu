@@ -14,6 +14,7 @@ object typeSource {
             "manhwaindo" -> sourceType.manhwaindo
             "dd" -> sourceType.doujindesu
             "batoto-all" -> sourceType.batoto_all
+            "otaku" -> sourceType.otakudesu
             else -> sourceType.ikiru
         }
     }

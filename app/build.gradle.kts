@@ -103,4 +103,6 @@ dependencies {
     implementation("com.github.taimoorsultani:android-sweetalert2:2.0.2")
 
     implementation("androidx.paging:paging-runtime-ktx:3.3.6")
+
+    implementation("androidx.work:work-runtime-ktx:2.10.3")
 }

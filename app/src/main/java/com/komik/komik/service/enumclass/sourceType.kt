@@ -9,5 +9,6 @@ enum class sourceType {
     komiku,
     manhwaindo,
     batoto_all,
-    doujindesu
+    doujindesu,
+    otakudesu
 }

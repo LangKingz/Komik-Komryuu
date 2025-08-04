@@ -174,11 +174,12 @@ class DetailActivity : AppCompatActivity() {
 
             binding.btnBaca.setOnClickListener {
                 val intent = Intent(this@DetailActivity, ReadActivity::class.java)
-                intent.putExtra(ReadActivity.EXTRA_URL, chapter.first().chapter.link)
-                intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.first().chapter.title)
-                intent.putExtra(ReadActivity.EXTRA_TYPE, chapter.first().chapter.location)
-                intent.putExtra(ReadActivity.EXTRA_ID, chapter.first().chapter.id)
-                intent.putExtra("num", chapter.first().chapter.numChapter)
+                intent.putExtra(ReadActivity.EXTRA_URL, chapter.last().chapter.link)
+                intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.last().chapter.title)
+                intent.putExtra(ReadActivity.EXTRA_TYPE, chapter.last().chapter.location)
+                intent.putExtra(ReadActivity.EXTRA_ID, chapter.last().chapter.id)
+                intent.putExtra("num", chapter.last().chapter.numChapter)
+                intent.putExtra(ReadActivity.EXTRA_ID_COMIC, chapter.last().chapter.comicId)
                 startActivity(intent)
             }
 

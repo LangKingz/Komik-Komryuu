@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.komik.komik.service.api.model.DataItem
+import com.komik.komik.service.api.model.DataItems
 import com.komik.komik.service.api.model.ListItem
 import com.komik.komik.service.client
 import com.komik.komik.service.repository.Repository
@@ -17,8 +18,8 @@ class Searchviewmodel:ViewModel() {
     private var _corousel = MutableLiveData<List<DataItem>?>()
     val corousel: MutableLiveData<List<DataItem>?>
         get() = _corousel
-    private var _daily = MutableLiveData<List<ListItem>?>()
-    val daily: MutableLiveData<List<ListItem>?>
+    private var _daily = MutableLiveData<List<DataItems>?>()
+    val daily: MutableLiveData<List<DataItems>?>
         get() = _daily
 
     private var _loading = MutableLiveData<Boolean>()

@@ -1,5 +1,6 @@
 package com.komik.komik.service.parser.comic
 
+import com.komik.komik.service.client
 import com.komik.komik.service.parser.model.getListUpdate
 import org.jsoup.nodes.Document
 
@@ -22,6 +23,22 @@ object SearchParser {
             )
         }
 
+    }
+
+    suspend fun parseShinigami(client: client, page: Int, query: String): List<getListUpdate>? {
+        val response = client.Shinigami.getSearchMangaList(query = query)
+        val pageData = response.data
+
+        return pageData?.mapIndexed { index, item ->
+            getListUpdate(
+                index = index,
+                title = item?.title.toString(),
+                urlImage = item?.coverImageUrl.toString(),
+                link = item?.mangaId.toString(),
+                location = "shinigami"
+
+            )
+        }
     }
 
 }

@@ -2,9 +2,11 @@ package com.komik.komik.service.adapter
 
 import android.content.Intent
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.snackbar.Snackbar
 import com.komik.komik.R
 import com.komik.komik.databinding.CardDailyBinding
 import com.komik.komik.service.parser.model.getListUpdate
@@ -14,13 +16,18 @@ class AdapterManhwa(private val list: MutableList<getListUpdate>) :
     RecyclerView.Adapter<AdapterManhwa.viewHolder>() {
     class viewHolder(private val binding: CardDailyBinding) :
         RecyclerView.ViewHolder(binding.root) {
-
             fun bind(item: getListUpdate) {
+                if(item.tagModel == "cinema"){
+                    binding.chinema.visibility = View.VISIBLE
+                }
                 binding.judul.text = item.title
                 Glide.with(itemView.context)
                     .load(item.urlImage)
                     .error(R.drawable.placeholder)
                     .into(binding.coverUrl)
+
+                binding.chinema.text = item.chapter
+
             }
 
     }
@@ -35,13 +42,20 @@ class AdapterManhwa(private val list: MutableList<getListUpdate>) :
     }
 
     override fun onBindViewHolder(holder: viewHolder, position: Int) {
-        holder.bind(list[position])
+
+        val currentItem = list[position]
+        val context = holder.itemView.context
+        holder.bind(currentItem)
 
         holder.itemView.setOnClickListener {
-            val intent = Intent(holder.itemView.context, DetailActivity::class.java)
-            intent.putExtra(DetailActivity.URL,list[position].link)
-            intent.putExtra(DetailActivity.LOCATION,list[position].location)
-            holder.itemView.context.startActivity(intent)
+            if(currentItem.tagModel== "komik"){
+                val intent = Intent(context, DetailActivity::class.java)
+                intent.putExtra(DetailActivity.URL,list[position].link)
+                intent.putExtra(DetailActivity.LOCATION,list[position].location)
+                context.startActivity(intent)
+            }else if(currentItem.tagModel == "cinema"){
+                Snackbar.make(holder.itemView,"Belum tersedia",Snackbar.LENGTH_SHORT).show()
+            }
         }
     }
 

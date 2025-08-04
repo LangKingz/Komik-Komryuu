@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.komik.komik.R
 import com.komik.komik.databinding.FragmentSettingBinding
+import com.komik.komik.service.component.BottomSheetCookie
 
 
 class SettingFragment : Fragment() {
@@ -38,6 +39,7 @@ class SettingFragment : Fragment() {
         binding.fullscreen.isChecked = fullscreen
         binding.pindah.isChecked = chapterPindah
         binding.update.isChecked = otomatisUpdate
+        binding.safemode.isChecked = safeMode
 
         binding.safemode.setOnCheckedChangeListener { buttonView, isChecked ->
             val editor = pref.edit()
@@ -62,6 +64,11 @@ class SettingFragment : Fragment() {
             val editor = pref.edit()
             editor.putBoolean("update",isChecked)
             editor.apply()
+        }
+
+        binding.CookieBs.setOnClickListener {
+            val bottomSheet = BottomSheetCookie()
+            bottomSheet.show(parentFragmentManager,"Cookie")
         }
 
 

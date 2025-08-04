@@ -3,6 +3,7 @@ package com.komik.komik.ui.beranda
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.komik.komik.service.api.model.DataItems
 import com.komik.komik.service.api.model.ListItem
 import com.komik.komik.service.client
 import com.komik.komik.service.repository.Repository
@@ -12,8 +13,8 @@ class Homeviewmodel : ViewModel() {
 
     val repository = Repository(client)
 
-    private var _source = MutableLiveData<List<ListItem>?>()
-    val source: MutableLiveData<List<ListItem>?>
+    private var _source = MutableLiveData<List<DataItems>?>()
+    val source: MutableLiveData<List<DataItems>?>
         get() = _source
 
     private var _loading = MutableLiveData<Boolean>()

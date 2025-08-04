@@ -6,8 +6,8 @@ import com.komik.komik.service.parser.model.ParsedData
 import com.komik.komik.service.parser.model.getListUpdate
 
 interface RepositroyComic {
-    suspend fun getComic(type:sourceType,url:String) : List<getListUpdate>
-    suspend fun getSearch(type: sourceType,query:String="") : List<getListUpdate>
+    suspend fun getComic(type:sourceType,url:String,pages:Int =10) : List<getListUpdate>
+    suspend fun getSearch(type: sourceType,query:String,url: String) : List<getListUpdate>
 
 
 }

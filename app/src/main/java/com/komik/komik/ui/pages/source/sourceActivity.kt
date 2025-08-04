@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.Menu
 import android.view.View
 import android.widget.SearchView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -22,6 +23,7 @@ import com.komik.komik.service.client
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.comic.SourceParser
 import com.komik.komik.service.parser.model.getListUpdate
+import com.komik.komik.service.utils.typeSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,6 +38,8 @@ class sourceActivity : AppCompatActivity() {
     private lateinit var adapterManhwa: AdapterManhwa
 
     private lateinit var locations : String
+
+    var urlSource: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,24 +69,16 @@ class sourceActivity : AppCompatActivity() {
         val url = intent.getStringExtra(URL)
         val location = intent.getStringExtra(location).toString()
 
+        urlSource = url.toString()
+
         locations = location
 
         binding.appbar.title = location
         binding.appbar.subtitle = url
 
-        when (location) {
-            "ikiru" -> viewmodel.getSource(sourceType.ikiru)
-            "comicscan" -> viewmodel.getSource(sourceType.comicscan)
-            "shinigami" -> viewmodel.getSource(sourceType.shinigami)
-            "komikcast" -> viewmodel.getSource(sourceType.komikcast)
-            "kiryuu" -> viewmodel.getSource(sourceType.kiryuu)
-            "komiku" -> viewmodel.getSource(sourceType.komiku)
-            "manhwaindo"-> viewmodel.getSource(sourceType.manhwaindo)
-            "batoto-all" -> viewmodel.getSource(sourceType.batoto_all)
-            "dd" -> viewmodel.getSource(sourceType.doujindesu)
-            else -> viewmodel.getSource(sourceType.ikiru)
-        }
+        val source = typeSource.getSourceType(location)
 
+        viewmodel.getSource(source,url.toString(),30)
 
         binding.appbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -97,6 +93,10 @@ class sourceActivity : AppCompatActivity() {
                 }
                 else -> false}
 
+        }
+
+        binding.again.setOnClickListener {
+            viewmodel.getSource(source,url.toString(),30)
         }
 
 
@@ -124,11 +124,7 @@ class sourceActivity : AppCompatActivity() {
 
         viewmodel.error.observe(this) { error ->
             if (error != null) {
-                Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG)
-                    .setAction("action") {
-                        finish()
-                    }
-                    .show()
+                binding.error.visibility = View.VISIBLE
             }
         }
     }
@@ -143,24 +139,15 @@ class sourceActivity : AppCompatActivity() {
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener,
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextChange(query: String?): Boolean {
-
-
                 return false
             }
             override fun onQueryTextSubmit(query: String?): Boolean {
 
-                when(locations){
-                    "ikiru" -> viewmodel.search(sourceType.ikiru,query.toString())
-                    "comicscan" -> viewmodel.search(sourceType.comicscan,query.toString())
-                    "shinigami" -> viewmodel.search(sourceType.shinigami,query.toString())
-                    "komikcast" -> viewmodel.search(sourceType.komikcast,query.toString())
-                    "kiryuu" -> viewmodel.search(sourceType.kiryuu,query.toString())
-                    "komiku" -> viewmodel.search(sourceType.komiku,query.toString())
-                    "manhwaindo"-> viewmodel.search(sourceType.manhwaindo,query.toString())
-                    "batoto-all" -> viewmodel.search(sourceType.batoto_all,query.toString())
-                    "dd" -> viewmodel.search(sourceType.doujindesu,query.toString())
-                    else -> viewmodel.search(sourceType.ikiru,query.toString())
-                }
+                Toast.makeText(this@sourceActivity, urlSource, Toast.LENGTH_SHORT).show()
+
+                val source = typeSource.getSourceType(locations)
+                viewmodel.search(source,query.toString(),urlSource)
+
                 return true
             }
         })

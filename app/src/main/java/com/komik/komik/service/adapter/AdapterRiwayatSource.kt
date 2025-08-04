@@ -37,7 +37,7 @@ class AdapterRiwayatSource(private val list: MutableList<RiwayatSource>): Recycl
             }
 
             Glide.with(itemView.context)
-                .load(url)
+                .load(item.imageUrl)
                 .error(R.drawable.placeholder)
                 .into(binding.imageView)
         }
