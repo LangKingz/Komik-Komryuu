@@ -22,5 +22,7 @@ fun downloadImageManager(context:Context,url:String){
     val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     downloadManager.enqueue(request)
 
-    Toast.makeText(context, "Mengunduh Gambar....", Toast.LENGTH_SHORT).show()
+
+    Toast.makeText(context, "Download Berhasil", Toast.LENGTH_SHORT).show()
+
 }

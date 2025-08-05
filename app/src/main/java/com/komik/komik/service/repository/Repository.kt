@@ -22,6 +22,7 @@ class Repository(private val client:client): RepositorySource {
     override suspend fun getSourceExtension(): List<DataItems> {
         val response = client.KomryuuxSource.getSource()
 
+//        val data = response.data?.filter { it?.type == "komik" }
         val data = response.data
         return data as List<DataItems>
     }

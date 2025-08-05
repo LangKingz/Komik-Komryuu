@@ -17,6 +17,7 @@ import com.komik.komik.service.adapter.AdapterRiwayatSource
 import com.komik.komik.service.api.model.ListItem
 import com.komik.komik.service.adapter.AdapterSource
 import com.komik.komik.service.api.model.DataItems
+import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.riwayatDao
 import com.komik.komik.service.data.dao.riwayatRelationDao
@@ -40,7 +41,7 @@ class homefragment : Fragment() {
     private lateinit var db: DatabaseRiwayatSource
     private lateinit var dao: sourceDao
     private lateinit var riwayatdao: riwayatRelationDao
-    private lateinit var dbUtama : DatabaseRiwayats
+    private lateinit var dbUtama: DatabaseRiwayats
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -72,9 +73,9 @@ class homefragment : Fragment() {
 
             val layoumanager = GridLayoutManager(requireContext(), spanCount)
 
-            layoumanager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup(){
+            layoumanager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
                 override fun getSpanSize(position: Int): Int {
-                    return when(adapter.getItemViewType(position)){
+                    return when (adapter.getItemViewType(position)) {
                         AdapterSource.VIEW_TYPE_HEADER -> spanCount
                         AdapterSource.VIEW_TYPE_ITEM -> 1
                         else -> 1
@@ -107,6 +108,17 @@ class homefragment : Fragment() {
                 binding.layoutRefresh.visibility = View.VISIBLE
             }
         })
+
+        binding.search.setOnClickListener {
+            AlertDialogCostum(
+                requireContext(),
+                "Search",
+                "Belum Tersedia",
+                { dialog ->
+                    dialog.cancel()
+                }
+            )
+        }
 
         binding.nestedScrollView.setOnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
             if (scrollY > 10) {
@@ -141,7 +153,7 @@ class homefragment : Fragment() {
                     }
                 })
 
-                dataRiwayat.observe(viewLifecycleOwner){riwayat ->
+                dataRiwayat.observe(viewLifecycleOwner) { riwayat ->
                     if (riwayat != null) {
                         binding.textView.visibility = View.VISIBLE
                         binding.frameDragon.visibility = View.VISIBLE
@@ -156,11 +168,12 @@ class homefragment : Fragment() {
                         val totalPage = riwayat.riwayat.totalPage
 
 // Cek dulu semua kemungkinan
-                        val progressPercentage = if (pageRead != null && totalPage != null && totalPage > 0) {
-                            (pageRead.toDouble() / totalPage.toDouble()) * 100
-                        } else {
-                            0
-                        }
+                        val progressPercentage =
+                            if (pageRead != null && totalPage != null && totalPage > 0) {
+                                (pageRead.toDouble() / totalPage.toDouble()) * 100
+                            } else {
+                                0
+                            }
                         binding.progressBaca.progress = progressPercentage.toInt()
 
 
@@ -175,7 +188,7 @@ class homefragment : Fragment() {
                             intent.putExtra("pageRead", pageRead)
                             requireContext().startActivity(intent)
                         }
-                    }else{
+                    } else {
                         binding.frameDragon.visibility = View.GONE
                         binding.textView.visibility = View.GONE
                     }
@@ -185,7 +198,7 @@ class homefragment : Fragment() {
         }
     }
 
-    fun init (){
+    fun init() {
         binding.latestopen.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
 

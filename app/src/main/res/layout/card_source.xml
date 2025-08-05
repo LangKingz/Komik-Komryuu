@@ -43,8 +43,8 @@
 
     <ImageView
         android:id="@+id/star"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         android:clickable="true"
@@ -52,9 +52,8 @@
         android:foreground="?attr/selectableItemBackground"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/download_cloud_line"
-        app:tint="@color/color_star"
-     />
+        app:srcCompat="@drawable/push_pin"
+        app:tint="@color/color_star" />
 
     <ImageView
         android:id="@+id/imageView7"
@@ -68,4 +67,18 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@tools:sample/avatars" />
+
+    <TextView
+        android:id="@+id/tag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:fontFamily="@font/interbold"
+        android:text="tags"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/JudulExtensi"
+        app:layout_constraintStart_toEndOf="@+id/JudulExtensi"
+        app:layout_constraintTop_toTopOf="@+id/JudulExtensi" />
 </androidx.constraintlayout.widget.ConstraintLayout>

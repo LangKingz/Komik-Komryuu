@@ -87,7 +87,7 @@
                 app:layout_constraintBottom_toBottomOf="@+id/layoutRefresh"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/listSource" />
+                app:layout_constraintTop_toBottomOf="@+id/listSource" />
 
             <TextView
                 android:id="@+id/textView"
@@ -224,14 +224,13 @@
             <LinearLayout
                 android:id="@+id/layoutRefresh"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginTop="16dp"
+                android:layout_height="300dp"
                 android:gravity="center"
                 android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/frameDragon">
+                app:layout_constraintStart_toStartOf="parent">
 
                 <TextView
                     android:id="@+id/refresh"

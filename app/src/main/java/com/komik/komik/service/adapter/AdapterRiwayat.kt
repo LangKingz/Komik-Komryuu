@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.komik.komik.R
 import com.komik.komik.databinding.CardRiwayatBinding
+import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.model.RiwayatDetail
 import com.komik.komik.service.utils.formatWaktuLalu
@@ -82,10 +83,7 @@ class AdapterRiwayat(private val list: List<RiwayatDetail>) :
 
         fun bind(header: String) {
 
-            headerText.text = SimpleDateFormat(
-                "dd/MM/yyyy",
-                Locale.getDefault()
-            ).format(Date(System.currentTimeMillis()))
+            headerText.text = header
 
         }
     }
@@ -110,7 +108,24 @@ class AdapterRiwayat(private val list: List<RiwayatDetail>) :
         if (holder is HeaderViewholder) {
             holder.bind(groupItems[position] as String)
         } else if (holder is ItemViewHolder) {
+            val currentItem = groupItems[position] as RiwayatDetail
+            val context = holder.itemView.context
             holder.bind(groupItems[position] as RiwayatDetail)
+            holder.itemView.setOnLongClickListener{
+                AlertDialogCostum(
+                    title = "Hapus Riwayat",
+                    message = "Apakah anda yakin ingin menghapus ${currentItem.comic.title} ?",
+                    context = context,
+                    onPositive = {dialogInterface ->
+                        holder.delete(currentItem.riwayat.id)
+                    },
+                    onNegative = {dialog ->
+                        dialog.dismiss()
+                    }
+                )
+
+                true
+            }
             holder.itemView.setOnClickListener {
                 val intent = Intent(holder.itemView.context, ReadActivity::class.java).apply {
                     putExtra(
