@@ -182,6 +182,9 @@ class Comic(val client: client) : RepositroyComic {
             }
 
             sourceType.ikiru -> {
+                val response = client.Ikiru.getHtml(url)
+                val document = Jsoup.parse(response)
+                val urlString = document.select("form.items-center").attr("hx-post")
                 withContext(Dispatchers.IO) {
                     val client = OkHttpClient()
 
@@ -190,7 +193,7 @@ class Comic(val client: client) : RepositroyComic {
                         .build()
 
                     val request = Request.Builder()
-                        .url("${url}ajax-call?nonce=145476235a&action=search")
+                        .url(urlString)
                         .post(formBody) // Tentukan metode POST dengan body yang sudah dibuat
                         .header(
                             "User-Agent",

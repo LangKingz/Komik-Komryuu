@@ -55,15 +55,15 @@ class Detail(
             Log.d(TAG, "getDetail: ${e.message}")
             return ParsedData(
                 url = url,
-                title = "",
+                title = "Gagal Memuat Data",
                 imageUrl = "",
-                description = e.localizedMessage.toString(),
+                description = "${e.message}",
                 author = "",
                 location = type.name,
                 chapters = emptyList(),
                 genres = emptyList(),
                 alternativeTitle = "",
-                type = "",
+                type = ""
             )
         }
 

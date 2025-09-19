@@ -9,7 +9,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.komik.komik.R
 import com.komik.komik.databinding.CookieBsBinding
 
-class BottomSheetCookie : BottomSheetDialogFragment() {
+class BottomSheetCookie() : BottomSheetDialogFragment() {
 
     private lateinit var binding: CookieBsBinding
 

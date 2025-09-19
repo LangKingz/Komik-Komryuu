@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -32,8 +33,10 @@ import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.Riwayats
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.repository.Detail
+import com.komik.komik.service.utils.createNotificationChannel
 import com.komik.komik.service.utils.downloadAndSaveImage
 import com.komik.komik.service.utils.genereteId
+import com.komik.komik.service.utils.showNotification
 import com.komik.komik.service.utils.typeSource
 import com.komik.komik.ui.pages.read.ReadActivity
 import kotlinx.coroutines.CoroutineScope
@@ -76,6 +79,11 @@ class DetailActivity : AppCompatActivity() {
         locations = location
         urlResume = url
 
+        createNotificationChannel(
+            "channel_detail",
+            this
+        )
+
         val title = binding.title.text
 
         val source = typeSource.getSourceType(location.toString())
@@ -100,7 +108,8 @@ class DetailActivity : AppCompatActivity() {
 
         viewModel.error.observe(this) { error ->
             if (error != null) {
-                Snackbar.make(binding.root, error, Snackbar.LENGTH_LONG).show()
+                Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+                finish()
             }
         }
 
@@ -191,8 +200,6 @@ class DetailActivity : AppCompatActivity() {
         try {
             CoroutineScope(Dispatchers.IO).launch {
                 val id = genereteId()
-
-
                 if (imageUrl != null) {
                     libraryDao.insertLibrary(
                         Library(
@@ -203,6 +210,13 @@ class DetailActivity : AppCompatActivity() {
 
                     withContext(Dispatchers.Main) {
                         isFavorite = true
+                        showNotification(
+                            this@DetailActivity,
+                            "channel_detail",
+                            102,
+                            "Berhasil Menambahkan Komik",
+                            "Komik ${binding.title.text} Berhasil Ditambahkan"
+                        )
                         binding.button2.setImageResource(R.drawable.bookmark_simple_fill)
                     }
                 } else {

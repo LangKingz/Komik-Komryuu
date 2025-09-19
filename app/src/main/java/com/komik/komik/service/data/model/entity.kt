@@ -194,3 +194,21 @@ data class LibraryDetail(
     )
     val comic: Comic
 )
+
+
+@Entity(tableName = "Extensi")
+data class Extensi(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val extensi: String,
+    val imageLocal: String,
+    val baseUrl: String,
+    val type: String,
+    val location: String,
+    val createdAt: Long = System.currentTimeMillis(),
+    val isSelected: Boolean = false,
+    val isFavorite: Boolean = false,
+    val isRead: Boolean = false,
+    val isDownloaded: Boolean = false,
+    val isPinned: Boolean = false,
+    val isUpdated: Boolean = false
+)

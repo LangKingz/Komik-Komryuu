@@ -19,7 +19,8 @@ object SearchParser {
                 title = item.select("h3").text(),
                 location = "ikiru",
                 urlImage = item.select("img").attr("src"),
-                link = item.attr("href")
+                link = item.attr("href"),
+                tagModel = "komik"
             )
         }
 
@@ -35,7 +36,8 @@ object SearchParser {
                 title = item?.title.toString(),
                 urlImage = item?.coverImageUrl.toString(),
                 link = item?.mangaId.toString(),
-                location = "shinigami"
+                location = "shinigami",
+                tagModel = "komik"
 
             )
         }

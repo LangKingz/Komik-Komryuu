@@ -20,6 +20,14 @@
         android:iconTint="@color/white"
         />
 
+    <item
+        android:id="@+id/info"
+        android:title="informasi"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/info"
+        android:menuCategory="container"
+        />
+
 
 
 

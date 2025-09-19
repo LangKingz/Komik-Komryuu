@@ -86,8 +86,15 @@ class DetailViewmodel(
 
                     if (data == null) {
                         val parsedData = repository.getDetail(sourceType, url)
-                        saveDataToDatabase(parsedData)
-                        data = comicDao.getComicByUrl(url)
+                        if(parsedData.chapters.isNotEmpty()){
+                            saveDataToDatabase(parsedData)
+                            data = comicDao.getComicByUrl(url)
+                        }
+                        else{
+                           withContext(Dispatchers.Main){
+                               _error.value = parsedData.description
+                           }
+                        }
                     }
 
                     if (data != null) {
@@ -102,6 +109,7 @@ class DetailViewmodel(
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.d(TAG, "getChapters: ${e.localizedMessage}")
+                error.value = e.message
             }
         }
 

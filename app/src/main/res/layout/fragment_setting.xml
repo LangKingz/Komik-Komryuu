@@ -330,6 +330,37 @@
 
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:clipToOutline="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
+
+                    <ImageView
+                        android:id="@+id/settinNotification"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginLeft="8dp"
+                        android:src="@drawable/bell_ringing"
+                        app:tint="@color/gray_400" />
+
+                    <com.google.android.material.materialswitch.MaterialSwitch
+                        android:id="@+id/Notification"
+                        style="@style/Costumtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="16dp"
+                        android:layout_weight="1"
+                        android:text="Notification" />
+
+
+                </LinearLayout>
+
             </LinearLayout>
 
             <LinearLayout

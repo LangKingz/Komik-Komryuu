@@ -41,7 +41,7 @@
             android:clickable="true"
 
             android:layout_gravity="center"
-            app:srcCompat="@drawable/chrome_fill" />
+            app:srcCompat="@drawable/baseline_search_24" />
     </com.google.android.material.bottomnavigation.BottomNavigationView>
 
 

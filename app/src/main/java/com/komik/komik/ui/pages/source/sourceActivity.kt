@@ -20,6 +20,7 @@ import com.komik.komik.R
 import com.komik.komik.databinding.ActivitySourceBinding
 import com.komik.komik.service.adapter.AdapterManhwa
 import com.komik.komik.service.client
+import com.komik.komik.service.component.BottomsheetInfo
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.comic.SourceParser
 import com.komik.komik.service.parser.model.getListUpdate
@@ -40,6 +41,7 @@ class sourceActivity : AppCompatActivity() {
     private lateinit var locations : String
 
     var urlSource: String = ""
+    var size : String =""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,6 +82,9 @@ class sourceActivity : AppCompatActivity() {
 
         viewmodel.getSource(source,url.toString(),30)
 
+//        val layoutmanager = binding.listSource as GridLayoutManager
+//        val totalItems = layoutmanager.itemCount
+
         binding.appbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.webview -> {
@@ -89,6 +94,12 @@ class sourceActivity : AppCompatActivity() {
                 }
                 R.id.search -> {
 
+                    true
+                }
+
+                R.id.info -> {
+                    val bottomsheet =BottomsheetInfo.newInstance(url.toString(),size)
+                    bottomsheet.show(supportFragmentManager,"info")
                     true
                 }
                 else -> false}
@@ -101,6 +112,7 @@ class sourceActivity : AppCompatActivity() {
 
 
         viewmodel.source.observe(this) { source ->
+            size = source.size.toString()
             Log.d(TAG, "onCreate: $source")
             adapterManhwa.addData(source)
             binding.listSource.adapter = adapterManhwa
@@ -143,7 +155,7 @@ class sourceActivity : AppCompatActivity() {
             }
             override fun onQueryTextSubmit(query: String?): Boolean {
 
-                Toast.makeText(this@sourceActivity, urlSource, Toast.LENGTH_SHORT).show()
+//                Toast.makeText(this@sourceActivity, urlSource, Toast.LENGTH_SHORT).show()
 
                 val source = typeSource.getSourceType(locations)
                 viewmodel.search(source,query.toString(),urlSource)
@@ -151,6 +163,8 @@ class sourceActivity : AppCompatActivity() {
                 return true
             }
         })
+
+
 
         return true
     }

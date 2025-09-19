@@ -1,12 +1,16 @@
 package com.komik.komik
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -29,9 +33,40 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
+    // permission launcher
+    private val registerlauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+
+        } else {
+            Snackbar.make(binding.root, "Permission Denied", Snackbar.LENGTH_LONG)
+                .setAction("request", {
+                    checkPermission()
+                })
+                .show()
+        }
+    }
+
+    private fun checkPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED -> {
+
+            }
+
+            else -> {
+                registerlauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        checkPermission()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 

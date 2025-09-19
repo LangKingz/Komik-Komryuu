@@ -6,18 +6,20 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.komik.komik.service.data.dao.ComicDao
+import com.komik.komik.service.data.dao.ExtensiDao
 import com.komik.komik.service.data.dao.LibraryDao
 import com.komik.komik.service.data.dao.chapterDao
 import com.komik.komik.service.data.dao.genreDao
 import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.Comic
+import com.komik.komik.service.data.model.Extensi
 import com.komik.komik.service.data.model.Genre
 import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.Riwayats
 
 @Database(
-    entities = [Riwayats::class, Comic::class, Chapter::class, Genre::class,Library::class],
+    entities = [Riwayats::class, Comic::class, Chapter::class, Genre::class, Library::class, Extensi::class],
     version = 1,
     exportSchema = false
 )
@@ -28,6 +30,7 @@ abstract class DatabaseRiwayats : RoomDatabase() {
     abstract fun chapterdao(): chapterDao
     abstract fun genreDao(): genreDao
     abstract fun libraryDao(): LibraryDao
+    abstract fun extensiDao(): ExtensiDao
 
 
     companion object {
