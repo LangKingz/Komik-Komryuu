@@ -99,16 +99,16 @@ class MainActivity : AppCompatActivity() {
         val navRail = binding.navigationRail
         val navController = findNavController(R.id.nav_host_fragment)
 
-        ViewCompat.setOnApplyWindowInsetsListener(nav!!) { view, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            // Ambil pengaturan margin bawaan dari XML
-            val layoutParams = view.layoutParams as ViewGroup.MarginLayoutParams
-            // Tambahin margin bawah bawaan (16dp) dengan tinggi navigation bar hp
-            layoutParams.bottomMargin = systemBars.bottom + (16 * resources.displayMetrics.density).toInt()
-            view.layoutParams = layoutParams
-
-            insets
-        }
+//        ViewCompat.setOnApplyWindowInsetsListener(nav!!) { view, insets ->
+//            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+//            // Ambil pengaturan margin bawaan dari XML
+//            val layoutParams = view.layoutParams as ViewGroup.MarginLayoutParams
+//            // Tambahin margin bawah bawaan (16dp) dengan tinggi navigation bar hp
+//            layoutParams.bottomMargin = systemBars.bottom + (16 * resources.displayMetrics.density).toInt()
+//            view.layoutParams = layoutParams
+//
+//            insets
+//        }
 
         CoroutineScope(Dispatchers.IO).launch {
             val count = dao.getLibraryCount()

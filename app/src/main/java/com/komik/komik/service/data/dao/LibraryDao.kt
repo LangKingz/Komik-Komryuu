@@ -36,4 +36,7 @@ interface LibraryDao {
     """)
     fun searchFavoriteLibraryComics(query: String): LiveData<List<LibraryDetail>>
 
+    @Query("DELETE FROM Library")
+    suspend fun DeleteALlLibrary()
+
 }

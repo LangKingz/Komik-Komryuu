@@ -98,6 +98,13 @@ class PustakaFragment : Fragment() {
         }
     }
 
+    private fun DeleteALlRiwayat (){
+        CoroutineScope(Dispatchers.IO).launch {
+             library.DeleteALlLibrary()
+
+        }
+    }
+
     private fun search(query: String){
         CoroutineScope(Dispatchers.IO).launch {
             val data = library.searchFavoriteLibraryComics(query)
@@ -157,6 +164,7 @@ class PustakaFragment : Fragment() {
             }
 
 //            Snackbar.make(binding.root, "Coming Soon", Snackbar.LENGTH_SHORT).show()
+//            DeleteALlRiwayat()
             false
         }
     }
