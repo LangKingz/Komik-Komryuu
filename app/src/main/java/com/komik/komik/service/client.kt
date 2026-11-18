@@ -16,7 +16,7 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 
 object client {
 
-    private const val URLSHINIGAMIAPI = "https://api.shngm.io/"
+    private const val URLSHINIGAMIAPI = "https://api.shinigami.io/"
     private const val URLSOURCE = "https://www.komryuu.my.id/"
     private const val IkiruUrl = "https://id.ikiru.wtf/"
     private const val KomikcastUrl = "https://komikcast.li/"
@@ -37,10 +37,10 @@ object client {
                             "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
                         )
                         .header(
-                            "Referer", "https://06.shinigami.asia/"
+                            "Referer", "https://s1.shinigami.mx/"
                         )
                         .header(
-                            "Origin", "https://06.shinigami.asia"
+                            "Origin", "https://s1.shinigami.mx/"
                         ).header(
                             "Accept",
                             "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
