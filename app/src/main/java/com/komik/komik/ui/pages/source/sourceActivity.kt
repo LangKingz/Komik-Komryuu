@@ -38,10 +38,10 @@ class sourceActivity : AppCompatActivity() {
 
     private lateinit var adapterManhwa: AdapterManhwa
 
-    private lateinit var locations : String
+    private lateinit var locations: String
 
     var urlSource: String = ""
-    var size : String =""
+    var size: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,21 +49,13 @@ class sourceActivity : AppCompatActivity() {
         binding = ActivitySourceBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        compatView()
+
         setSupportActionBar(binding.appbar)
         adapterManhwa = AdapterManhwa(mutableListOf())
 
         window.navigationBarColor = resources.getColor(R.color.bottom_navbar)
 
-        WindowCompat.getInsetsController(window, window.decorView).let { controller ->
-            controller.isAppearanceLightStatusBars = false
-            controller.isAppearanceLightNavigationBars = false
-        }
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, 0, systemBars.right, 0)
-            insets
-        }
         viewmodel = ViewModelProvider(this).get(sourceViewmodel::class)
 
         binding.listSource.layoutManager = GridLayoutManager(this, 3)
@@ -80,7 +72,7 @@ class sourceActivity : AppCompatActivity() {
 
         val source = typeSource.getSourceType(location)
 
-        viewmodel.getSource(source,url.toString(),30)
+        viewmodel.getSource(source, url.toString(), 30)
 
 //        val layoutmanager = binding.listSource as GridLayoutManager
 //        val totalItems = layoutmanager.itemCount
@@ -92,22 +84,25 @@ class sourceActivity : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+
                 R.id.search -> {
 
                     true
                 }
 
                 R.id.info -> {
-                    val bottomsheet =BottomsheetInfo.newInstance(url.toString(),size)
-                    bottomsheet.show(supportFragmentManager,"info")
+                    val bottomsheet = BottomsheetInfo.newInstance(url.toString(), size)
+                    bottomsheet.show(supportFragmentManager, "info")
                     true
                 }
-                else -> false}
+
+                else -> false
+            }
 
         }
 
         binding.again.setOnClickListener {
-            viewmodel.getSource(source,url.toString(),30)
+            viewmodel.getSource(source, url.toString(), 30)
         }
 
 
@@ -126,7 +121,7 @@ class sourceActivity : AppCompatActivity() {
             }
         }
 
-        viewmodel.search.observe(this){ search ->
+        viewmodel.search.observe(this) { search ->
             adapterManhwa.updateData(search)
         }
 
@@ -153,12 +148,13 @@ class sourceActivity : AppCompatActivity() {
             override fun onQueryTextChange(query: String?): Boolean {
                 return false
             }
+
             override fun onQueryTextSubmit(query: String?): Boolean {
 
 //                Toast.makeText(this@sourceActivity, urlSource, Toast.LENGTH_SHORT).show()
 
                 val source = typeSource.getSourceType(locations)
-                viewmodel.search(source,query.toString(),urlSource)
+                viewmodel.search(source, query.toString(), urlSource)
 
                 return true
             }
@@ -169,7 +165,18 @@ class sourceActivity : AppCompatActivity() {
         return true
     }
 
+    fun compatView() {
+        WindowCompat.getInsetsController(window, window.decorView).let { controller ->
+            controller.isAppearanceLightStatusBars = false
+            controller.isAppearanceLightNavigationBars = false
+        }
 
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, 0, systemBars.right, 0)
+            insets
+        }
+    }
 
 
     companion object {

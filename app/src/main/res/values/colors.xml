@@ -67,4 +67,47 @@
     <color name="grey_300">#D1D5DB</color>
     <color name="text_violet_400">#A78BFA</color>
     <color name="text_grey_500">#a0aec0</color>
+
+    <!-- Aksen Warna Kalem & Elegan (Modern Pastel/Neon Soft) -->
+
+    <!-- Cocok buat tag genre Romance atau tombol Favorit/Heart -->
+    <color name="calm_rose">#F472B6</color>
+    <color name="rose_background">#381E29</color>
+
+    <!-- Cocok buat genre Action, badge 'New Chapter', atau notifikasi -->
+    <color name="soft_coral">#FB7185</color>
+
+    <!-- Cocok buat genre Fantasy, badge 'Completed', atau tombol sukses -->
+    <color name="mint_teal">#2DD4BF</color>
+    <color name="teal_background">#163331</color>
+
+    <!-- Cocok buat fitur Premium, koin, atau rating bintang (lebih kalem dari kuning terang) -->
+    <color name="golden_sand">#FBBF24</color>
+
+    <!-- Cocok buat highlight menu atau background card yang butuh pembeda tipis -->
+    <color name="soft_lavender">#C084FC</color>
+    <color name="lavender_background">#2E1E3B</color>
+
+
+    <color name="bg">#FF14141E</color>
+    <color name="surface">#FF1C1C28</color>
+    <color name="surface_light">#FF282836</color>
+
+    <color name="primary">#FFFF8A76</color>
+    <color name="primary_light">#FFFFB3A7</color>
+    <color name="secondary">#FF8B5CF6</color>
+
+    <color name="text">#FFF8FAFC</color>
+    <color name="text_muted">#FF94A3B8</color>
+    <color name="text_subtle">#FF64748B</color>
+
+    <color name="cat_all">#FFFFB3A7</color>
+    <color name="cat_manhwa">#FF282836</color>
+
+    <color name="ext_shinigami">#FF2D2D3A</color>
+    <color name="ext_komikcast">#FF2A2D3D</color>
+    <color name="ext_ikiru">#FF27312F</color>
+    <color name="ext_kiryuu">#FF332929</color>
+    <color name="ext_comicscan">#FF302A35</color>
+    <color name="ext_manhwa">#FF253034</color>
 </resources>

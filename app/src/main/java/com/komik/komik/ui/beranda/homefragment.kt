@@ -19,6 +19,7 @@ import com.komik.komik.service.adapter.AdapterSource
 import com.komik.komik.service.api.model.DataItems
 import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.data.Database.DatabaseRiwayats
+import com.komik.komik.service.data.dao.chapterDao
 import com.komik.komik.service.data.dao.riwayatDao
 import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.data.dao.sourceDao
@@ -30,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import taimoor.sultani.sweetalert2.Sweetalert
+import java.util.Calendar
 
 class homefragment : Fragment() {
 
@@ -42,6 +44,7 @@ class homefragment : Fragment() {
     private lateinit var dao: sourceDao
     private lateinit var riwayatdao: riwayatRelationDao
     private lateinit var dbUtama: DatabaseRiwayats
+    private lateinit var ChapterDao : chapterDao
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -56,6 +59,7 @@ class homefragment : Fragment() {
         dao = db.riwayatdao()
         dbUtama = DatabaseRiwayats.getDatabase(requireContext())
         riwayatdao = dbUtama.riwayatdao()
+        ChapterDao = dbUtama.chapterdao()
 
         init()
 
@@ -64,6 +68,8 @@ class homefragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        binding.greetings.text = "${greetingCostum()}"
 
         viewmodel.source.observe(viewLifecycleOwner, { source ->
             adapter = AdapterSource(source as MutableList<DataItems>)
@@ -145,8 +151,8 @@ class homefragment : Fragment() {
                     if (riwayat.isNotEmpty()) {
                         binding.latestopen.adapter =
                             AdapterRiwayatSource(riwayat as MutableList<RiwayatSource>)
-                        binding.latestopen.visibility = View.VISIBLE
-                        binding.titleLatest.visibility = View.VISIBLE
+//                        binding.latestopen.visibility = View.VISIBLE
+//                        binding.titleLatest.visibility = View.VISIBLE
                     } else {
                         binding.latestopen.visibility = View.GONE
                         binding.titleLatest.visibility = View.GONE
@@ -154,47 +160,62 @@ class homefragment : Fragment() {
                 })
 
                 dataRiwayat.observe(viewLifecycleOwner) { riwayat ->
-                    if (riwayat != null) {
-                        binding.textView.visibility = View.VISIBLE
-                        binding.frameDragon.visibility = View.VISIBLE
-                        binding.judulManhwa.text = riwayat.comic.title
-                        binding.chapter.text = riwayat.chapter.title
-                        Glide.with(requireContext())
-                            .load(riwayat.comic.localImageUri)
-                            .error(R.drawable.placeholder)
-                            .into(binding.imageHistory)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val chapterSize = ChapterDao.getChapterByLocation(riwayat.comic.title,riwayat.comic.location)
+                        withContext(Dispatchers.Main){
+                            if (riwayat != null) {
+                                binding.textView.visibility = View.VISIBLE
+                                binding.frameDragon.visibility = View.VISIBLE
+                                binding.judulManhwa.text = riwayat.comic.title
+                                binding.chapter.text = "${riwayat.chapter.title} dari ${chapterSize.size} chapter | Gambar ${riwayat.riwayat.pageRead} / ${riwayat.riwayat.totalPage} "
+                                Glide.with(requireContext())
+                                    .load(riwayat.comic.localImageUri)
+                                    .error(R.drawable.placeholder)
+                                    .into(binding.imageHistory)
 
-                        val pageRead = riwayat.riwayat.pageRead
-                        val totalPage = riwayat.riwayat.totalPage
+                                val pageRead = riwayat.riwayat.pageRead
+                                val totalPage = riwayat.riwayat.totalPage
 
 // Cek dulu semua kemungkinan
-                        val progressPercentage =
-                            if (pageRead != null && totalPage != null && totalPage > 0) {
-                                (pageRead.toDouble() / totalPage.toDouble()) * 100
+                                val progressPercentage =
+                                    if (pageRead != null && totalPage != null && totalPage > 0) {
+                                        (pageRead.toDouble() / totalPage.toDouble()) * 100
+                                    } else {
+                                        0
+                                    }
+                                binding.progressBaca.progress = progressPercentage.toInt()
+
+
+                                binding.frameDragon.setOnClickListener {
+                                    val intent = Intent(requireContext(), ReadActivity::class.java)
+                                    intent.putExtra(ReadActivity.EXTRA_URL, riwayat.chapter.link)
+                                    intent.putExtra(ReadActivity.EXTRA_TYPE, riwayat.comic.location)
+                                    intent.putExtra("num", riwayat.chapter.numChapter)
+                                    intent.putExtra(ReadActivity.EXTRA_ID, riwayat.chapter.id)
+                                    intent.putExtra(ReadActivity.EXTRA_TITLE, riwayat.comic.title)
+                                    intent.putExtra(ReadActivity.EXTRA_ID_COMIC, riwayat.comic.id)
+                                    intent.putExtra("pageRead", pageRead)
+                                    requireContext().startActivity(intent)
+                                }
                             } else {
-                                0
+                                binding.frameDragon.visibility = View.GONE
+                                binding.textView.visibility = View.GONE
                             }
-                        binding.progressBaca.progress = progressPercentage.toInt()
-
-
-                        binding.frameDragon.setOnClickListener {
-                            val intent = Intent(requireContext(), ReadActivity::class.java)
-                            intent.putExtra(ReadActivity.EXTRA_URL, riwayat.chapter.link)
-                            intent.putExtra(ReadActivity.EXTRA_TYPE, riwayat.comic.location)
-                            intent.putExtra("num", riwayat.chapter.numChapter)
-                            intent.putExtra(ReadActivity.EXTRA_ID, riwayat.chapter.id)
-                            intent.putExtra(ReadActivity.EXTRA_TITLE, riwayat.comic.title)
-                            intent.putExtra(ReadActivity.EXTRA_ID_COMIC, riwayat.comic.id)
-                            intent.putExtra("pageRead", pageRead)
-                            requireContext().startActivity(intent)
                         }
-                    } else {
-                        binding.frameDragon.visibility = View.GONE
-                        binding.textView.visibility = View.GONE
                     }
                 }
 
             }
+        }
+    }
+
+    fun greetingCostum(): String {
+        val hourNow = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+
+        return when(hourNow){
+            in 0..11 -> "SELAMAT PAGI"
+            in 12..17 -> "SELAMAT SIANG"
+            else -> "SELAMAT MALAM"
         }
     }
 

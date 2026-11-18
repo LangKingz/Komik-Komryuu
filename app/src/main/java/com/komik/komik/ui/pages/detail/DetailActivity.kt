@@ -45,6 +45,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
+import kotlin.collections.last
 
 class DetailActivity : AppCompatActivity() {
 
@@ -84,8 +85,6 @@ class DetailActivity : AppCompatActivity() {
             this
         )
 
-        val title = binding.title.text
-
         val source = typeSource.getSourceType(location.toString())
 
         sources = source
@@ -120,6 +119,10 @@ class DetailActivity : AppCompatActivity() {
         binding.swipeRefreshLayout.setOnRefreshListener {
             binding.swipeRefreshLayout.isRefreshing = false
             viewModel.refreshData(source, url.toString())
+            viewModel.dataChapter.observe(this){ chapter ->
+                adapterChapter.addData(chapter)
+
+            }
         }
 
 
@@ -182,6 +185,17 @@ class DetailActivity : AppCompatActivity() {
             binding.chapter.adapter = adapterChapter
 
             binding.btnBaca.setOnClickListener {
+                val intent = Intent(this@DetailActivity, ReadActivity::class.java)
+                intent.putExtra(ReadActivity.EXTRA_URL, chapter.last().chapter.link)
+                intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.last().chapter.title)
+                intent.putExtra(ReadActivity.EXTRA_TYPE, chapter.last().chapter.location)
+                intent.putExtra(ReadActivity.EXTRA_ID, chapter.last().chapter.id)
+                intent.putExtra("num", chapter.last().chapter.numChapter)
+                intent.putExtra(ReadActivity.EXTRA_ID_COMIC, chapter.last().chapter.comicId)
+                startActivity(intent)
+            }
+
+            binding.baca.setOnClickListener {
                 val intent = Intent(this@DetailActivity, ReadActivity::class.java)
                 intent.putExtra(ReadActivity.EXTRA_URL, chapter.last().chapter.link)
                 intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.last().chapter.title)
@@ -269,13 +283,25 @@ class DetailActivity : AppCompatActivity() {
                     if (chapter != null) {
                         Log.d(TAG, "CheckLatestRead: ${chapter.riwayat.readAt}")
                         binding.btnBaca.text = "Lanjut Baca ${chapter.chapter.title}"
+                        val intent = Intent(this@DetailActivity, ReadActivity::class.java)
+
                         binding.btnBaca.setOnClickListener {
-                            val intent = Intent(this@DetailActivity, ReadActivity::class.java)
                             intent.putExtra(ReadActivity.EXTRA_URL, chapter.chapter.link)
                             intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.comic.title)
                             intent.putExtra(ReadActivity.EXTRA_TYPE, chapter.chapter.location)
                             intent.putExtra(ReadActivity.EXTRA_ID, chapter.chapter.id)
                             intent.putExtra("num", chapter.chapter.numChapter)
+                            intent.putExtra(ReadActivity.EXTRA_ID_COMIC, chapter.comic.id)
+                            startActivity(intent)
+                        }
+
+                        binding.baca.setOnClickListener {
+                            intent.putExtra(ReadActivity.EXTRA_URL, chapter.chapter.link)
+                            intent.putExtra(ReadActivity.EXTRA_TITLE, chapter.comic.title)
+                            intent.putExtra(ReadActivity.EXTRA_TYPE, chapter.chapter.location)
+                            intent.putExtra(ReadActivity.EXTRA_ID, chapter.chapter.id)
+                            intent.putExtra("num", chapter.chapter.numChapter)
+                            intent.putExtra(ReadActivity.EXTRA_ID_COMIC, chapter.comic.id)
                             startActivity(intent)
                         }
                     }

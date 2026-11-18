@@ -58,7 +58,7 @@
     </style>
 
     <style name="App.Custom.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:color">@color/primary_button</item>
+        <item name="android:color">@android:color/transparent</item>
     </style>
 
     <style name="Theme.Komik" parent="Base.Theme.Komik" />

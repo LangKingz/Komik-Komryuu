@@ -8,4 +8,8 @@
     <string name="riwayat">riwayat</string>
     <string name="pengaturan">pengaturan</string>
     <string name="adultcontent">18 +</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
 </resources>

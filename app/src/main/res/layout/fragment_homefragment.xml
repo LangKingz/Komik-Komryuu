@@ -3,26 +3,49 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:background="@drawable/aurora_bg"
     android:layout_height="match_parent"
     tools:context=".ui.beranda.homefragment">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout3"
         android:layout_width="match_parent"
+        android:background="@android:color/transparent"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.appbar.MaterialToolbar
+        <LinearLayout
             android:layout_width="match_parent"
-            app:title="@string/app_name"
-            app:titleTextColor="@color/white"
-            app:navigationIcon="@drawable/rb_komryuu_svg"
-            app:titleTextAppearance="@style/Toolbar.TitleText"
             android:layout_height="wrap_content"
-            app:menu="@menu/menu_appbar_home"
-            android:minHeight="?attr/actionBarSize" />
+            android:orientation="horizontal"
+            android:padding="10dp">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:minHeight="40dp"
+                android:minWidth="40dp"
+                android:background="@drawable/background_gradient_logo"
+                android:src="@drawable/logo_komryu_rb" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textStyle="bold"
+
+
+                android:layout_gravity="center"
+                android:layout_marginStart="10dp"
+
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+
+        </LinearLayout>
+
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -95,11 +118,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:text="🚀 Lanjutkan Membaca"
+                android:text="Lanjutkan bacaanmu"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:textStyle="bold"
                 android:visibility="gone"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/latestopen" />
+                app:layout_constraintTop_toBottomOf="@+id/greetings" />
 
             <FrameLayout
                 android:id="@+id/frameDragon"
@@ -149,24 +174,29 @@
                         android:id="@+id/chapter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
                         android:text="Chapter Manhwa" />
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progressBaca"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom"
+                        android:layout_marginBottom="10dp"
+                        app:indicatorColor="@color/primary"
+                        app:trackColor="@color/surface_light"
+                        app:trackCornerRadius="8dp"
+                        app:trackThickness="8dp" />
 
                 </LinearLayout>
 
                 <ImageView
                     android:id="@+id/imageView2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|top"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="end|top"
                     android:layout_margin="10dp"
                     android:src="@drawable/play_circle_fill__1_" />
-
-                <com.google.android.material.progressindicator.LinearProgressIndicator
-                    android:id="@+id/progressBaca"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-
-                    android:layout_gravity="bottom" />
 
             </FrameLayout>
 
@@ -183,6 +213,7 @@
                 android:foreground="?attr/selectableItemBackground"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
+                android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 tools:layout_editor_absoluteY="13dp">
@@ -241,6 +272,17 @@
                     android:text="Muat Ulang"
                     android:textColor="@color/primary_button" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/greetings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="SELAMAT MALAM"
+                android:textSize="16sp"
+                android:textColor="@color/primary"
+                app:layout_constraintStart_toStartOf="@+id/textView"
+                app:layout_constraintTop_toBottomOf="@+id/latestopen" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

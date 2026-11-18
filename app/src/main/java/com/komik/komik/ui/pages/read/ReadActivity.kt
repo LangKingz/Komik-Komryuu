@@ -93,6 +93,10 @@ class ReadActivity : AppCompatActivity() {
         adapter =AdapterImage(mutableListOf(), sourceLocation, url)
         binding.listImage.adapter = adapter
 
+        binding.back?.setOnClickListener {
+            finish()
+        }
+
 
         setUpListener(sourceLocation,type,title,idComic)
 
@@ -161,6 +165,7 @@ class ReadActivity : AppCompatActivity() {
                 totalPage = totalItem
 
                 binding.lis3.text = "${firstVisiblePosition + 1}/${totalItem}"
+                binding.PageNumber?.text = "${firstVisiblePosition +1}/ ${totalItem}"
 
                 if (binding.slider.values.first() != firstVisiblePosition.toFloat()) {
                     binding.slider.setValues(firstVisiblePosition.toFloat())

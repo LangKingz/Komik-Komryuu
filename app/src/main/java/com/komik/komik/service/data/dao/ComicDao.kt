@@ -61,6 +61,9 @@ interface ComicDao {
 
     }
 
+    @Query("SELECT * FROM comic")
+    suspend fun getComic(): List<Comic>
+
     @Query("DELETE FROM comic WHERE id = :id")
     suspend fun deleteComicByUrl(id:Int)
 

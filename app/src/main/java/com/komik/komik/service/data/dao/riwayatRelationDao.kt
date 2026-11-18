@@ -33,6 +33,7 @@ interface riwayatRelationDao {
      @Query("SELECT * FROM RiwayatRelasi WHERE comicId = :comicId ORDER BY readAt DESC LIMIT 1")
      fun getLastRiwayatsByComicId(comicId: Int): LiveData<RiwayatDetail>
 
+
     @Query("UPDATE RiwayatRelasi SET pageRead = :pageRead,  totalpage = :totalpage WHERE comicId = :id")
     suspend fun updateProgress(id: Int, pageRead: Int, totalpage: Int)
 

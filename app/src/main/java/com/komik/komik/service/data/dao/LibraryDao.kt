@@ -15,6 +15,9 @@ interface LibraryDao {
     @Query("SELECT * FROM Library ORDER BY createdAt DESC")
     fun getLibrary(): LiveData<List<LibraryDetail>>
 
+    @Query("SELECT COUNT(*) FROM Library")
+    fun getLibraryCount(): Int
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertLibrary(library: Library)
 

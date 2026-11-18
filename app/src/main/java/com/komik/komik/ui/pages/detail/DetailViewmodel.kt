@@ -60,8 +60,8 @@ class DetailViewmodel(
                 _loading.value = false
                 if (title.isNotEmpty()) {
                     withContext(Dispatchers.IO) {
-                        Log.d(TAG, "refreshData: ${parsedData.title}")
-                        val data = chapterDao.getChaptersForComic(parsedData.title)
+                        Log.d(TAG, "refreshData: ${title}")
+                        val data = chapterDao.getChaptersForComic(title)
                         _dataChapter.postValue(data)
                     }
                 }else{

@@ -30,6 +30,9 @@ interface chapterDao {
     @Query("SELECT * FROM Chapter WHERE title = :comicTitle AND link = :link")
     suspend fun getChapterByLink(comicTitle: String, link: String): Chapter?
 
+    @Query("SELECT * FROM Chapter WHERE comicTitle = :comicTitle AND location = :location ")
+    suspend fun getChapterByLocation(comicTitle: String, location: String): List<Chapter>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertChapter(chapter: Chapter)
 

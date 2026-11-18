@@ -51,7 +51,7 @@ object comicParser {
         }
 
         val chapters = chapter?.map {
-            val chapterString = "chapter ${it?.chapterNumber}"
+            val chapterString = "Chapter ${it?.chapterNumber?.toInt().toString()}"
             val date = it?.releaseDate
             Chapter(
                 comicTitle = title.toString(),

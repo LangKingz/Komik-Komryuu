@@ -9,10 +9,10 @@
         android:id="@+id/pustakaFragment"
         android:icon="@drawable/baseline_bookmarks_24"
         android:title="@string/pustaka" />
-    <item
-        android:id="@+id/searchFragment"
-        android:enabled="false"
-        android:title="" />
+<!--    <item-->
+<!--        android:id="@+id/searchFragment"-->
+<!--        android:enabled="false"-->
+<!--        android:title="" />-->
     <item
         android:id="@+id/historyFragment"
         android:icon="@drawable/history"

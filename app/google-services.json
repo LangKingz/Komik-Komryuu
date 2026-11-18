@@ -7,43 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:518116789019:android:40ca71f6e94a3df45961be",
-        "android_client_info": {
-          "package_name": "com.example.testscraping"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "518116789019-k02ahav61r9ptla2u2oi8p2e3q3gkv2f.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.testscraping",
-            "certificate_hash": "352cf5248aa8d8967a6729bc9681e3526dc4002f"
-          }
-        },
-        {
-          "client_id": "518116789019-vkbh26156ftit93anmuiflrqqdee9a6p.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAWcr85u3P16oQxnPD9TSWKiYqXq74pFfg"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "518116789019-vkbh26156ftit93anmuiflrqqdee9a6p.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:518116789019:android:aa4f006c4ed8f5415961be",
         "android_client_info": {
           "package_name": "com.komik.komik"
