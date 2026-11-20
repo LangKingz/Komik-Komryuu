@@ -5,180 +5,323 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/background_utama"
     tools:context=".ui.pages.read.ReadActivity">
 
+    <!-- Main Reading RecyclerView (Webtoon / Horizontal Mode) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listImage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:clipToPadding="false"
+        android:paddingBottom="40dp" />
 
-    <TextView
-        android:id="@+id/lis3"
+    <!-- Thin Linear Progress Indicator at the top (2dp) -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/readingProgressBar"
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:layout_gravity="top"
+        android:max="100"
+        android:progress="0"
+        app:indicatorColor="@color/brand"
+        app:trackColor="#25FFFFFF" />
+
+    <!-- Compact Floating Page Pill in Bottom-Right Corner (always visible while reading) -->
+    <LinearLayout
+        android:id="@+id/pillPageInfo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center|bottom"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
         android:layout_marginBottom="24dp"
-        android:text="1/0"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:background="@drawable/bg_floating_hud"
+        android:elevation="6dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp">
 
-    <View
-        android:id="@+id/tapDetector"
-        android:layout_width="150dp"
-        android:layout_height="100dp"
-        android:layout_gravity="center"
-        android:background="@android:color/transparent"
-        android:clickable="true"
-        android:focusable="true" />
+        <TextView
+            android:id="@+id/tvQuickChapterInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/intersemi"
+            android:text="Ch. -- • 1/1"
+            android:textColor="@color/white"
+            android:textSize="11sp" />
+    </LinearLayout>
 
-    <!-- Tambahkan ini di bawah RecyclerView -->
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <!-- Fullscreen HUD Container (Top Bar + Bottom Bar) -->
+    <FrameLayout
         android:id="@+id/chapterControls"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="bottom"
-        android:background="#88000000"
-        android:gravity="center"
+        android:clickable="true"
+        android:focusable="true"
         android:visibility="gone">
 
+        <!-- Floating Top Bar -->
         <LinearLayout
-            android:id="@+id/linearLayout4"
+            android:id="@+id/topBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            android:layout_gravity="top"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="44dp"
+            android:background="@drawable/bg_floating_hud"
+            android:clickable="true"
+            android:elevation="10dp"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp">
 
+            <!-- Back Button -->
+            <ImageButton
+                android:id="@+id/back"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_read_btn"
+                android:clickable="true"
+                android:clipToOutline="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="8dp"
+                android:src="@drawable/caret_left"
+                app:tint="@color/white" />
+
+            <!-- Title & Subtitle Container -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/judulManhwa"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="marquee"
+                    android:fontFamily="@font/interbold"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:singleLine="true"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvChapterSubtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/interreguler"
+                    android:maxLines="1"
+                    android:text="Chapter --"
+                    android:textColor="@color/gray_400"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Quick Bookmark / Pustaka Button -->
+            <ImageButton
+                android:id="@+id/btnBookmark"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_read_btn"
+                android:clickable="true"
+                android:clipToOutline="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="8dp"
+                android:src="@drawable/bookmark_simple"
+                app:tint="@color/white" />
+
+            <!-- Quick Refresh Page Button -->
+            <ImageButton
+                android:id="@+id/btnRefresh"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_read_btn"
+                android:clickable="true"
+                android:clipToOutline="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="9dp"
+                android:src="@drawable/loop_right_line"
+                app:tint="@color/white" />
         </LinearLayout>
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <!-- Floating Bottom Bar -->
+        <LinearLayout
             android:id="@+id/bottom_progress"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:background="@drawable/background_porgress"
-            android:orientation="horizontal"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/bg_floating_hud_bottom"
+            android:clickable="true"
+            android:elevation="10dp"
+            android:focusable="true"
+            android:orientation="vertical"
+            android:paddingHorizontal="14dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="12dp">
 
-            <com.google.android.material.slider.RangeSlider
+            <!-- Interactive Page Slider with Tooltip -->
+            <com.google.android.material.slider.Slider
                 android:id="@+id/slider"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="8dp"
-                android:padding="10dp"
-                android:stepSize="1"
-                app:layout_constraintBottom_toTopOf="@+id/btnPrevChapter"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:stepSize="1.0"
+                android:value="0.0"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                app:thumbColor="@color/brand"
+                app:trackColorActive="@color/brand"
+                app:trackColorInactive="#44FFFFFF" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPrevChapter"
-                android:layout_width="wrap_content"
+            <!-- Quick Control Actions Row -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginBottom="16dp"
-                android:backgroundTint="@color/btn_background"
-                android:text="Prev"
-                app:icon="@drawable/caret_left"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                android:layout_marginTop="2dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnNextChapter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:backgroundTint="@color/text_blue_600"
-                android:text="Next"
-                app:icon="@drawable/caret_right"
-                app:iconGravity="end"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                <!-- Prev Chapter Button -->
+                <LinearLayout
+                    android:id="@+id/btnPrevChapter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_read_btn"
+                    android:clickable="true"
+                    android:clipToOutline="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:id="@+id/PageNumber"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=""
-                android:textColor="@color/white"
-                android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/btnNextChapter"
-                app:layout_constraintStart_toEndOf="@+id/btnPrevChapter"
-                app:layout_constraintTop_toBottomOf="@+id/slider" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginEnd="4dp"
+                        android:src="@drawable/caret_left"
+                        app:tint="@color/white" />
 
-        <TextView
-            android:id="@+id/judulManhwa"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="16dp"
-            android:fontFamily="@font/interbold"
-            android:text=""
-            android:textAlignment="center"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/daftarChapter"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toEndOf="@+id/back"
-            app:layout_constraintTop_toTopOf="@+id/back" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/intersemi"
+                        android:text="Prev"
+                        android:textColor="@color/white"
+                        android:textSize="13sp" />
+                </LinearLayout>
 
-        <ImageView
-            android:id="@+id/back"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="32dp"
-            android:background="@drawable/circle_back_btn"
-            android:clickable="true"
-            android:clipToOutline="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:padding="16dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/caret_left"
-            app:tint="@color/white" />
+                <!-- Center Controls (Chapter List & Page Number & Settings) -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/btnNextChapter"
+                    app:layout_constraintStart_toEndOf="@+id/btnPrevChapter"
+                    app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:id="@+id/daftarChapter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:background="@drawable/circle_back_btn"
-            android:clickable="true"
-            android:clipToOutline="true"
-            android:focusable="true"
-            android:foreground="?attr/selectableItemBackground"
-            android:padding="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/back"
-            app:srcCompat="@drawable/baseline_filter_list_24"
-            app:tint="@color/white" />
+                    <!-- Chapter List Button -->
+                    <ImageButton
+                        android:id="@+id/daftarChapter"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_read_btn"
+                        android:clickable="true"
+                        android:clipToOutline="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:padding="9dp"
+                        android:src="@drawable/baseline_filter_list_24"
+                        app:tint="@color/white" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                    <!-- Current Page Indicator Text -->
+                    <TextView
+                        android:id="@+id/PageNumber"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="10dp"
+                        android:fontFamily="@font/intersemi"
+                        android:text="1/1"
+                        android:textColor="@color/white"
+                        android:textSize="12sp" />
 
+                    <!-- Read Settings Button -->
+                    <ImageButton
+                        android:id="@+id/btnSettings"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_read_btn"
+                        android:clickable="true"
+                        android:clipToOutline="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:padding="9dp"
+                        android:src="@drawable/baseline_settings_24"
+                        app:tint="@color/white" />
+                </LinearLayout>
+
+                <!-- Next Chapter Button -->
+                <LinearLayout
+                    android:id="@+id/btnNextChapter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_read_btn_accent"
+                    android:clickable="true"
+                    android:clipToOutline="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/intersemi"
+                        android:text="Next"
+                        android:textColor="@color/white"
+                        android:textSize="13sp" />
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="4dp"
+                        android:src="@drawable/caret_right"
+                        app:tint="@color/white" />
+                </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Full-screen Loading Card -->
     <androidx.cardview.widget.CardView
         android:id="@+id/loading"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
         android:layout_gravity="center"
-        android:backgroundTint="@color/text_slate_900"
-        app:cardCornerRadius="20dp">
+        android:backgroundTint="@color/bottom_navbar"
+        android:visibility="gone"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -190,17 +333,18 @@
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:indeterminate="true" />
+                android:indeterminate="true"
+                app:indicatorColor="@color/brand" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_margin="6dp"
-                android:text="Loading ..." />
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/intersemi"
+                android:text="Memuat..."
+                android:textColor="@color/white"
+                android:textSize="12sp" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
-
 
 </FrameLayout>

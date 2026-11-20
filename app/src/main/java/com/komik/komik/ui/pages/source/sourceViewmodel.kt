@@ -1,17 +1,23 @@
 package com.komik.komik.ui.pages.source
 
+import android.app.Application
 import android.util.Log
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.komik.komik.service.api.model.ListItem
 import com.komik.komik.service.client
+import com.komik.komik.service.data.Database.DatabaseRiwayats
+import com.komik.komik.service.data.model.RiwayatDetail
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getListUpdate
 import com.komik.komik.service.repository.Comic
 import kotlinx.coroutines.launch
 
-class sourceViewmodel: ViewModel() {
+class sourceViewmodel(application: Application) : AndroidViewModel(application) {
+
+    private val db = DatabaseRiwayats.getDatabase(application)
+    val allHistory: LiveData<List<RiwayatDetail>> = db.riwayatdao().getRiwayatDetail()
 
     private var _source = MutableLiveData<List<getListUpdate>>()
     val source: MutableLiveData<List<getListUpdate>> get() = _source
@@ -25,42 +31,43 @@ class sourceViewmodel: ViewModel() {
     private var _search = MutableLiveData<List<getListUpdate>>()
     val search: MutableLiveData<List<getListUpdate>> get() = _search
 
+    private var _pingMs = MutableLiveData<Long?>()
+    val pingMs: MutableLiveData<Long?> get() = _pingMs
 
-    val repository : Comic = Comic(client)
+    val repository: Comic = Comic(client)
 
-
-    fun getSource(type:sourceType,url:String,page:Int){
+    fun getSource(type: sourceType, url: String, page: Int) {
         _loading.postValue(true)
         viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
             try {
-                val result = repository.getComic(type,url,page)
-                Log.d("sourceViewmodel", "getSource: ${result.size}")
+                val result = repository.getComic(type, url, page)
+                val duration = System.currentTimeMillis() - startTime
+                _pingMs.postValue(duration)
+                Log.d("sourceViewmodel", "getSource: ${result.size}  in ${duration}ms")
                 _source.value = result
                 _loading.postValue(false)
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 Log.d("sourceViewmodel", "getSource: $e")
                 e.printStackTrace()
                 _error.postValue(e.message)
                 _loading.postValue(false)
-
             }
         }
     }
 
-    fun search (type: sourceType,query:String,url: String){
+    fun search(type: sourceType, query: String, url: String) {
         _loading.postValue(true)
         viewModelScope.launch {
             try {
-                val response = repository.getSearch(type,query,url)
+                val response = repository.getSearch(type, query, url)
                 _search.postValue(response)
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
                 _error.postValue(e.message)
-            }finally {
+            } finally {
                 _loading.postValue(false)
             }
         }
-
     }
-
 }

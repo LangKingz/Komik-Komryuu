@@ -1,6 +1,7 @@
 package com.komik.komik.service
 
 import android.content.Context
+import com.komik.komik.service.Scrape.DoujindesuDecryptor
 import com.komik.komik.service.api.Scrape
 import com.komik.komik.service.api.ScrapeComicscan
 import com.komik.komik.service.api.ScrapeIkiru
@@ -10,6 +11,7 @@ import com.komik.komik.service.api.SourceService
 import com.komik.komik.service.api.newSourceService
 import com.komik.komik.service.utils.generateFakeCookie
 import okhttp3.OkHttpClient
+import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
@@ -23,6 +25,40 @@ object client {
     private const val ComicscanUrl = "https://lc3.cosmicscans.asia/"
 
     private const val Komryuux ="https://komryuu-x.vercel.app/"
+
+    private const val DoujindesuUrl = "https://doujin.desu.xxx/"
+
+    val Doujindesu: ScrapeIkiru by lazy {
+        Retrofit.Builder()
+            .baseUrl(DoujindesuUrl)
+            .client(
+                OkHttpClient.Builder()
+                    .addInterceptor { chain ->
+                        val request = chain.request().newBuilder()
+                            .header(
+                                "User-Agent",
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                            )
+                            .header("Referer", "https://doujin.desu.xxx/")
+                            .header("Accept", "application/json, text/plain, */*")
+                            .build()
+
+                        val response = chain.proceed(request)
+                        val rawString = response.body?.string() ?: ""
+
+                        // Otomatis dekripsi kalau response-nya dibungkus _enc_resp_
+                        val decryptedString = DoujindesuDecryptor.decryptIfNeeded(rawString)
+
+                        response.newBuilder()
+                            .body(decryptedString.toResponseBody(response.body?.contentType()))
+                            .build()
+                    }
+                    .build()
+            )
+            .addConverterFactory(ScalarsConverterFactory.create())
+            .build()
+            .create(ScrapeIkiru::class.java)
+    }
 
 
     val Shinigami: ShinigamiService by lazy {
@@ -54,9 +90,21 @@ object client {
             .create(ShinigamiService::class.java)
     }
 
+    const val API_KEY = "91f30a30adcb829df7bb8d2146fef5b3104951838996284d24392a02eef83b96"
+
     val Source: SourceService by lazy {
         Retrofit.Builder()
             .baseUrl(URLSOURCE)
+            .client(OkHttpClient.Builder()
+                .addInterceptor { chain ->
+                    val request = chain.request().newBuilder()
+                        .header("x-api-key", API_KEY)
+                        .header("Accept", "application/json")
+                        .build()
+                    chain.proceed(request)
+                }
+                .build()
+            )
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(SourceService::class.java)
@@ -161,7 +209,7 @@ object client {
                         .header(
                             "x-api-key", "91f30a30adcb829df7bb8d2146fef5b3104951838996284d24392a02eef83b96"
                         )
-
+                        .header("Accept", "application/json")
                         .build()
                     chain.proceed(request)
                 }

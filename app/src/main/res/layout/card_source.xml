@@ -1,84 +1,265 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="5dp"
-    android:background="@drawable/card"
+    android:layout_marginHorizontal="5dp"
+    android:layout_marginVertical="6dp"
     android:clickable="true"
-    android:clipToOutline="true"
-    android:foreground="?attr/selectableItemBackground">
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="#1C1C28"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#2A2A3C"
+    app:strokeWidth="1dp">
 
-
-    <TextView
-        android:id="@+id/profilExtensi"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/oval_extensi"
-        android:fontFamily="@font/interbold"
-        android:gravity="center"
-        android:text="K"
-        android:textSize="16sp"
-        android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/JudulExtensi"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:fontFamily="@font/interbold"
-        android:text="Komiku"
-        android:textAlignment="center"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/profilExtensi"
-        app:layout_constraintTop_toBottomOf="@+id/imageView7" />
+        android:padding="12dp">
 
-    <ImageView
-        android:id="@+id/star"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:clickable="true"
-        android:clipToOutline="true"
-        android:foreground="?attr/selectableItemBackground"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/push_pin"
-        app:tint="@color/color_star" />
+        <!-- Baris Atas: Extension Logo / Avatar (Kiri) -->
+        <ImageView
+            android:id="@+id/imageView7"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/oval_extensi"
+            android:clipToOutline="true"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@drawable/ppanime" />
 
-    <ImageView
-        android:id="@+id/imageView7"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/corner_gambar"
-        android:clickable="true"
-        android:clipToOutline="true"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
+        <TextView
+            android:id="@+id/profilExtensi"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/oval_extensi"
+            android:fontFamily="@font/interbold"
+            android:gravity="center"
+            android:text="K"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tag"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:fontFamily="@font/interbold"
-        android:text="tags"
-        android:textAlignment="center"
-        android:textSize="16sp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/JudulExtensi"
-        app:layout_constraintStart_toEndOf="@+id/JudulExtensi"
-        app:layout_constraintTop_toTopOf="@+id/JudulExtensi" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Baris Atas: Action Icons (Kanan) -->
+        <!-- Quick Search, Cek Ping/Refresh, Info, Pin -->
+        <LinearLayout
+            android:id="@+id/actionIconsLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="@+id/imageView7"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/imageView7">
+
+            <!-- Quick Search Button -->
+            <ImageView
+                android:id="@+id/btnSearchSource"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:src="@drawable/baseline_search_24"
+                app:tint="@color/gray_400"
+                android:contentDescription="Cari di sumber ini" />
+
+            <!-- Cek Ping / Refresh Button -->
+            <ImageView
+                android:id="@+id/btnCheckPing"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginStart="2dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:src="@drawable/loop_right_line"
+                app:tint="@color/gray_400"
+                android:contentDescription="Periksa Latensi / Ping" />
+
+            <!-- Info Button -->
+            <ImageView
+                android:id="@+id/btnInfoSource"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginStart="2dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:src="@drawable/info"
+                app:tint="@color/gray_400"
+                android:contentDescription="Informasi Sumber" />
+
+            <!-- Pin Button -->
+            <ImageView
+                android:id="@+id/star"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginStart="2dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:src="@drawable/push_pin"
+                app:tint="@color/gray_400"
+                android:contentDescription="Sematkan Sumber" />
+        </LinearLayout>
+
+        <!-- Baris Tengah: Nama Ekstensi (Full Width, layout_width="0dp") -->
+        <TextView
+            android:id="@+id/JudulExtensi"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/interbold"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="Nama Sumber"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageView7" />
+
+        <!-- Baris Tengah (Sub): Badges (Region, Version, 18+) -->
+        <LinearLayout
+            android:id="@+id/badgesLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/JudulExtensi">
+
+            <!-- Language / Region Badge -->
+            <TextView
+                android:id="@+id/tvRegion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/badge_last_read"
+                android:fontFamily="@font/intersemi"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:text="ID"
+                android:textColor="@color/white"
+                android:textSize="9sp" />
+
+            <!-- Version Badge -->
+            <TextView
+                android:id="@+id/tvVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:background="#26334155"
+                android:fontFamily="@font/interreguler"
+                android:paddingHorizontal="5dp"
+                android:paddingVertical="1dp"
+                android:text="v1.2.0"
+                android:textColor="@color/gray_400"
+                android:textSize="9sp" />
+
+            <!-- Adult 18+ Tag -->
+            <TextView
+                android:id="@+id/tag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:background="#33EF4444"
+                android:fontFamily="@font/interbold"
+                android:paddingHorizontal="5dp"
+                android:paddingVertical="1dp"
+                android:text="18+"
+                android:textColor="@color/red"
+                android:textSize="9sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Baris Bawah: Status Online/Maintenance, Kategori & Ping Indicator -->
+        <LinearLayout
+            android:id="@+id/bottomStatusLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/badgesLayout">
+
+            <!-- Server Status Badge (Online / Maintenance) -->
+            <TextView
+                android:id="@+id/badgeServerStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/badge_status_online"
+                android:fontFamily="@font/intersemi"
+                android:gravity="center"
+                android:paddingHorizontal="7dp"
+                android:paddingVertical="2dp"
+                android:text="● Online"
+                android:textColor="@color/text_emerald_400"
+                android:textSize="10sp" />
+
+            <!-- Category Badge (e.g. Komik / Manga / Anime) disandingkan dengan status -->
+            <TextView
+                android:id="@+id/tvCategory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:background="#26334155"
+                android:fontFamily="@font/intersemi"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp"
+                android:text="Komik"
+                android:textColor="@color/text_violet_400"
+                android:textSize="10sp" />
+
+            <!-- Flexible Space -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Ping / Latency Indicator Layout -->
+            <LinearLayout
+                android:id="@+id/layoutPing"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <View
+                    android:id="@+id/ivPingDot"
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/dot_indicator" />
+
+                <TextView
+                    android:id="@+id/tvPing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/intersemi"
+                    android:text="-- ms"
+                    android:textColor="@color/text_emerald_400"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

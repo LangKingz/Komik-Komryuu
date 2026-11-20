@@ -2,11 +2,12 @@
     <string name="app_name">Komryuu.X</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="beranda">beranda</string>
-    <string name="pustaka">pustaka</string>
-    <string name="cari">cari</string>
-    <string name="riwayat">riwayat</string>
-    <string name="pengaturan">pengaturan</string>
+    <string name="beranda">Beranda</string>
+    <string name="pustaka">Pustaka</string>
+    <string name="cari">Cari</string>
+    <string name="riwayat">Riwayat</string>
+    <string name="pengaturan">Pengaturan</string>
+    <string name="profil">Profil</string>
     <string name="adultcontent">18 +</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="title_home">Home</string>

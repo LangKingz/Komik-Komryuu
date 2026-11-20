@@ -130,13 +130,29 @@ class Comic(val client: client) : RepositroyComic {
                     result
                 }
 
+//                sourceType.doujindesu -> {
+//                    val result = mutableListOf<getListUpdate>()
+//
+//                    for (page in 1..pages) {
+//                        val html = client.Ikiru.getHtml("https://doujin.desu.xxx/manhwa?page=${page}")
+//                        val document = Jsoup.parse(html)
+//                        val pageData = SourceParser.parseDoujindesu(document)
+//
+//                        result.addAll(pageData)
+//                    }
+//
+//                    result
+//                }
                 sourceType.doujindesu -> {
                     val result = mutableListOf<getListUpdate>()
+                    val limit = 24
 
                     for (page in 1..pages) {
-                        val html = client.Ikiru.getHtml("https://doujindesu.tv/manhwa/page/$page/")
-                        val document = Jsoup.parse(html)
-                        val pageData = SourceParser.parseDoujindesu(document)
+                        val offset = (page - 1) * limit
+                        val json = client.Doujindesu.getHtml(
+                            "https://doujin.desu.xxx/api/manga?limit=$limit&type=manhwa&sort=latest_chapter&offset=$offset"
+                        )
+                        val pageData = SourceParser.parseDoujindesu(json)
 
                         result.addAll(pageData)
                     }
@@ -278,16 +294,16 @@ class Comic(val client: client) : RepositroyComic {
                 result
             }
 
-            sourceType.doujindesu -> {
-                val url = "${url}?s=$query"
-                val html = client.Ikiru.getHtml(url)
-                val document = Jsoup.parse(html)
-
-                val dataPaged = SourceParser.parseDoujindesu(document)
-                result.addAll(dataPaged)
-
-                result
-            }
+//            sourceType.doujindesu -> {
+//                val url = "${url}?s=$query"
+//                val html = client.Ikiru.getHtml(url)
+//                val document = Jsoup.parse(html)
+//
+////                val dataPaged = SourceParser.parseDoujindesu(document)
+//                result.addAll(dataPaged)
+//
+//                result
+//            }
 
             else -> emptyList()
         }

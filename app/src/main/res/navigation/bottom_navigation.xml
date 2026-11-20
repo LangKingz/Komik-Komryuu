@@ -5,8 +5,6 @@
     android:id="@+id/bottom_navigation"
     app:startDestination="@id/homefragment">
 
-
-
     <fragment
         android:id="@+id/homefragment"
         android:name="com.komik.komik.ui.beranda.homefragment"
@@ -14,23 +12,26 @@
         tools:layout="@layout/fragment_homefragment" />
 
     <fragment
-        android:id="@+id/historyFragment"
-        android:name="com.komik.komik.ui.riwayat.HistoryFragment"
-        android:label="fragment_history"
-        tools:layout="@layout/fragment_history" />
-    <fragment
         android:id="@+id/pustakaFragment"
         android:name="com.komik.komik.ui.pustaka.PustakaFragment"
         android:label="fragment_pustaka"
         tools:layout="@layout/fragment_pustaka" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.komik.komik.ui.riwayat.HistoryFragment"
+        android:label="fragment_history"
+        tools:layout="@layout/fragment_history" />
+
     <fragment
         android:id="@+id/searchFragment"
         android:name="com.komik.komik.ui.pencarian.SearchFragment"
         android:label="fragment_search"
         tools:layout="@layout/fragment_search" />
+
     <fragment
         android:id="@+id/settingFragment"
         android:name="com.komik.komik.ui.pengaturan.SettingFragment"
-        android:label="fragment_setting"
+        android:label="fragment_profile"
         tools:layout="@layout/fragment_setting" />
 </navigation>

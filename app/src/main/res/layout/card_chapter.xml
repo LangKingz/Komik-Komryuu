@@ -1,44 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/card_chapter"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="4dp"
+    android:background="@drawable/bg_chapter_item"
     android:clickable="true"
+    android:clipToOutline="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    android:clipToOutline="true"
-    android:paddingHorizontal="6dp"
-    android:layout_height="wrap_content">
-
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="12dp">
 
     <TextView
         android:id="@+id/chapter"
-        style="@style/Costumtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="end"
+        android:fontFamily="@font/interbold"
+        android:maxLines="1"
         android:text="Chapter 0"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/day"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/badgeStatus"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/day"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="8dp"
+        android:fontFamily="@font/interreguler"
+        android:text="1 hari lalu"
+        android:textColor="@color/gray_400"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/badgeStatus"
+        app:layout_constraintStart_toStartOf="@+id/chapter"
+        app:layout_constraintTop_toBottomOf="@+id/chapter" />
+
+    <TextView
+        android:id="@+id/badgeStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="1 day"
-        android:textColor="@color/grey_300"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/badge_last_read"
+        android:fontFamily="@font/intersemi"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="3dp"
+        android:text="Terakhir Dibaca"
+        android:textColor="@color/white"
+        android:textSize="10sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnDownload"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
+    <!-- Download Button Container (Download Icon, Spinner, or Checked Icon) -->
+    <FrameLayout
+        android:id="@+id/btnDownload"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginEnd="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/ivArrow"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/ivDownload"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:src="@drawable/baseline_download_24"
+            app:tint="@color/gray_400" />
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/pbDownload"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:indicatorColor="@color/brand"
+            app:indicatorSize="20dp"
+            app:trackThickness="2dp" />
+    </FrameLayout>
+
+    <ImageView
+        android:id="@+id/ivArrow"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:alpha="0.6"
+        android:src="@drawable/caret_right"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/gray_400" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

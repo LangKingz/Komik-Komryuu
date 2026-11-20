@@ -1,45 +1,229 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/corner_navbottom"
-    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
-    app:behavior_fitToContents="false"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="20dp">
 
     <com.google.android.material.bottomsheet.BottomSheetDragHandleView
         android:id="@+id/drag"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-   <TextView
-       android:layout_width="match_parent"
-       android:layout_height="wrap_content"
-       android:text="Informasi"
-       android:textColor="@color/white"
-       android:textAlignment="center"
-       android:fontFamily="@font/interbold"
-       />
-
-    <TextView
-        android:id="@+id/sizeCard"
+    <!-- Source Header -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="Jumlah isi konten : 300"
-        android:textColor="@color/white"
-        />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/webs"
+        <ImageView
+            android:id="@+id/imgBsLogo"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/corner_gambar"
+            android:clipToOutline="true"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ppanime" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvBsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/interbold"
+                android:text="Nama Ekstensi"
+                android:textColor="@color/white"
+                android:textSize="17sp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tvBsServerStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/badge_status_online"
+                    android:fontFamily="@font/intersemi"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp"
+                    android:text="● Online"
+                    android:textColor="@color/text_emerald_400"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tvBsVersion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:fontFamily="@font/interreguler"
+                    android:text="Versi 1.2.0"
+                    android:textColor="@color/gray_400"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Source URL Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:cardBackgroundColor="#1A1D24"
+        app:cardCornerRadius="12dp"
+        app:strokeColor="#2E3440"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/intersemi"
+                android:text="URL Sumber Asli"
+                android:textColor="@color/text_slate_400"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/webs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:fontFamily="@font/intermedium"
+                android:maxLines="2"
+                android:text="https://komikcast01.com"
+                android:textColor="@color/primary_light"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Response Speed / Ping Card -->
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="Informasi Webtoon : https://webtoon.kakao.com/"
-        android:textColor="@color/white"
-        />
+        app:cardBackgroundColor="#1A1D24"
+        app:cardCornerRadius="12dp"
+        app:strokeColor="#2E3440"
+        app:strokeWidth="1dp">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/loop_right_line"
+                app:tint="@color/mint_teal" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/intersemi"
+                    android:text="Kecepatan Respon / Ping"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/tvBsPing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/interreguler"
+                    android:text="Mengukur kecepatan respon..."
+                    android:textColor="@color/mint_teal"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/sizeCard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/intersemi"
+                android:text="300+ Komik"
+                android:textColor="@color/gray_400"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Extension Update History / Changelog Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        app:cardBackgroundColor="#1A1D24"
+        app:cardCornerRadius="12dp"
+        app:strokeColor="#2E3440"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/intersemi"
+                android:text="Riwayat Pembaruan Ekstensi"
+                android:textColor="@color/text_slate_400"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvChangelog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:fontFamily="@font/interreguler"
+                android:lineSpacingExtra="3dp"
+                android:text="• v1.2.0: Perbaikan parser chapter &amp; bypass Cloudflare\n• v1.1.0: Peningkatan kecepatan unduhan gambar\n• v1.0.0: Rilis awal ekstensi sumber"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Visit Website Action Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnVisitWebsite"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/primary_button"
+        android:fontFamily="@font/intersemi"
+        android:text="Kunjungi Situs Sumber"
+        android:textColor="@color/white"
+        app:cornerRadius="12dp"
+        app:icon="@drawable/chrome_fill"
+        app:iconGravity="textStart"
+        app:iconTint="@color/white" />
 
 </LinearLayout>

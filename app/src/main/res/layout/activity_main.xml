@@ -3,15 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:background="@drawable/aurora_bg"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/aurora_bg"
     tools:context=".MainActivity">
 
-    <fragment
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         app:defaultNavHost="true"
         app:layout_constraintBottom_toTopOf="@+id/bottom_navigation"
@@ -20,31 +20,21 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/bottom_navigation" />
 
-
+    <!-- Standard Docked Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@drawable/corner_navbottom"
-        android:padding="0dp"
+        android:elevation="8dp"
+        app:backgroundTint="@null"
         app:itemActiveIndicatorStyle="@style/App.Custom.Indicator"
         app:itemIconTint="@color/color_selected_bottom"
         app:itemTextColor="@color/text_select_bottombar"
-        app:labelVisibilityMode="selected"
+        app:labelVisibilityMode="labeled"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/menu_bottom_navigation" />
-
-
-    <!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-    <!--        android:id="@+id/btnSearch"-->
-    <!--        android:layout_width="wrap_content"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_gravity="center"-->
-    <!--        android:backgroundTint="@color/primary_button"-->
-
-    <!--        android:clickable="true"-->
-    <!--        app:srcCompat="@drawable/baseline_search_24" />-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

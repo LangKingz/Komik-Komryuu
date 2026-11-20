@@ -35,6 +35,8 @@ object SourceParser {
             }
     }
 
+//    https://api.shinigami.io/v1/manga/list?type=project&is_update=true&sort=latest&sort_order=desc&offset=20&limit=20
+
     suspend fun parseShinigami(client: client, page: Int): List<getListUpdate>? {
         val response = client.Shinigami.getMangaList(pageSize = 24, page = page, sortBy = "latest")
         val pageData = response.data
@@ -133,20 +135,54 @@ object SourceParser {
             }
     }
 
-    fun parseDoujindesu(document: Document) : List<getListUpdate>{
-        val baseurl = "https://doujindesu.tv"
+//    fun parseDoujindesu(document: Document) : List<getListUpdate>{
+//        val baseurl = "https://doujin.desu.xxx/"
+//
+//        return document.select(".entries article").mapIndexed { index, element ->
+//            getListUpdate(
+//                index = index,
+//                title = element.select(".entry a").attr("title"),
+//                urlImage = element.select(".thumbnail img").attr("src"),
+//                link =baseurl+ element.select(".entry a").attr("href"),
+//                location = "dd",
+//                tagModel = "komik"
+//                )
+//        }
+//    }
 
-        return document.select(".entries article").mapIndexed { index, element ->
-            getListUpdate(
-                index = index,
-                title = element.select(".entry a").attr("title"),
-                urlImage = element.select(".thumbnail img").attr("src"),
-                link =baseurl+ element.select(".entry a").attr("href"),
-                location = "dd",
-                tagModel = "komik"
+    fun parseDoujindesu(jsonString: String): List<getListUpdate> {
+        val baseurl = "https://doujin.desu.xxx/"
+        val list = mutableListOf<getListUpdate>()
+
+        try {
+            val jsonArray = org.json.JSONArray(jsonString)
+            for (i in 0 until jsonArray.length()) {
+                val item = jsonArray.getJSONObject(i)
+                val slug = item.optString("slug", "")
+                val title = item.optString("title", "")
+                val coverUrl = item.optString("cover_url", "")
+
+                list.add(
+                    getListUpdate(
+                        index = i,
+                        title = title,
+                        urlImage = coverUrl,
+                        link = "${baseurl}manga/$slug",
+                        location = "dd",
+                        tagModel = "komik"
+                    )
                 )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+
+        return list
     }
+
+
+
+
 
 
 }

@@ -1,91 +1,179 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:clipToOutline="true"
-    android:padding="8dp"
-    android:layout_marginHorizontal="6dp"
-    android:layout_marginVertical="3dp"
-    android:background="@drawable/corner_gambar"
-    android:backgroundTint="@android:color/transparent"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="5dp"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground">
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="#1F242D"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#2E3544"
+    app:strokeWidth="1dp">
 
-
-    <ImageButton
-        android:id="@+id/imageButton"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:background="@android:color/transparent"
-        android:clickable="true"
-        android:clipToOutline="true"
-        android:focusable="true"
-        android:foreground="?attr/selectableItemBackground"
-        android:src="@drawable/ic_trash"
-        app:layout_constraintBottom_toBottomOf="@+id/linearLayout2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/linearLayout2"
-        app:layout_constraintVertical_bias="0.513"
-        app:tint="@color/white" />
+        android:padding="12dp">
 
-    <ImageView
-        android:id="@+id/Gambar"
-        android:layout_width="60dp"
-        android:layout_height="80dp"
-        android:adjustViewBounds="true"
-        android:background="@drawable/corner_gambar_riwayat"
-        android:clipToOutline="true"
-        android:scaleType="centerCrop"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
+        <!-- Comic Cover -->
+        <ImageView
+            android:id="@+id/Gambar"
+            android:layout_width="64dp"
+            android:layout_height="88dp"
+            android:background="@drawable/corner_gambar_riwayat"
+            android:clipToOutline="true"
+            android:scaleType="centerCrop"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@tools:sample/avatars" />
 
-    <LinearLayout
-        android:id="@+id/linearLayout2"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:gravity="center_vertical"
-        android:orientation="vertical"
-        app:layout_constraintEnd_toStartOf="@+id/imageButton"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toEndOf="@+id/Gambar"
-        app:layout_constraintTop_toTopOf="@+id/Gambar">
+        <!-- Quick Action: Lanjut Baca Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnContinueRead"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:backgroundTint="#26334155"
+            android:fontFamily="@font/intersemi"
+            android:paddingHorizontal="10dp"
+            android:text="Lanjut"
+            android:textColor="@color/mint_teal"
+            android:textSize="12sp"
+            app:cornerRadius="8dp"
+            app:icon="@drawable/ic_continue_reading"
+            app:iconGravity="textStart"
+            app:iconSize="14dp"
+            app:iconTint="@color/mint_teal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/NameKomik"
-            style="@style/Costumtitle"
-            android:layout_width="match_parent"
+        <!-- Delete Button (Top Right, hidden by default as swipe-to-delete is available, but functional) -->
+        <ImageButton
+            android:id="@+id/imageButton"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="5dp"
+            android:src="@drawable/ic_trash"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/gray_400" />
+
+        <!-- Middle Info Layout -->
+        <LinearLayout
+            android:id="@+id/linearLayout2"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0"
-            android:ellipsize="end"
-            android:maxLines="3"
-            android:text="Solo Leveling"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="10dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btnContinueRead"
+            app:layout_constraintStart_toEndOf="@+id/Gambar"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/Chapter"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="chapter 20"
-            android:textColor="@color/text_grey_500"
-            android:textSize="12sp" />
+            <!-- Title -->
+            <TextView
+                android:id="@+id/NameKomik"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/interbold"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="Solo Leveling"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
 
-        <TextView
-            android:id="@+id/time"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="dari Komiku • 14:10"
-            android:textColor="@color/gray_400"
-            android:textSize="12sp" />
+            <!-- Source Badge & Last Read Time -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-    </LinearLayout>
+                <TextView
+                    android:id="@+id/tvSourceBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#26334155"
+                    android:fontFamily="@font/intersemi"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:text="Komiku"
+                    android:textColor="@color/text_violet_400"
+                    android:textSize="10sp" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:id="@+id/time"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/interreguler"
+                    android:maxLines="1"
+                    android:text="• 10 menit lalu"
+                    android:textColor="@color/gray_400"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Chapter Info -->
+            <TextView
+                android:id="@+id/Chapter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:fontFamily="@font/intersemi"
+                android:maxLines="1"
+                android:text="Chapter 45"
+                android:textColor="@color/mint_teal"
+                android:textSize="12sp" />
+
+            <!-- Reading Progress Bar & Text -->
+            <LinearLayout
+                android:id="@+id/layoutProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="0dp"
+                    android:layout_height="4dp"
+                    android:layout_weight="1"
+                    android:max="100"
+                    android:progress="45"
+                    android:progressDrawable="@drawable/progress_reading_thin" />
+
+                <TextView
+                    android:id="@+id/tvProgress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:fontFamily="@font/interreguler"
+                    android:text="12/36"
+                    android:textColor="@color/text_slate_400"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

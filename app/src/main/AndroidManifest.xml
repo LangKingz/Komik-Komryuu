@@ -37,6 +37,10 @@
         tools:targetApi="31">
 
         <activity
+            android:name=".ui.pages.login.LoginActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".ui.pages.search.SearchActivity"
             android:exported="false" />
         <activity
@@ -50,6 +54,12 @@
             android:exported="false" />
         <activity
             android:name=".ui.pages.source.sourceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.pages.download.DownloadManagerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.pages.admin.AdminManageUserActivity"
             android:exported="false" />
         <activity
             android:name=".ui.pages.splash.SplashActivity"

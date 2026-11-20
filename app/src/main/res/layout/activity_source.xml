@@ -5,57 +5,495 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/aurora_bg"
     tools:context=".ui.pages.source.sourceActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
+    <!-- Top Modern Minimalist Header -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/bottom_navbar"
+        android:background="#14141E"
         android:fitsSystemWindows="true"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/appbar"
+        <!-- Circular Back Button -->
+        <FrameLayout
+            android:id="@+id/btnBack"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/circle_back_btn"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/caret_left"
+                app:tint="@color/white" />
+        </FrameLayout>
+
+        <!-- Source Logo / Avatar -->
+        <ImageView
+            android:id="@+id/ivSourceLogo"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/corner_gambar"
+            android:clipToOutline="true"
+            android:scaleType="centerCrop"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btnBack"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:srcCompat="@drawable/ppanime" />
+
+        <TextView
+            android:id="@+id/tvSourceAvatar"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/oval_extensi"
+            android:fontFamily="@font/interbold"
+            android:gravity="center"
+            android:text="K"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btnBack"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Source Title & Status Subtitle -->
+        <LinearLayout
+            android:id="@+id/sourceInfoLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="8dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/headerActionsLayout"
+            app:layout_constraintStart_toEndOf="@+id/ivSourceLogo"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tvSourceName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/interbold"
+                android:maxLines="1"
+                android:singleLine="true"
+                android:text="Sumber Ekstensi"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <!-- Server Status / Ping Badge -->
+                <TextView
+                    android:id="@+id/badgeServerStatusTop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/badge_status_online"
+                    android:fontFamily="@font/intersemi"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:text="● Online"
+                    android:textColor="@color/text_emerald_400"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/tvSourceDomain"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:ellipsize="end"
+                    android:fontFamily="@font/interreguler"
+                    android:maxLines="1"
+                    android:text="https://source.url"
+                    android:textColor="@color/gray_400"
+                    android:textSize="10sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Right Quick Action Buttons: Cookie & Browser -->
+        <LinearLayout
+            android:id="@+id/headerActionsLayout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!-- Cookie / Cloudflare Bypass Button -->
+            <FrameLayout
+                android:id="@+id/btnCookieBypass"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/circle_back_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/cookie"
+                    app:tint="@color/golden_sand" />
+            </FrameLayout>
+
+            <!-- Open in Browser Button -->
+            <FrameLayout
+                android:id="@+id/btnOpenBrowser"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/circle_back_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/chrome_fill"
+                    app:tint="@color/mint_teal" />
+            </FrameLayout>
+
+            <!-- Info / About Button -->
+            <FrameLayout
+                android:id="@+id/btnSourceInfo"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/circle_back_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/info"
+                    app:tint="@color/gray_400" />
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Top 1dp Divider -->
+    <View
+        android:id="@+id/topDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#262636"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+
+    <!-- Inline Search Bar -->
+    <LinearLayout
+        android:id="@+id/layoutSourceSearch"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_search_detail"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/topDivider">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/baseline_search_24"
+            app:tint="@color/gray_400" />
+
+        <EditText
+            android:id="@+id/etSearchSource"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:background="@null"
+            android:fontFamily="@font/interreguler"
+            android:hint="Cari judul komik di sumber ini..."
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textColor="@color/white"
+            android:textColorHint="@color/text_slate_500"
+            android:textSize="13sp" />
+
+        <ImageView
+            android:id="@+id/btnCloseSourceSearch"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/baseline_close_24"
+            android:visibility="gone"
+            app:tint="@color/gray_400" />
+    </LinearLayout>
+
+    <!-- Quick Filter Chips: Terbaru, Populer, Riwayat Source Ini -->
+    <HorizontalScrollView
+        android:id="@+id/chipsScrollSource"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:clipToPadding="false"
+        android:paddingHorizontal="16dp"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/layoutSourceSearch">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupSourceQuick"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleLine="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipTerbaru"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:fontFamily="@font/intersemi"
+                android:text="Terbaru"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                app:chipBackgroundColor="#23262B"
+                app:chipStrokeColor="#3A404D"
+                app:chipStrokeWidth="1dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPopuler"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/intersemi"
+                android:text="Populer"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                app:chipBackgroundColor="#23262B"
+                app:chipStrokeColor="#3A404D"
+                app:chipStrokeWidth="1dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipRiwayatSource"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/intersemi"
+                android:text="Riwayat Source Ini"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                app:chipBackgroundColor="#23262B"
+                app:chipStrokeColor="#3A404D"
+                app:chipStrokeWidth="1dp" />
+
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <!-- Reading History Horizontal Mini Section for this specific source -->
+    <LinearLayout
+        android:id="@+id/layoutSourceHistorySection"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/chipsScrollSource">
+
+        <LinearLayout
             android:layout_width="match_parent"
-            app:titleTextColor="@color/white"
-            app:navigationIconTint="@color/white"
-            android:minHeight="?attr/actionBarSize"
-            app:title="Source Extensi"
-            app:menu="@menu/menu_navigation_appbar"
-            app:subtitleTextColor="@color/gray_400"
-            app:subtitle="https://phosphoricons.com/?q=arrow"
-            app:navigationIcon="@drawable/baseline_close_24"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="4dp">
 
-    </com.google.android.material.appbar.AppBarLayout>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="@font/interbold"
+                android:text="📖  Terakhir Dibaca di Sumber Ini"
+                android:textColor="@color/text_violet_400"
+                android:textSize="12sp" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/listSource"
+            <TextView
+                android:id="@+id/btnHideHistorySection"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:fontFamily="@font/intermedium"
+                android:text="Tutup"
+                android:textColor="@color/gray_400"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvSourceHistory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="2dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+    </LinearLayout>
+
+    <!-- SwipeRefreshLayout wrapping Main Content List -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshSource"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/appBarLayout" />
+        app:layout_constraintTop_toBottomOf="@+id/layoutSourceHistorySection">
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/listSource"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="6dp"
+            android:paddingBottom="96dp" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- Loading Indicator -->
     <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:indeterminate="true"
+        app:indicatorColor="@color/primary_button"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/listSource" />
+        app:layout_constraintTop_toTopOf="@+id/swipeRefreshSource" />
 
+    <!-- Error State: Interactive with Cookie Bypass and Retry Buttons -->
     <LinearLayout
         android:id="@+id/error"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/error" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/interbold"
+            android:text="Gagal Memuat Sumber"
+            android:textColor="@color/white"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/tvErrorMessage"
+            android:layout_width="260dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="@font/interreguler"
+            android:gravity="center"
+            android:text="Sumber kemungkinan sedang maintenance atau diblokir proteksi Cloudflare."
+            android:textColor="@color/gray_400"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <!-- Atur Cookie Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnErrorCookie"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="#26334155"
+                android:fontFamily="@font/intersemi"
+                android:text="Atur Cookie"
+                android:textColor="@color/golden_sand"
+                android:textSize="13sp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/cookie"
+                app:iconGravity="textStart"
+                app:iconTint="@color/golden_sand"
+                app:strokeColor="#334155"
+                app:strokeWidth="1dp" />
+
+            <!-- Coba Lagi Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/again"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:backgroundTint="@color/primary_button"
+                android:fontFamily="@font/intersemi"
+                android:text="Coba Lagi"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/loop_right_line"
+                app:iconGravity="textStart"
+                app:iconTint="@color/white" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Empty Search State -->
+    <LinearLayout
+        android:id="@+id/emptySearchState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone"
@@ -65,23 +503,185 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:src="@drawable/error" />
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:alpha="0.7"
+            android:src="@drawable/compass_3_line"
+            app:tint="@color/gray_400" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/interextra"
-            android:text="Gagal Menembus Cloudflare" />
+            android:layout_marginTop="12dp"
+            android:fontFamily="@font/interbold"
+            android:text="Komik Tidak Ditemukan"
+            android:textColor="@color/white"
+            android:textSize="15sp" />
 
         <TextView
-            android:id="@+id/again"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/interextra"
-            android:text="Coba Lagi"
-            android:textColor="@color/primary_button" />
-
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/interreguler"
+            android:text="Coba kata kunci lain atau periksa koneksi."
+            android:textColor="@color/gray_400"
+            android:textSize="12sp" />
     </LinearLayout>
+
+    <!-- Floating Action Pill (Floating Bottom Bar - PRESERVED EXACTLY AS REQUIRED) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/floatingActionPill"
+        android:layout_width="wrap_content"
+        android:layout_height="54dp"
+        android:layout_marginBottom="24dp"
+        app:cardBackgroundColor="#EB1F242D"
+        app:cardCornerRadius="27dp"
+        app:cardElevation="10dp"
+        app:strokeColor="#3A404D"
+        app:strokeWidth="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp">
+
+            <!-- 1. Filter Kategori Button -->
+            <LinearLayout
+                android:id="@+id/btnFilterKategori"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/baseline_filter_list_24"
+                    app:tint="@color/calm_rose" />
+
+                <TextView
+                    android:id="@+id/tvFilterKategoriLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:fontFamily="@font/intersemi"
+                    android:text="Kategori"
+                    android:textColor="@color/white"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Vertical Separator -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="22dp"
+                android:background="#3A404D" />
+
+            <!-- 2. Pencarian Cepat Button -->
+            <LinearLayout
+                android:id="@+id/btnCariSource"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/baseline_search_24"
+                    app:tint="@color/primary_light" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:fontFamily="@font/intersemi"
+                    android:text="Cari"
+                    android:textColor="@color/white"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Vertical Separator -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="22dp"
+                android:background="#3A404D" />
+
+            <!-- 3. Pin Source ke Atas Button -->
+            <LinearLayout
+                android:id="@+id/btnPinSource"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+
+                <ImageView
+                    android:id="@+id/icPinSource"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/push_pin"
+                    app:tint="@color/color_star" />
+
+                <TextView
+                    android:id="@+id/tvPinSourceLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:fontFamily="@font/intersemi"
+                    android:text="Pin"
+                    android:textColor="@color/white"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Vertical Separator -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="22dp"
+                android:background="#3A404D" />
+
+            <!-- 4. Badge Status Server Aktif/Offline -->
+            <LinearLayout
+                android:id="@+id/btnServerStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="8dp">
+
+                <TextView
+                    android:id="@+id/badgeServerStatusPill"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/badge_status_online"
+                    android:fontFamily="@font/intersemi"
+                    android:gravity="center"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="4dp"
+                    android:text="● Aktif"
+                    android:textColor="@color/text_emerald_400"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

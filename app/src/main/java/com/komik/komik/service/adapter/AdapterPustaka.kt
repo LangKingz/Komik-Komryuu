@@ -1,114 +1,233 @@
 package com.komik.komik.service.adapter
 
+import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.komik.komik.R
-import com.komik.komik.databinding.CardDailyBinding
+import com.komik.komik.databinding.ItemPustakaGridBinding
+import com.komik.komik.databinding.ItemPustakaListBinding
 import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.data.Database.DatabaseRiwayats
-import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.LibraryDetail
 import com.komik.komik.ui.pages.detail.DetailActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class AdapterPustaka(private val list: MutableList<LibraryDetail>) :
-    RecyclerView.Adapter<AdapterPustaka.ViewHolder>() {
-    class ViewHolder(private val binding: CardDailyBinding) :
-        RecyclerView.ViewHolder(binding.root) {
-        val context = itemView.context
+class AdapterPustaka(
+    private val list: MutableList<LibraryDetail>,
+    var isListMode: Boolean = false
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-        val dbUtama = DatabaseRiwayats.getDatabase(context)
-        val daoComic = dbUtama.comicdao()
-        val libraryDao = dbUtama.libraryDao()
-
-        fun bind(data: LibraryDetail) {
-            binding.judul.text = data.comic.title
-
-            val finalpath: String
-            val comic = data.library
-            val tag = data.comic.tags
-
-            if (tag == "adult") {
-                binding.tagAdult.visibility = View.VISIBLE
-            }
-
-            Glide.with(itemView.context)
-                .load(data.comic.localImageUri)
-                .error(R.drawable.placeholder)
-                .into(binding.coverUrl)
-        }
-
-        fun deleteComidData(comic_id: Int, comicTitle: String) {
-            CoroutineScope(Dispatchers.IO).launch {
-                daoComic.deleteChapterById(comic_id)
-                daoComic.deleteGenreByTitle(comicTitle)
-                daoComic.deleteComicByUrl(comic_id)
-                libraryDao.deleteLibrary(comic_id)
-
-            }
-        }
+    companion object {
+        const val VIEW_TYPE_GRID = 0
+        const val VIEW_TYPE_LIST = 1
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = CardDailyBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return ViewHolder(binding)
+    var isSelectionMode: Boolean = false
+        set(value) {
+            field = value
+            if (!value) selectedIds.clear()
+            notifyDataSetChanged()
+        }
+
+    val selectedIds = mutableSetOf<Int>()
+    var onSelectionChangedListener: ((Int) -> Unit)? = null
+    var onItemDeletedListener: (() -> Unit)? = null
+
+    private val unreadCache = mutableMapOf<Int, Int>()
+
+    override fun getItemViewType(position: Int): Int {
+        return if (isListMode) VIEW_TYPE_LIST else VIEW_TYPE_GRID
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == VIEW_TYPE_LIST) {
+            val binding = ItemPustakaListBinding.inflate(inflater, parent, false)
+            ListViewHolder(binding)
+        } else {
+            val binding = ItemPustakaGridBinding.inflate(inflater, parent, false)
+            GridViewHolder(binding)
+        }
     }
 
     override fun getItemCount(): Int = list.size
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(list[position])
-
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        val item = list[position]
         val context = holder.itemView.context
 
-        holder.itemView.setOnClickListener {
-            val intent = Intent(holder.itemView.context, DetailActivity::class.java).apply {
-                putExtra(DetailActivity.URL, list[position].comic.url)
-                putExtra(DetailActivity.LOCATION, list[position].comic.location)
+        loadUnreadCount(context, item.comic.id) { unread ->
+            if (holder is GridViewHolder) {
+                holder.bind(item, isSelectionMode, selectedIds.contains(item.comic.id), unread)
+            } else if (holder is ListViewHolder) {
+                holder.bind(item, isSelectionMode, selectedIds.contains(item.comic.id), unread)
             }
+        }
 
-            holder.itemView.context.startActivity(intent)
+        holder.itemView.setOnClickListener {
+            if (isSelectionMode) {
+                toggleSelection(item.comic.id)
+            } else {
+                val intent = Intent(context, DetailActivity::class.java).apply {
+                    putExtra(DetailActivity.URL, item.comic.url)
+                    putExtra(DetailActivity.LOCATION, item.comic.location)
+                }
+                context.startActivity(intent)
+            }
         }
 
         holder.itemView.setOnLongClickListener {
-            AlertDialogCostum(
-                context,
-                "Hapus",
-                "Yakin ingin menghapus ${list[position].comic.title}?",
-                onPositive = {dialog ->
-                    removeItemWithContext(holder.adapterPosition, context)
-                    dialog.dismiss()
-                },
-                onNegative = {
-                    it.dismiss()
-                }
-            ).show()
-
+            if (!isSelectionMode) {
+                AlertDialogCostum(
+                    context,
+                    "Hapus dari Pustaka",
+                    "Yakin ingin menghapus ${item.comic.title} dari pustaka?",
+                    onPositive = { dialog ->
+                        removeItemAt(holder.bindingAdapterPosition, context)
+                        dialog.dismiss()
+                    },
+                    onNegative = { dialog ->
+                        dialog.dismiss()
+                    }
+                ).show()
+            } else {
+                toggleSelection(item.comic.id)
+            }
             true
+        }
+
+        if (holder is ListViewHolder) {
+            holder.binding.btnDelete.setOnClickListener {
+                AlertDialogCostum(
+                    context,
+                    "Hapus Komik",
+                    "Hapus ${item.comic.title} dari pustaka?",
+                    onPositive = { dialog ->
+                        removeItemAt(holder.bindingAdapterPosition, context)
+                        dialog.dismiss()
+                    },
+                    onNegative = { it.dismiss() }
+                ).show()
+            }
         }
     }
 
-    fun updateData(newData: List<LibraryDetail>) {
-        list.clear()
-        list.addAll(newData)
+    private fun toggleSelection(comicId: Int) {
+        if (selectedIds.contains(comicId)) {
+            selectedIds.remove(comicId)
+        } else {
+            selectedIds.add(comicId)
+        }
         notifyDataSetChanged()
+        onSelectionChangedListener?.invoke(selectedIds.size)
     }
 
-    fun addData(newData: List<LibraryDetail>) {
-        list.addAll(newData)
-        notifyItemRangeInserted(list.size - newData.size, newData.size)
+    private fun loadUnreadCount(context: Context, comicId: Int, onResult: (Int) -> Unit) {
+        val cached = unreadCache[comicId]
+        if (cached != null) {
+            onResult(cached)
+            return
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = DatabaseRiwayats.getDatabase(context)
+            val unread = try {
+                db.chapterdao().getUnreadChapterCount(comicId)
+            } catch (_: Exception) {
+                0
+            }
+            unreadCache[comicId] = unread
+            withContext(Dispatchers.Main) {
+                onResult(unread)
+            }
+        }
     }
 
-    fun clearData() {
-        list.clear()
-        notifyDataSetChanged()
+    inner class GridViewHolder(val binding: ItemPustakaGridBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(data: LibraryDetail, isSelectMode: Boolean, isSelected: Boolean, unreadCount: Int) {
+            binding.judul.text = data.comic.title
+            binding.tvStatus.text = buildString {
+                append(data.comic.location)
+                if (!data.comic.status.isNullOrBlank()) {
+                    append(" • ").append(data.comic.status)
+                }
+            }
+
+            if (data.comic.tags == "adult") {
+                binding.tagAdult.visibility = View.VISIBLE
+            } else {
+                binding.tagAdult.visibility = View.GONE
+            }
+
+            if (unreadCount > 0) {
+                binding.badgeUnread.visibility = View.VISIBLE
+                binding.badgeUnread.text = "+$unreadCount"
+            } else {
+                binding.badgeUnread.visibility = View.GONE
+            }
+
+            if (isSelectMode) {
+                binding.cbSelect.visibility = View.VISIBLE
+                binding.cbSelect.isChecked = isSelected
+            } else {
+                binding.cbSelect.visibility = View.GONE
+            }
+
+            Glide.with(itemView.context)
+                .load(data.comic.localImageUri ?: data.comic.imageUrl)
+                .error(R.drawable.placeholder)
+                .into(binding.coverUrl)
+        }
+    }
+
+    inner class ListViewHolder(val binding: ItemPustakaListBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(data: LibraryDetail, isSelectMode: Boolean, isSelected: Boolean, unreadCount: Int) {
+            binding.judul.text = data.comic.title
+            binding.tvLocation.text = data.comic.location
+            binding.tvStatus.text = if (!data.comic.status.isNullOrBlank()) {
+                data.comic.status
+            } else {
+                "Tersimpan di Pustaka"
+            }
+
+            if (data.comic.tags == "adult") {
+                binding.tagAdult.visibility = View.VISIBLE
+            } else {
+                binding.tagAdult.visibility = View.GONE
+            }
+
+            if (unreadCount > 0) {
+                binding.badgeUnread.visibility = View.VISIBLE
+                binding.badgeUnread.text = "$unreadCount Baru"
+            } else {
+                binding.badgeUnread.visibility = View.GONE
+            }
+
+            if (isSelectMode) {
+                binding.cbSelect.visibility = View.VISIBLE
+                binding.cbSelect.isChecked = isSelected
+                binding.btnDelete.visibility = View.GONE
+            } else {
+                binding.cbSelect.visibility = View.GONE
+                binding.btnDelete.visibility = View.VISIBLE
+            }
+
+            Glide.with(itemView.context)
+                .load(data.comic.localImageUri ?: data.comic.imageUrl)
+                .error(R.drawable.placeholder)
+                .into(binding.coverUrl)
+        }
     }
 
     fun setData(newData: List<LibraryDetail>) {
@@ -117,9 +236,19 @@ class AdapterPustaka(private val list: MutableList<LibraryDetail>) :
         notifyDataSetChanged()
     }
 
-    // Dan fungsinya menjadi:
-    fun removeItemWithContext(position: Int, context: android.content.Context) {
-        if (position >= 0 && position < list.size) {
+    fun updateData(newData: List<LibraryDetail>) {
+        list.clear()
+        list.addAll(newData)
+        notifyDataSetChanged()
+    }
+
+    fun clearData() {
+        list.clear()
+        notifyDataSetChanged()
+    }
+
+    fun removeItemAt(position: Int, context: Context) {
+        if (position in 0 until list.size) {
             val itemToDelete = list[position]
             val dbUtama = DatabaseRiwayats.getDatabase(context)
             val daoComic = dbUtama.comicdao()
@@ -135,6 +264,30 @@ class AdapterPustaka(private val list: MutableList<LibraryDetail>) :
             list.removeAt(position)
             notifyItemRemoved(position)
             notifyItemRangeChanged(position, list.size)
+            onItemDeletedListener?.invoke()
         }
+    }
+
+    fun deleteSelectedItems(context: Context) {
+        if (selectedIds.isEmpty()) return
+        val itemsToDelete = list.filter { selectedIds.contains(it.comic.id) }
+        val dbUtama = DatabaseRiwayats.getDatabase(context)
+        val daoComic = dbUtama.comicdao()
+        val libraryDao = dbUtama.libraryDao()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            for (item in itemsToDelete) {
+                daoComic.deleteChapterById(item.comic.id)
+                daoComic.deleteGenreByTitle(item.comic.title)
+                daoComic.deleteComicByUrl(item.comic.id)
+                libraryDao.deleteLibrary(item.comic.id)
+            }
+        }
+
+        list.removeAll(itemsToDelete)
+        selectedIds.clear()
+        isSelectionMode = false
+        notifyDataSetChanged()
+        onItemDeletedListener?.invoke()
     }
 }

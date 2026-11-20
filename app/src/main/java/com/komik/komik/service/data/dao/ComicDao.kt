@@ -37,7 +37,7 @@ interface ComicDao {
     suspend fun getChapterByLink(comicTitle: String,location: String): List<Chapter>
 
     @Query("SELECT * FROM comic WHERE url = :url")
-    fun getComicByUrl(url: String): Comic
+    fun getComicByUrl(url: String): Comic?
 
     @Query("DELETE FROM comic ")
     fun deleteAllComic()

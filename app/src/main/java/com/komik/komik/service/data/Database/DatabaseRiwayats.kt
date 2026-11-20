@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.komik.komik.service.data.dao.ComicDao
+import com.komik.komik.service.data.dao.DownloadDao
 import com.komik.komik.service.data.dao.ExtensiDao
 import com.komik.komik.service.data.dao.LibraryDao
 import com.komik.komik.service.data.dao.chapterDao
@@ -13,13 +14,24 @@ import com.komik.komik.service.data.dao.genreDao
 import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.Comic
+import com.komik.komik.service.data.model.DownloadChapter
+import com.komik.komik.service.data.model.DownloadLog
 import com.komik.komik.service.data.model.Extensi
 import com.komik.komik.service.data.model.Genre
 import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.Riwayats
 
 @Database(
-    entities = [Riwayats::class, Comic::class, Chapter::class, Genre::class, Library::class, Extensi::class],
+    entities = [
+        Riwayats::class,
+        Comic::class,
+        Chapter::class,
+        Genre::class,
+        Library::class,
+        Extensi::class,
+        DownloadChapter::class,
+        DownloadLog::class
+    ],
     version = 1,
     exportSchema = false
 )
@@ -31,7 +43,7 @@ abstract class DatabaseRiwayats : RoomDatabase() {
     abstract fun genreDao(): genreDao
     abstract fun libraryDao(): LibraryDao
     abstract fun extensiDao(): ExtensiDao
-
+    abstract fun downloadDao(): DownloadDao
 
     companion object {
 
@@ -59,7 +71,7 @@ abstract class DatabaseRiwayats : RoomDatabase() {
                     DatabaseRiwayats::class.java,
                     "riwayat_database"
                 )
-//                    .addMigrations(MIGRATION_1_2)
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance

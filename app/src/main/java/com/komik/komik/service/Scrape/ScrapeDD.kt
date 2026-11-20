@@ -8,85 +8,128 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
 
-//              https://doujindesu.tv/manhwa/
+import org.json.JSONObject
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
+import kotlin.math.abs
 
-//            https://doujindesu.tv/beautiful-days-chapter-41/
 
-suspend fun main() {
 
-    val url = "https://doujindesu.tv/beautiful-days-chapter-41/"
-    val html =
-        client.Ikiru.getHtml(url)
-    val document = Jsoup.parse(html)
+object ResponseDecryptor {
+    private const val SALT = "doujindesu-scrapers-cannot-read-this-super-secret-salt-2026-v2"
+    private const val HOUR_IN_MS = 3_600_000L
 
-    val id = document.select("main").attr("data-id")
-
-    val parseImage = client.Ikiru.getHtml("")
-
-    val pageData = document.select(".entries article").mapIndexed { index, element ->
-        getListUpdate(
-            index = index,
-            title = element.select(".entry a").attr("title"),
-            urlImage = element.select(".thumbnail img").attr("src"),
-            link = element.select(".entry a").attr("href"),
-
-            )
-    }
-    val data =
-        document.select("div#anu img").mapIndexed { index, element ->
-            getImages(
-                index = index,
-                image = element.attr("src"),
-            )
+    // Equivalent dengan fungsi sn(t) di JS
+    private fun generateKey(timeSlot: Long): String {
+        val input = "${SALT}_$timeSlot"
+        var hash = 0
+        for (char in input) {
+            // Di JS: r = (r << 5) - r + n.charCodeAt(l); r |= 0;
+            // Tipe Int di Kotlin secara otomatis 32-bit signed integer seperti `| 0` di JS
+            hash = (hash shl 5) - hash + char.code
         }
 
-    val client = OkHttpClient()
-    val formBuilder = FormBody.Builder()
-        .add("id", id)
-        .build()
+        val sb = StringBuilder()
+        // Gunakan Long agar tidak overflow saat perkalian LCG (1664525)
+        var seed = if (hash == 0) 123456789L else abs(hash.toLong())
 
-    val request = Request.Builder()
-        .url("https://doujindesu.tv/themes/ajax/ch.php")
-        .post(formBuilder)
-        .header(
-            "Referer",url
+        for (i in 0 until 32) {
+            seed = (seed * 1664525L + 1013904223L) % 4294967296L
+            val charCode = 33 + (seed % 93).toInt()
+            sb.append(charCode.toChar())
+        }
+        return sb.toString()
+    }
+
+    // Equivalent dengan fungsi cl() di JS (menghasilkan 3 kemungkinan key)
+    private fun getCandidateKeys(customTimestampMs: Long = System.currentTimeMillis()): List<String> {
+        val currentSlot = customTimestampMs / HOUR_IN_MS
+        return listOf(
+            generateKey(currentSlot),
+            generateKey(currentSlot - 1),
+            generateKey(currentSlot + 1)
         )
-        .header(
-            "X-Requested-With","XMLHttpRequest"
-        )
-        .header(
-            "Accept","image/avif,image/webp,*/*"
-        ).build()
+    }
 
-    try {
+    // Equivalent dengan fungsi Ro(t, n) di JS
+    private fun xorDecrypt(hexCipher: String, key: String): String {
+        val cleanHex = hexCipher.filter { it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }
+        val len = cleanHex.length / 2
+        val bytes = IntArray(len)
+        for (i in 0 until len) {
+            val hexPair = cleanHex.substring(i * 2, i * 2 + 2)
+            bytes[i] = hexPair.toIntOrNull(16) ?: 0
+        }
 
-        println("pageData: $id")
-        val result = client.newCall(request).execute()
+        val result = StringBuilder()
+        val keyLen = key.length
+        var rolling = 42
 
-        val body = result.body?.string()
+        for (i in bytes.indices) {
+            val b = bytes[i]
+            val k = key[i % keyLen].code
+            val decryptedChar = (b xor k xor (i * 13) xor rolling) and 255
+            result.append(decryptedChar.toChar())
+            rolling = (rolling + b) % 256
+        }
+        return result.toString()
+    }
 
-        if(body != null){
-            val doc = Jsoup.parse(body)
-            val imageParser = doc.select("img").mapIndexed { index, element ->
-                getImages(
-                    index = index,
-                    image = element.attr("src"),
-                )
+    // Equivalent dengan fungsi dl(t, n) di JS dengan mencoba semua kandidat key
+    fun decryptResponse(encryptedHex: String, timestampMs: Long = System.currentTimeMillis()): String {
+        val keys = getCandidateKeys(timestampMs)
+
+        for (key in keys) {
+            try {
+                val rawDecoded = xorDecrypt(encryptedHex, key)
+                // Di JS: decodeURIComponent(r)
+                val jsonString = URLDecoder.decode(rawDecoded, StandardCharsets.UTF_8.name())
+
+                // Cek validitas awal apakah hasilnya berbentuk JSON
+                if (jsonString.trim().startsWith("{") || jsonString.trim().startsWith("[")) {
+                    return jsonString
+                }
+            } catch (e: Exception) {
+                // Jika key salah, URLDecoder biasanya gagal karena karakter tidak valid, lanjut ke key berikutnya
             }
-
-            println("imageParser: $imageParser")
         }
-
-
-
-    }catch (e:Exception){
-        e.printStackTrace()
+        return "Gagal mendekripsi. Pastikan timestamp sesuai dengan waktu saat API di-request."
     }
+}
 
+object DoujindesuDecryptor {
+    fun decryptIfNeeded(rawString: String): String {
+        return try {
+            if (rawString.contains("_enc_resp_")) {
+                val json = JSONObject(rawString)
+                val encResp = json.optString("_enc_resp_")
+                if (encResp.isNotEmpty()) {
+                    ResponseDecryptor.decryptResponse(encResp)
+                } else {
+                    rawString
+                }
+            } else {
+                rawString
+            }
+        } catch (_: Exception) {
+            rawString
+        }
+    }
+}
 
+fun main() {
+    // Masukkan string hex dari "_enc_resp_" di sini
+    val encResp = "5ae468b3de4ebf20e9285111df4496024077eca318233e3f9042ca4e8129897e9835f4892c3245ff44e6568864e8d527ea4c3336d19f57032cdaed145b41b90e4a"
 
-
-
-//            Log.d(TAG, "fakecookie: ${generateFakeCookie()}")
-
+    // CATATAN PENTING:
+    // Key bergantung pada JAM saat request API dilakukan (System.currentTimeMillis() / 3600000).
+    // Jika `_enc_resp_` diambil baru saja (< 1 jam), biarkan default.
+    // Jika diambil beberapa jam/hari lalu, masukkan perkiraan timestamp (dalam milidetik) saat data itu diambil.
+    println("Hasil Dekripsi:")
+    try {
+        val hasilJson = ResponseDecryptor.decryptResponse(encResp)
+        println(hasilJson)
+    } catch (e: Exception) {
+        println("Error saat dekripsi: ${e.message}")
+    }
 }

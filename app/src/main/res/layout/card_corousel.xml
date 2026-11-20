@@ -1,28 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.carousel.MaskableFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/carousel_item_container"
-    android:layout_width="200dp"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginStart="4dp"
-    android:layout_marginEnd="4dp"
-    android:foreground="?attr/selectableItemBackground"
-    app:shapeAppearance="?attr/shapeAppearanceCornerExtraLarge">
+    android:layout_marginHorizontal="6dp"
+    android:layout_marginVertical="4dp"
+    app:cardBackgroundColor="#181B22"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="6dp"
+    app:strokeColor="#2E3442"
+    app:strokeWidth="1dp">
 
-    <ImageView
-        android:id="@+id/carousel_image_view"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop" />
+        android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/intersemi"
-        android:textAlignment="center"
-        android:layout_gravity="bottom|center"
-        android:layout_margin="16dp"
-        android:text="Judul"/>
-</com.google.android.material.carousel.MaskableFrameLayout>
+        <ImageView
+            android:id="@+id/carousel_image_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/placeholder" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/background_cover_image" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/tvBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/badge_last_read"
+                android:fontFamily="@font/interbold"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:text="UNGGULAN"
+                android:textColor="@color/white"
+                android:textSize="10sp" />
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:ellipsize="end"
+                android:fontFamily="@font/interbold"
+                android:maxLines="2"
+                android:text="Judul Komik"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBacaSekarang"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/primary_button"
+                android:fontFamily="@font/interbold"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="14dp"
+                android:text="Baca Sekarang"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                app:cornerRadius="10dp"
+                app:icon="@drawable/play_circle_fill__1_"
+                app:iconGravity="textStart"
+                app:iconSize="16dp"
+                app:iconTint="@color/white" />
+        </LinearLayout>
+    </FrameLayout>
+</com.google.android.material.card.MaterialCardView>

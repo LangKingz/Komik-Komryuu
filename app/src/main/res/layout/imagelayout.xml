@@ -3,27 +3,83 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="true">
 
+    <!-- Webtoon Page Image with Pinch-to-Zoom -->
     <com.github.chrisbanes.photoview.PhotoView
         android:id="@+id/imagechapter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:scaleType="fitCenter"
         tools:srcCompat="@tools:sample/avatars" />
 
+    <!-- Per-Page Loading Shimmer / Spinner -->
     <LinearLayout
         android:id="@+id/loading"
         android:layout_width="match_parent"
+        android:layout_height="500dp"
         android:gravity="center"
-        android:layout_height="800dp">
+        android:orientation="vertical">
+
         <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            app:indicatorColor="@color/brand" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:indeterminate="true" />
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/interreguler"
+            android:text="Memuat gambar..."
+            android:textColor="@color/gray_400"
+            android:textSize="11sp" />
     </LinearLayout>
+
+    <!-- Retry button shown on failure -->
+    <LinearLayout
+        android:id="@+id/layoutRetry"
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginBottom="8dp"
+            android:alpha="0.5"
+            android:src="@drawable/placeholder"
+            app:tint="@color/gray_400" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:fontFamily="@font/interreguler"
+            android:text="Gagal memuat gambar"
+            android:textColor="@color/gray_400"
+            android:textSize="13sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRetry"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:backgroundTint="@color/btn_background"
+            android:fontFamily="@font/intersemi"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="16dp"
+            android:text="Muat Ulang"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            app:cornerRadius="8dp" />
+    </LinearLayout>
+
 </FrameLayout>

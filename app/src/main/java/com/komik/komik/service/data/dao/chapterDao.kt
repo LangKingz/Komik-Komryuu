@@ -54,4 +54,7 @@ interface chapterDao {
 
     @Query("UPDATE Chapter SET isRead = :isRead WHERE id = :chapterId")
     suspend fun updateIsReadChapter(chapterId: Int, isRead: Boolean)
+
+    @Query("SELECT COUNT(*) FROM Chapter WHERE comicId = :comicId AND isRead = 0")
+    suspend fun getUnreadChapterCount(comicId: Int): Int
 }

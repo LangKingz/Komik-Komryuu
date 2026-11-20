@@ -4,8 +4,6 @@ import android.graphics.drawable.Drawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.paging.PagingDataAdapter
-import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -16,6 +14,7 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.komik.komik.R
 import com.komik.komik.databinding.ImagelayoutBinding
+import com.komik.komik.databinding.ItemChapterEndBinding
 import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getImages
@@ -24,17 +23,58 @@ import com.komik.komik.service.utils.downloadImageManager
 class AdapterImage(
     private val list: MutableList<getImages>,
     private val type: sourceType,
-    val refererUrl: String? = null
-) :
-    RecyclerView.Adapter<AdapterImage.ViewHolder>() {
-    class ViewHolder(
+    var refererUrl: String? = null,
+    var chapterNumberText: String = "",
+    var hasNextChapter: Boolean = true,
+    var onSingleTap: (() -> Unit)? = null,
+    var onNextChapterClick: (() -> Unit)? = null,
+    var onBackToDetailClick: (() -> Unit)? = null
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+    companion object {
+        const val VIEW_TYPE_IMAGE = 0
+        const val VIEW_TYPE_FOOTER = 1
+    }
+
+    inner class ImageViewHolder(
         val binding: ImagelayoutBinding,
         val type: sourceType,
         val refererUrl: String
     ) : RecyclerView.ViewHolder(binding.root) {
 
         val context = itemView.context
+
         fun bind(data: getImages) {
+            // Reset state
+            binding.loading.visibility = View.VISIBLE
+            binding.layoutRetry.visibility = View.GONE
+            binding.imagechapter.setImageDrawable(null)
+
+            val listener = object : RequestListener<Drawable> {
+                override fun onLoadFailed(
+                    e: GlideException?,
+                    model: Any?,
+                    target: Target<Drawable>,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    binding.loading.visibility = View.GONE
+                    binding.layoutRetry.visibility = View.VISIBLE
+                    return true
+                }
+
+                override fun onResourceReady(
+                    resource: Drawable,
+                    model: Any,
+                    target: Target<Drawable>?,
+                    dataSource: DataSource,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    binding.loading.visibility = View.GONE
+                    binding.layoutRetry.visibility = View.GONE
+                    return false
+                }
+            }
+
             when (type) {
                 sourceType.doujindesu -> {
                     val headers = LazyHeaders.Builder()
@@ -45,119 +85,145 @@ class AdapterImage(
                         )
                         .addHeader("X-Requested-With", "XMLHttpRequest")
                         .build()
-
                     val glideUrl = GlideUrl(data.image, headers)
-                    Glide.with(itemView.context)
-                        .load(glideUrl)
-                        .listener(object : RequestListener<Drawable> {
-                            override fun onLoadFailed(
-                                e: GlideException?,
-                                model: Any?,
-                                target: Target<Drawable>,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                binding.loading.visibility = View.GONE
-                                binding.imagechapter.setImageResource(R.drawable.placeholder)
-                                return false
-                            }
-
-                            override fun onResourceReady(
-                                resource: Drawable,
-                                model: Any,
-                                target: Target<Drawable>?,
-                                dataSource: DataSource,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                binding.loading.visibility = View.GONE
-                                return false
-                            }
-                        })
-                        .override(Target.SIZE_ORIGINAL)
-                        .into(binding.imagechapter)
+                    loadWithGlide(glideUrl, listener)
                 }
-
                 else -> {
-                    Glide.with(itemView.context)
-                        .load(data.image)
-                        .listener(object : RequestListener<Drawable> {
-                            override fun onLoadFailed(
-                                e: GlideException?,
-                                model: Any?,
-                                target: Target<Drawable>,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                binding.loading.visibility = View.GONE
-                                binding.imagechapter.setImageResource(R.drawable.placeholder)
-                                return false
-                            }
-
-                            override fun onResourceReady(
-                                resource: Drawable,
-                                model: Any,
-                                target: Target<Drawable>?,
-                                dataSource: DataSource,
-                                isFirstResource: Boolean
-                            ): Boolean {
-                                binding.loading.visibility = View.GONE
-                                return false
-                            }
-                        })
-                        .override(Target.SIZE_ORIGINAL)
-                        .into(binding.imagechapter)
+                    loadWithGlide(data.image, listener)
                 }
-
             }
 
+            // Single tap on image or root anywhere toggles HUD
+            binding.imagechapter.setOnViewTapListener { _, _, _ ->
+                onSingleTap?.invoke()
+            }
+            binding.imagechapter.setOnPhotoTapListener { _, _, _ ->
+                onSingleTap?.invoke()
+            }
+            binding.root.setOnClickListener {
+                onSingleTap?.invoke()
+            }
+
+            // Long-press to download
             binding.imagechapter.setOnLongClickListener {
                 AlertDialogCostum(
                     context,
-                    "Unduh",
+                    "Unduh Gambar",
                     "Apakah anda yakin ingin mendownload gambar ini?",
-                    onPositive = { dialog ->
+                    onPositive = { _ ->
                         downloadImageManager(context, data.image)
                     },
                     onNegative = { dialog ->
                         dialog.dismiss()
                     }
-
                 )
                 true
+            }
+
+            // Retry button
+            binding.btnRetry.setOnClickListener {
+                bind(data)
+            }
+        }
+
+        private fun loadWithGlide(url: Any, listener: RequestListener<Drawable>) {
+            Glide.with(context)
+                .load(url)
+                .listener(listener)
+                .override(Target.SIZE_ORIGINAL)
+                .into(binding.imagechapter)
+        }
+    }
+
+    inner class FooterViewHolder(
+        val binding: ItemChapterEndBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+        fun bind() {
+            val titleText = if (chapterNumberText.isNotEmpty()) {
+                "Kamu telah menyelesaikan Chapter $chapterNumberText"
+            } else {
+                "Kamu telah menyelesaikan Chapter ini"
+            }
+            binding.tvChapterEndTitle.text = titleText
+
+            if (hasNextChapter) {
+                binding.btnNextChapterEnd.isEnabled = true
+                binding.btnNextChapterEnd.alpha = 1.0f
+                binding.btnNextChapterEnd.text = "Lanjut ke Chapter Berikutnya"
+                binding.tvChapterEndSubtitle.text = "Lanjutkan petualangan membaca kamu ke chapter berikutnya"
+                binding.btnNextChapterEnd.setOnClickListener {
+                    onNextChapterClick?.invoke()
+                }
+            } else {
+                binding.btnNextChapterEnd.isEnabled = false
+                binding.btnNextChapterEnd.alpha = 0.5f
+                binding.btnNextChapterEnd.text = "Sudah di Chapter Terakhir"
+                binding.tvChapterEndSubtitle.text = "Selamat! Kamu telah membaca semua chapter yang tersedia."
+                binding.btnNextChapterEnd.setOnClickListener(null)
+            }
+
+            binding.btnBackToDetail.setOnClickListener {
+                onBackToDetailClick?.invoke()
+            }
+
+            binding.root.setOnClickListener {
+                onSingleTap?.invoke()
             }
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val binding = ImagelayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return ViewHolder(binding, type, refererUrl.toString())
+    override fun getItemViewType(position: Int): Int {
+        return if (position < list.size) VIEW_TYPE_IMAGE else VIEW_TYPE_FOOTER
     }
 
-    override fun getItemCount(): Int = list.size
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(list[position])
-
-        val context = holder.itemView.context
-
-
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        return if (viewType == VIEW_TYPE_IMAGE) {
+            val binding = ImagelayoutBinding.inflate(inflater, parent, false)
+            ImageViewHolder(binding, type, refererUrl.orEmpty())
+        } else {
+            val binding = ItemChapterEndBinding.inflate(inflater, parent, false)
+            FooterViewHolder(binding)
+        }
     }
 
-    fun updateList(newList: List<getImages>) {
+    override fun getItemCount(): Int {
+        return if (list.isEmpty()) 0 else list.size + 1
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (holder is ImageViewHolder && position < list.size) {
+            holder.bind(list[position])
+        } else if (holder is FooterViewHolder) {
+            holder.bind()
+        }
+    }
+
+    fun updateList(
+        newList: List<getImages>,
+        newReferer: String? = null,
+        chapterNum: String = chapterNumberText,
+        hasNext: Boolean = hasNextChapter
+    ) {
         list.clear()
         list.addAll(newList)
+        if (newReferer != null) refererUrl = newReferer
+        chapterNumberText = chapterNum
+        hasNextChapter = hasNext
         notifyDataSetChanged()
     }
 
-    fun addList(newList: List<getImages>) {
-        val currentSize = list.size
-        list.addAll(newList)
-        notifyItemRangeInserted(currentSize, newList.size)
+    fun updateChapterInfo(chapterNum: String, hasNext: Boolean) {
+        chapterNumberText = chapterNum
+        hasNextChapter = hasNext
+        if (list.isNotEmpty()) {
+            notifyItemChanged(list.size)
+        }
     }
 
     fun clear() {
         val size = list.size
         list.clear()
-        // Gunakan notifyItemRangeRemoved agar lebih efisien dan ada animasinya
-        notifyItemRangeRemoved(0, size)
+        notifyDataSetChanged()
     }
-
 }

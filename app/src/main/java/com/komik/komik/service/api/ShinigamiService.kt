@@ -18,6 +18,9 @@ interface ShinigamiService {
         @Query("genre_exclude_mode") genreExcludeMode:String= "or",
         @Query("sort_order") sortOrder:String= "desc",
         @Query("sort") sortBy:String,
+        @Query("offset") offset: Int = 100,
+        @Query("type") type: String = "project",
+        @Query("limit") limit: Int = 100,
     ): ShinigamiHomeExplore
 
     @GET("v1/manga/list")
@@ -37,6 +40,7 @@ interface ShinigamiService {
         @Path("id") id:String,
         @Query("page") page:Int=1,
         @Query("page_size") pageSize:Int,
+        @Query("limit") limitChapter: Int =1000,
         @Query("sort_by") sortBy:String = "chapter_number",
         @Query("sort_order") sortOrder:String= "desc",
     ): ChapterResponseSHinigami

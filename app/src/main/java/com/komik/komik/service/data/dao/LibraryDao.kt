@@ -39,4 +39,10 @@ interface LibraryDao {
     @Query("DELETE FROM Library")
     suspend fun DeleteALlLibrary()
 
+    @Transaction
+    @Query("SELECT * FROM Library ORDER BY createdAt DESC")
+    suspend fun getAllLibraryList(): List<LibraryDetail>
+
+    @Query("UPDATE Library SET comicId = :newComicId WHERE comicId = :oldComicId")
+    suspend fun migrateLibrary(oldComicId: Int, newComicId: Int)
 }

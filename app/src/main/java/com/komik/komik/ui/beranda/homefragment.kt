@@ -1,234 +1,385 @@
 package com.komik.komik.ui.beranda
 
-import android.content.Intent
+import android.content.Context
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
+import com.google.firebase.auth.FirebaseAuth
+import com.komik.komik.MainActivity
 import com.komik.komik.R
 import com.komik.komik.databinding.FragmentHomefragmentBinding
-import com.komik.komik.service.adapter.AdapterRiwayatSource
-import com.komik.komik.service.api.model.ListItem
+import com.komik.komik.service.adapter.AdapterCorousel
+import com.komik.komik.service.adapter.AdapterGenre
+import com.komik.komik.service.adapter.AdapterManhwa
+import com.komik.komik.service.adapter.AdapterQuickResume
 import com.komik.komik.service.adapter.AdapterSource
 import com.komik.komik.service.api.model.DataItems
-import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.data.Database.DatabaseRiwayats
-import com.komik.komik.service.data.dao.chapterDao
-import com.komik.komik.service.data.dao.riwayatDao
 import com.komik.komik.service.data.dao.riwayatRelationDao
-import com.komik.komik.service.data.dao.sourceDao
-import com.komik.komik.service.data.data.DatabaseRiwayatSource
-import com.komik.komik.service.data.model.RiwayatSource
-import com.komik.komik.ui.pages.read.ReadActivity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.komik.komik.service.parser.model.getListUpdate
+import com.komik.komik.service.utils.AppConfigHelper
+import com.komik.komik.ui.pages.login.LoginActivity
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import taimoor.sultani.sweetalert2.Sweetalert
 import java.util.Calendar
 
 class homefragment : Fragment() {
 
-    var _binding: FragmentHomefragmentBinding? = null
+    private var _binding: FragmentHomefragmentBinding? = null
     val binding get() = _binding!!
-    private lateinit var adapter: AdapterSource
-    private lateinit var viewmodel: Homeviewmodel
 
-    private lateinit var db: DatabaseRiwayatSource
-    private lateinit var dao: sourceDao
-    private lateinit var riwayatdao: riwayatRelationDao
+    private lateinit var viewmodel: Homeviewmodel
     private lateinit var dbUtama: DatabaseRiwayats
-    private lateinit var ChapterDao : chapterDao
+    private lateinit var riwayatdao: riwayatRelationDao
+
+    private lateinit var adapterSource: AdapterSource
+    private lateinit var adapterLatest: AdapterManhwa
+    private lateinit var adapterPopular: AdapterManhwa
+    private lateinit var adapterQuickResume: AdapterQuickResume
+
+    private val carouselHandler = Handler(Looper.getMainLooper())
+    private var carouselRunnable: Runnable? = null
+    private var carouselCount = 0
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentHomefragmentBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-
-        viewmodel = ViewModelProvider(this).get(Homeviewmodel::class.java)
-
-        db = DatabaseRiwayatSource.getDatabase(requireContext())
-        dao = db.riwayatdao()
-        dbUtama = DatabaseRiwayats.getDatabase(requireContext())
-        riwayatdao = dbUtama.riwayatdao()
-        ChapterDao = dbUtama.chapterdao()
-
-        init()
-
-        return root
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
-        binding.greetings.text = "${greetingCostum()}"
 
-        viewmodel.source.observe(viewLifecycleOwner, { source ->
-            adapter = AdapterSource(source as MutableList<DataItems>)
-            binding.listSource.adapter = adapter
+        viewmodel = ViewModelProvider(this)[Homeviewmodel::class.java]
+        dbUtama = DatabaseRiwayats.getDatabase(requireContext())
+        riwayatdao = dbUtama.riwayatdao()
 
-            val spanCount = 2
+        setupHeader()
+        setupBroadcastBanner()
+        setupRecyclerViews()
+        setupScrollBehavior()
+        observeViewModel()
+        loadQuickResume()
 
-            val layoumanager = GridLayoutManager(requireContext(), spanCount)
+        binding.refresh.setOnClickListener {
+            adapterSource.refreshPings()
+            viewmodel.loadHomeData()
+            setupBroadcastBanner()
+        }
+    }
 
-            layoumanager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+    // ----------------------------------------------------
+    // 1. Dynamic Header (User greeting & Server Status)
+    // ----------------------------------------------------
+    private fun setupHeader() {
+        val user = FirebaseAuth.getInstance().currentUser
+        val timeGreeting = getTimeGreeting()
+
+        if (user != null) {
+            val name = user.displayName?.split(" ")?.firstOrNull() ?: "Pengguna"
+            binding.greetings.text = "$timeGreeting, $name!"
+            binding.tvSubGreeting.text = "Lanjut baca manhwa favoritmu"
+
+            if (user.photoUrl != null) {
+                Glide.with(this)
+                    .load(user.photoUrl)
+                    .circleCrop()
+                    .error(R.drawable.logo_komryu_rb)
+                    .into(binding.ivUserAvatar)
+            } else {
+                binding.ivUserAvatar.setImageResource(R.drawable.logo_komryu_rb)
+            }
+        } else {
+            val pref = requireContext().getSharedPreferences(LoginActivity.PREF_USER, Context.MODE_PRIVATE)
+            val isGuest = pref.getBoolean(LoginActivity.KEY_IS_GUEST, false)
+            val label = if (isGuest) "Tamu" else "Pengguna"
+            binding.greetings.text = "$timeGreeting, $label!"
+            binding.tvSubGreeting.text = "Jelajahi ribuan komik di Komryuu.X"
+            binding.ivUserAvatar.setImageResource(R.drawable.logo_komryu_rb)
+        }
+
+        binding.btnQuickSearch.setOnClickListener {
+            try {
+                findNavController().navigate(R.id.searchFragment)
+            } catch (_: Exception) {
+                Toast.makeText(requireContext(), "Cari komik...", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun getTimeGreeting(): String {
+        return when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+            in 4..11 -> "Selamat Pagi"
+            in 12..15 -> "Selamat Siang"
+            in 16..18 -> "Selamat Sore"
+            else -> "Selamat Malam"
+        }
+    }
+
+    // ----------------------------------------------------
+    // 2. Setup RecyclerViews & Hero Carousel
+    // ----------------------------------------------------
+    private fun setupRecyclerViews() {
+        // Quick Resume
+        adapterQuickResume = AdapterQuickResume(mutableListOf())
+        binding.rvQuickResume.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        binding.rvQuickResume.adapter = adapterQuickResume
+
+        // Genres
+        binding.rvGenres.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+
+        // Latest Comics (3 Columns Grid)
+        adapterLatest = AdapterManhwa(mutableListOf())
+        binding.rvLatestComics.layoutManager = GridLayoutManager(requireContext(), 3)
+        binding.rvLatestComics.adapter = adapterLatest
+
+        // Popular Comics (Horizontal)
+        adapterPopular = AdapterManhwa(mutableListOf())
+        binding.rvPopularComics.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        binding.rvPopularComics.adapter = adapterPopular
+
+        // Source Extensions (2 Columns with Header span)
+        adapterSource = AdapterSource(mutableListOf())
+        adapterSource.initPinnedCache(requireContext())
+        val spanCount = 2
+        val sourceLayoutManager = GridLayoutManager(requireContext(), spanCount).apply {
+            spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
                 override fun getSpanSize(position: Int): Int {
-                    return when (adapter.getItemViewType(position)) {
+                    return when (adapterSource.getItemViewType(position)) {
                         AdapterSource.VIEW_TYPE_HEADER -> spanCount
-                        AdapterSource.VIEW_TYPE_ITEM -> 1
                         else -> 1
                     }
                 }
             }
-
-            binding.listSource.layoutManager = layoumanager
-        })
-
-        viewmodel.loading.observe(viewLifecycleOwner, { loading ->
-            if (loading) {
-                binding.loading.visibility = View.VISIBLE
-                binding.layoutRefresh.visibility = View.GONE
-            } else {
-                binding.loading.visibility = View.GONE
-                binding.layoutRefresh.visibility = View.GONE
-            }
-        })
-
-        viewmodel.error.observe(viewLifecycleOwner, { error ->
-            if (error != null) {
-                Sweetalert(requireContext(), Sweetalert.ERROR_TYPE)
-                    .setTitleText("Terjadi Kesalahan")
-                    .setContentText(error)
-                    .show()
-
-                binding.loading.visibility = View.GONE
-
-                binding.layoutRefresh.visibility = View.VISIBLE
-            }
-        })
-
-        binding.search.setOnClickListener {
-            AlertDialogCostum(
-                requireContext(),
-                "Search",
-                "Belum Tersedia",
-                { dialog ->
-                    dialog.cancel()
-                }
-            )
         }
-
-        binding.nestedScrollView.setOnScrollChangeListener { v, scrollX, scrollY, oldScrollX, oldScrollY ->
-            if (scrollY > 10) {
-                binding.filter.text = "Filter"
-
-            }
-        }
-
-        loadLatest()
-
-        binding.refresh.setOnClickListener {
-            viewmodel.fetchSource()
-        }
-
+        binding.listSource.layoutManager = sourceLayoutManager
+        binding.listSource.adapter = adapterSource
     }
 
-    fun loadLatest() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val data = dao.getRiwayatSourceLive()
-            val dataRiwayat = riwayatdao.getLastRiwayats()
+    // ----------------------------------------------------
+    // 3. Scroll Behavior
+    // ----------------------------------------------------
+    private fun setupScrollBehavior() {
+        // Bottom nav is docked to bottom; keeping stable view bounds
+    }
 
-            withContext(Dispatchers.Main) {
-                data.observe(viewLifecycleOwner, { riwayat ->
-                    if (riwayat.isNotEmpty()) {
-                        binding.latestopen.adapter =
-                            AdapterRiwayatSource(riwayat as MutableList<RiwayatSource>)
-//                        binding.latestopen.visibility = View.VISIBLE
-//                        binding.titleLatest.visibility = View.VISIBLE
-                    } else {
-                        binding.latestopen.visibility = View.GONE
-                        binding.titleLatest.visibility = View.GONE
+    // ----------------------------------------------------
+    // 4. Observe ViewModel
+    // ----------------------------------------------------
+    private fun observeViewModel() {
+        // Server Status
+        viewmodel.isServerOnline.observe(viewLifecycleOwner) { isOnline ->
+            if (isOnline) {
+                binding.dotServerStatus.setBackgroundResource(R.drawable.badge_status_online)
+                binding.tvServerStatus.text = "Online"
+                binding.tvServerStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_emerald_400))
+            } else {
+                binding.dotServerStatus.setBackgroundResource(R.drawable.badge_status_offline)
+                binding.tvServerStatus.text = "Offline"
+                binding.tvServerStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.btn_trek1))
+            }
+        }
+
+        // Hero Carousel
+        viewmodel.carousel.observe(viewLifecycleOwner) { items ->
+            if (!items.isNullOrEmpty()) {
+                carouselCount = items.size
+                val carouselAdapter = AdapterCorousel(items)
+                binding.vpCarousel.adapter = carouselAdapter
+                setupCarouselDots(carouselCount, 0)
+
+                binding.vpCarousel.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                    override fun onPageSelected(position: Int) {
+                        super.onPageSelected(position)
+                        setupCarouselDots(carouselCount, position)
                     }
                 })
 
-                dataRiwayat.observe(viewLifecycleOwner) { riwayat ->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val chapterSize = ChapterDao.getChapterByLocation(riwayat.comic.title,riwayat.comic.location)
-                        withContext(Dispatchers.Main){
-                            if (riwayat != null) {
-                                binding.textView.visibility = View.VISIBLE
-                                binding.frameDragon.visibility = View.VISIBLE
-                                binding.judulManhwa.text = riwayat.comic.title
-                                binding.chapter.text = "${riwayat.chapter.title} dari ${chapterSize.size} chapter | Gambar ${riwayat.riwayat.pageRead} / ${riwayat.riwayat.totalPage} "
-                                Glide.with(requireContext())
-                                    .load(riwayat.comic.localImageUri)
-                                    .error(R.drawable.placeholder)
-                                    .into(binding.imageHistory)
+                startCarouselAutoSlide()
+            }
+        }
 
-                                val pageRead = riwayat.riwayat.pageRead
-                                val totalPage = riwayat.riwayat.totalPage
+        // Genres
+        viewmodel.genres.observe(viewLifecycleOwner) { genres ->
+            binding.rvGenres.adapter = AdapterGenre(genres) { genre ->
+                Toast.makeText(requireContext(), "Genre: ${genre.genre}", Toast.LENGTH_SHORT).show()
+            }
+        }
 
-// Cek dulu semua kemungkinan
-                                val progressPercentage =
-                                    if (pageRead != null && totalPage != null && totalPage > 0) {
-                                        (pageRead.toDouble() / totalPage.toDouble()) * 100
-                                    } else {
-                                        0
-                                    }
-                                binding.progressBaca.progress = progressPercentage.toInt()
+        // Latest Comics
+        viewmodel.latestComics.observe(viewLifecycleOwner) { comics ->
+            if (comics.isNullOrEmpty()) {
+                binding.sectionLatest.visibility = View.GONE
+            } else {
+                binding.sectionLatest.visibility = View.VISIBLE
+                adapterLatest.updateData(comics)
+            }
+        }
 
+        // Popular Comics
+        viewmodel.popularComics.observe(viewLifecycleOwner) { comics ->
+            if (comics.isNullOrEmpty()) {
+                binding.sectionPopular.visibility = View.GONE
+            } else {
+                binding.sectionPopular.visibility = View.VISIBLE
+                adapterPopular.updateData(comics)
+            }
+        }
 
-                                binding.frameDragon.setOnClickListener {
-                                    val intent = Intent(requireContext(), ReadActivity::class.java)
-                                    intent.putExtra(ReadActivity.EXTRA_URL, riwayat.chapter.link)
-                                    intent.putExtra(ReadActivity.EXTRA_TYPE, riwayat.comic.location)
-                                    intent.putExtra("num", riwayat.chapter.numChapter)
-                                    intent.putExtra(ReadActivity.EXTRA_ID, riwayat.chapter.id)
-                                    intent.putExtra(ReadActivity.EXTRA_TITLE, riwayat.comic.title)
-                                    intent.putExtra(ReadActivity.EXTRA_ID_COMIC, riwayat.comic.id)
-                                    intent.putExtra("pageRead", pageRead)
-                                    requireContext().startActivity(intent)
-                                }
-                            } else {
-                                binding.frameDragon.visibility = View.GONE
-                                binding.textView.visibility = View.GONE
-                            }
-                        }
-                    }
-                }
+        // Source Extensions
+        viewmodel.source.observe(viewLifecycleOwner) { sources ->
+            if (!sources.isNullOrEmpty()) {
+                adapterSource.initPinnedCache(requireContext())
+                adapterSource.updateData(sources)
+            }
+        }
 
+        // Loading
+        viewmodel.loading.observe(viewLifecycleOwner) { loading ->
+            binding.loading.visibility = if (loading) View.VISIBLE else View.GONE
+        }
+
+        // Error
+        viewmodel.error.observe(viewLifecycleOwner) { error ->
+            binding.layoutRefresh.visibility = if (error != null) View.VISIBLE else View.GONE
+        }
+    }
+
+    // ----------------------------------------------------
+    // 5. Quick Resume ("Lanjut Baca") from Room Database
+    // ----------------------------------------------------
+    private fun loadQuickResume() {
+        riwayatdao.getRiwayatDetail().observe(viewLifecycleOwner) { riwayatList ->
+            if (!riwayatList.isNullOrEmpty()) {
+                binding.sectionQuickResume.visibility = View.VISIBLE
+                adapterQuickResume.updateData(riwayatList.take(8))
+            } else {
+                binding.sectionQuickResume.visibility = View.GONE
             }
         }
     }
 
-    fun greetingCostum(): String {
-        val hourNow = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+    // ----------------------------------------------------
+    // Broadcast Banner Dinamis dari Config Komryuu.x
+    // ----------------------------------------------------
+    private fun setupBroadcastBanner() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val config = AppConfigHelper.cachedConfig ?: AppConfigHelper.fetchConfig()
+            val banner = config?.activeBanner
+            if (_binding == null) return@launch
 
-        return when(hourNow){
-            in 0..11 -> "SELAMAT PAGI"
-            in 12..17 -> "SELAMAT SIANG"
-            else -> "SELAMAT MALAM"
+            if (banner != null && banner.isActive && !AppConfigHelper.isBannerDismissed(requireContext(), banner)) {
+                binding.cardBroadcastBanner.visibility = View.VISIBLE
+                binding.tvBannerTitle.text = banner.title.ifEmpty { "Pengumuman" }
+                binding.tvBannerMessage.text = banner.message
+
+                val strokeColor: Int
+                val iconBgColor: Int
+                val iconTint: Int
+                val iconRes: Int
+
+                when (banner.type.lowercase()) {
+                    "urgent" -> {
+                        strokeColor = android.graphics.Color.parseColor("#EF4444")
+                        iconBgColor = android.graphics.Color.parseColor("#3B1824")
+                        iconTint = android.graphics.Color.parseColor("#F87171")
+                        iconRes = R.drawable.ic_fire_streak
+                    }
+                    "warning" -> {
+                        strokeColor = android.graphics.Color.parseColor("#F59E0B")
+                        iconBgColor = android.graphics.Color.parseColor("#3D2612")
+                        iconTint = android.graphics.Color.parseColor("#FBBF24")
+                        iconRes = R.drawable.bell_ringing
+                    }
+                    else -> { // info
+                        strokeColor = android.graphics.Color.parseColor("#4F46E5")
+                        iconBgColor = android.graphics.Color.parseColor("#264F46E5")
+                        iconTint = android.graphics.Color.parseColor("#818CF8")
+                        iconRes = R.drawable.bell_ringing
+                    }
+                }
+
+                binding.cardBroadcastBanner.strokeColor = strokeColor
+                binding.bannerIconFrame.backgroundTintList = android.content.res.ColorStateList.valueOf(iconBgColor)
+                binding.ivBannerIcon.setImageResource(iconRes)
+                binding.ivBannerIcon.setColorFilter(iconTint)
+
+                binding.btnCloseBanner.setOnClickListener {
+                    AppConfigHelper.dismissBanner(requireContext(), banner)
+                    binding.cardBroadcastBanner.visibility = View.GONE
+                }
+            } else {
+                binding.cardBroadcastBanner.visibility = View.GONE
+            }
         }
     }
 
-    fun init() {
-        binding.latestopen.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-
+    // ----------------------------------------------------
+    // 6. Carousel Auto-slide & Dots
+    // ----------------------------------------------------
+    private fun setupCarouselDots(count: Int, selectedPosition: Int) {
+        binding.layoutDots.removeAllViews()
+        for (i in 0 until count) {
+            val dot = View(requireContext()).apply {
+                val isSelected = (i == selectedPosition)
+                val widthDp = if (isSelected) 22 else 7
+                val params = LinearLayout.LayoutParams(
+                    (widthDp * resources.displayMetrics.density).toInt(),
+                    (6 * resources.displayMetrics.density).toInt()
+                ).apply {
+                    marginEnd = (5 * resources.displayMetrics.density).toInt()
+                }
+                layoutParams = params
+                background = ContextCompat.getDrawable(
+                    requireContext(),
+                    if (isSelected) R.drawable.badge_last_read else R.drawable.bg_read_btn
+                )
+            }
+            binding.layoutDots.addView(dot)
+        }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    private fun startCarouselAutoSlide() {
+        carouselRunnable?.let { carouselHandler.removeCallbacks(it) }
+        carouselRunnable = object : Runnable {
+            override fun run() {
+                if (_binding != null && carouselCount > 1) {
+                    val current = binding.vpCarousel.currentItem
+                    val next = (current + 1) % carouselCount
+                    binding.vpCarousel.setCurrentItem(next, true)
+                    carouselHandler.postDelayed(this, 4000)
+                }
+            }
+        }
+        carouselHandler.postDelayed(carouselRunnable!!, 4000)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        (activity as? MainActivity)?.showBottomNav()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        carouselRunnable?.let { carouselHandler.removeCallbacks(it) }
         _binding = null
     }
-
-
 }

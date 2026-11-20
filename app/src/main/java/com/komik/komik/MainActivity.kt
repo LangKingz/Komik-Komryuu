@@ -4,10 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.AttributeSet
-import android.util.Log
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,61 +13,49 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.navigation.findNavController
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.komik.komik.databinding.ActivityMainBinding
-import com.komik.komik.service.client
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.LibraryDao
-import com.komik.komik.service.parser.comic.SourceParser
-import com.komik.komik.service.parser.model.getImages
-import com.komik.komik.service.parser.model.getListUpdate
-import com.komik.komik.service.utils.generateFakeCookie
+import com.komik.komik.service.utils.AppConfigHelper
+import com.komik.komik.service.utils.PreferenceManager
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jsoup.Jsoup
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-
     private lateinit var db: DatabaseRiwayats
-    private lateinit var dao : LibraryDao
+    private lateinit var dao: LibraryDao
+    private lateinit var navController: NavController
+    private var isBottomNavVisible: Boolean = true
 
     // permission launcher
-    private val registerlauncher = registerForActivityResult(
+    private val registerLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (isGranted) {
-
-        } else {
-            Snackbar.make(binding.root, "Permission Denied", Snackbar.LENGTH_LONG)
-                .setAction("request", {
-                    checkPermission()
-                })
+        if (!isGranted) {
+            Snackbar.make(binding.root, "Izin notifikasi ditolak", Snackbar.LENGTH_LONG)
+                .setAction("Coba Lagi") { checkPermission() }
                 .show()
         }
     }
 
     private fun checkPermission() {
-        when {
-            ContextCompat.checkSelfPermission(
+        if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED -> {
-
-            }
-
-            else -> {
-                registerlauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            registerLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,78 +64,101 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-//        window.navigationBarColor = resources.getColor(R.color.bottom_navbar)
-
         WindowCompat.getInsetsController(window, window.decorView).let { controller ->
             controller.isAppearanceLightStatusBars = false
             controller.isAppearanceLightNavigationBars = false
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0)
             insets
         }
 
-        val db = DatabaseRiwayats.getDatabase(this)
-        val dao = db.libraryDao()
+        db = DatabaseRiwayats.getDatabase(this)
+        dao = db.libraryDao()
 
-        val nav = binding.bottomNavigation
-        val navRail = binding.navigationRail
-        val navController = findNavController(R.id.nav_host_fragment)
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navController = navHostFragment.navController
 
-//        ViewCompat.setOnApplyWindowInsetsListener(nav!!) { view, insets ->
-//            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-//            // Ambil pengaturan margin bawaan dari XML
-//            val layoutParams = view.layoutParams as ViewGroup.MarginLayoutParams
-//            // Tambahin margin bawah bawaan (16dp) dengan tinggi navigation bar hp
-//            layoutParams.bottomMargin = systemBars.bottom + (16 * resources.displayMetrics.density).toInt()
-//            view.layoutParams = layoutParams
-//
-//            insets
-//        }
+        binding.bottomNavigation?.setupWithNavController(navController)
 
+        // Show nav bar whenever user switches screen
+        navController.addOnDestinationChangedListener { _, _, _ ->
+            showBottomNav()
+        }
+
+        // Library badge
         CoroutineScope(Dispatchers.IO).launch {
             val count = dao.getLibraryCount()
-
-            withContext(Dispatchers.Main){
-                val badge = nav?.getOrCreateBadge(R.id.pustakaFragment)
-                badge?.isVisible = true
-                badge?.number = count
+            withContext(Dispatchers.Main) {
+                binding.bottomNavigation?.let { bottomNav ->
+                    val badge = bottomNav.getOrCreateBadge(R.id.pustakaFragment)
+                    badge.isVisible = count > 0
+                    badge.number = count
+                }
             }
         }
 
+        // Automatic security & banned check in background
+        CoroutineScope(Dispatchers.Main).launch {
+            PreferenceManager.checkAccountSecurity(this@MainActivity)
+        }
 
-
-        nav?.setupWithNavController(navController)
-        navRail?.setupWithNavController(navController)
-
-
-
-
-//        binding.btnSearch?.setOnClickListener {
-//            MaterialAlertDialogBuilder(this)
-//                .setTitle("Cari Komik")
-//                .setMessage("Cari komik yang kamu inginkan")
-//                .setNeutralButton("cancel"){dialog,which ->
-//                    dialog.dismiss()
-//                }
-//                .show()
-//
-//        }
-
-
+        checkServerConfig()
     }
 
-    fun costumToast (titleNotif: String, context: Context){
+    private fun checkServerConfig() {
+        lifecycleScope.launch {
+            val config = AppConfigHelper.cachedConfig ?: AppConfigHelper.fetchConfig()
+            val pref = PreferenceManager.getInstance(this@MainActivity)
+            val userRole = pref.userRole
+
+            if (config != null && config.isMaintenance && userRole != "admin") {
+                AppConfigHelper.showMaintenanceDialog(
+                    activity = this@MainActivity,
+                    message = config.activeMaintenanceMessage,
+                    onRetry = { checkServerConfig() }
+                )
+                return@launch
+            }
+
+            val update = config?.activeUpdate
+            if (update != null) {
+                val currentVer = BuildConfig.VERSION_NAME
+                val isMinOlder = AppConfigHelper.isVersionOlder(currentVer, update.minAppVersion)
+                val isLatestOlder = AppConfigHelper.isVersionOlder(currentVer, update.latestAppVersion)
+
+                if (isMinOlder || (update.forceUpdate && isLatestOlder)) {
+                    AppConfigHelper.showUpdateDialog(
+                        activity = this@MainActivity,
+                        update = update,
+                        isForce = true
+                    )
+                }
+            }
+        }
+    }
+
+    fun showBottomNav() {
+        binding.bottomNavigation?.let { bottomNav ->
+            isBottomNavVisible = true
+            bottomNav.visibility = View.VISIBLE
+            bottomNav.translationY = 0f
+            bottomNav.alpha = 1f
+        }
+    }
+
+    fun hideBottomNav() {
+        // Docked bottom bar remains cleanly visible without blank viewport gaps
+    }
+
+    fun costumToast(titleNotif: String, context: Context) {
         Toast.makeText(context, titleNotif, Toast.LENGTH_SHORT).show()
     }
-
-
 
     companion object {
         const val TAG = "MainActivity"
     }
-
-
 }

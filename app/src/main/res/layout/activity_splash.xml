@@ -5,31 +5,117 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/aurora_bg"
     tools:context=".ui.pages.splash.SplashActivity">
 
-    <ImageView
-        android:id="@+id/imageView4"
-        android:layout_width="277dp"
-        android:layout_height="258dp"
-        android:scaleType="centerCrop"
-        app:layout_constraintBottom_toTopOf="@+id/textView3"
+    <!-- Center Content: Logo, App Name & Tagline -->
+    <LinearLayout
+        android:id="@+id/layoutLogoCenter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/layoutBottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.441"
-        app:srcCompat="@drawable/rb_komryuu" />
+        app:layout_constraintVertical_bias="0.44">
 
-    <TextView
-        android:id="@+id/textView3"
-        style="@style/Costumtitle"
-        android:layout_width="wrap_content"
+        <!-- Logo Frame with Subtle Radial Glow -->
+        <FrameLayout
+            android:id="@+id/frameLogo"
+            android:layout_width="128dp"
+            android:layout_height="128dp">
+
+            <ImageView
+                android:id="@+id/ivLogoGlow"
+                android:layout_width="128dp"
+                android:layout_height="128dp"
+                android:alpha="0.22"
+                android:scaleType="fitCenter"
+                android:src="@drawable/logo_komryu_rb" />
+
+            <ImageView
+                android:id="@+id/ivLogo"
+                android:layout_width="112dp"
+                android:layout_height="112dp"
+                android:layout_gravity="center"
+                android:scaleType="fitCenter"
+                android:src="@drawable/logo_komryu_rb" />
+        </FrameLayout>
+
+        <!-- App Name -->
+        <TextView
+            android:id="@+id/tvAppName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="@font/interbold"
+            android:letterSpacing="0.03"
+            android:text="Komryuu"
+            android:textColor="@color/white"
+            android:textSize="28sp" />
+
+        <!-- Tagline -->
+        <TextView
+            android:id="@+id/tvTagline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:fontFamily="@font/interreguler"
+            android:letterSpacing="0.02"
+            android:text="Baca Komik Online Cepat &amp; Gratis"
+            android:textColor="@color/gray_400"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Bottom Content: Dynamic Status, Progress & Version -->
+    <LinearLayout
+        android:id="@+id/layoutBottom"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="108dp"
-        android:fontFamily="@font/interextra"
-        android:text="Version BETA"
-        android:textStyle="bold"
-        android:visibility="gone"
+        android:layout_marginHorizontal="48dp"
+        android:layout_marginBottom="36dp"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <!-- Dynamic Status Message -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/interreguler"
+            android:maxLines="1"
+            android:text="Menghubungkan ke server Komryuu.x..."
+            android:textColor="@color/gray_400"
+            android:textSize="12sp" />
+
+        <!-- Thin Progress Indicator -->
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progressSplash"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:indeterminate="true"
+            app:indicatorColor="@color/mint_teal"
+            app:trackColor="#26334155"
+            app:trackCornerRadius="2dp"
+            app:trackThickness="3dp" />
+
+        <!-- App Version -->
+        <TextView
+            android:id="@+id/tvVersion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:fontFamily="@font/interreguler"
+            android:text="Versi 1.0"
+            android:textColor="#64748B"
+            android:textSize="11sp" />
+    </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
