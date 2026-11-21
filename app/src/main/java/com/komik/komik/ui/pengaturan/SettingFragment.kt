@@ -46,6 +46,7 @@ import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.Riwayats
 import com.komik.komik.service.utils.PreferenceManager
 import android.graphics.Color
+import android.util.Log
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RadioButton
@@ -224,7 +225,7 @@ class SettingFragment : Fragment() {
         val prefManager = PreferenceManager.getInstance(context)
         val roleLower = role.lowercase()
 
-        Toast.makeText(requireContext(), "${roleLower}", Toast.LENGTH_SHORT).show()
+//        Toast.makeText(requireContext(), "${roleLower}", Toast.LENGTH_SHORT).show()
 
         when (roleLower) {
             "admin" -> {
@@ -694,6 +695,8 @@ class SettingFragment : Fragment() {
                 val response = withContext(Dispatchers.IO) {
                     client.KomryuuxSource.syncData(syncReq)
                 }
+
+                Log.d("USER", "${response.message()} ")
 
                 if (_binding == null) return@launch
 

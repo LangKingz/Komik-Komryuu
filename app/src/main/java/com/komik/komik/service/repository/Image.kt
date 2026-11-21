@@ -64,10 +64,11 @@ class Image(private val client: client) : RepositoryImage {
                 }
 
                 sourceType.doujindesu-> {
-                    val html = client.Ikiru.getHtml(url)
-                    val document = Jsoup.parse(html)
-                    val pageData = ImageParser.doujindesuParseAsync(document,url)
-                    Log.d(TAG, "getImage: $pageData")
+                    val response = client.Doujindesu.getHtml(url)
+                    Log.d(TAG, "getImage: $response")
+
+                    val pageData = ImageParser.doujindesuParseAsync(url,response)
+
                     pageData
                 }
 

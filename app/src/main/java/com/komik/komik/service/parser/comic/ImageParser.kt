@@ -1,5 +1,6 @@
 package com.komik.komik.service.parser.comic
 
+import android.util.Log
 import com.komik.komik.service.client
 import com.komik.komik.service.parser.model.getImages
 import kotlinx.coroutines.Dispatchers
@@ -7,6 +8,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
@@ -74,47 +76,58 @@ object ImageParser {
         }
     }
 
-    suspend fun doujindesuParseAsync(document: Document, url: String): List<getImages> {
-        val id = document.select("main").attr("data-id")
+    suspend fun doujindesuParseAsync( url: String,jsonString: String): List<getImages> {
+        val imagesList = mutableListOf<getImages>()
+
+        try {
+            val json = JSONObject(jsonString)
+            val contentUrls = json.optJSONArray("content_urls")
+
+            if (contentUrls != null) {
+                for (i in 0 until contentUrls.length()) {
+                    val imageUrl = contentUrls.optString(i, "")
+                    if (imageUrl.isNotEmpty()) {
+                        imagesList.add(
+                            getImages(
+                                index = i, // atau i + 1 kalau AdapterImage kamu mulai halaman dari angka 1
+                                image = imageUrl
+                            )
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ImageParser", "Error parsing Doujindesu images: ${e.localizedMessage}")
+        }
+
+        return imagesList
 
         // Pindahkan operasi jaringan ke IO Dispatcher (background thread khusus I/O)
-        return withContext(Dispatchers.IO) { // Ini yang penting!
-            val client = OkHttpClient()
-            val formBuilder = FormBody.Builder()
-                .add("id", id)
-                .build()
-
-            val request = Request.Builder()
-                .url("https://doujindesu.tv/themes/ajax/ch.php")
-                .post(formBuilder)
-                .header(
-                    "Referer", url
-                )
-                .header(
-                    "X-Requested-With", "XMLHttpRequest"
-                )
-                .header(
-                    "Accept", "image/avif,image/webp,*/*"
-                ).build()
-
-            val result = client.newCall(request).execute() // <-- Sekarang ini berjalan di background thread
-
-            val body = result.body?.string()
-
-            if (body != null) {
-                val doc = Jsoup.parse(body)
-                val imageParser = doc.select("img").mapIndexed { index, element ->
-                    getImages(
-                        index = index,
-                        image = element.attr("src"),
-                    )
-                }
-
-                println("imageParser: $imageParser")
-                return@withContext imageParser // Gunakan return@withContext untuk mengembalikan nilai dari block
-            }
-            emptyList() // Kembalikan list kosong jika body null
-        }
+//        return withContext(Dispatchers.IO) { // Ini yang penting!
+//            val client = OkHttpClient()
+//            val formBuilder = FormBody.Builder()
+//                .add("id", url)
+//                .build()
+//
+//            val request = Request.Builder()
+//                .url("https://doujindesu.tv/themes/ajax/ch.php")
+//                .post(formBuilder)
+//                .header(
+//                    "Referer", url
+//                )
+//                .header(
+//                    "X-Requested-With", "XMLHttpRequest"
+//                )
+//                .header(
+//                    "Accept", "image/avif,image/webp,*/*"
+//                ).build()
+//
+//            val result = client.newCall(request).execute() // <-- Sekarang ini berjalan di background thread
+//
+//            val body = result.body?.string()
+//
+//            emptyList() // Kembalikan list kosong jika body null
+//        }
     }
 
     suspend fun parseShinigami(client : client,id:String):List<getImages>{

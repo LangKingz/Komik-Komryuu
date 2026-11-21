@@ -27,6 +27,7 @@ class Detail(
                 sourceType.kiryuu -> client.Ikiru.getHtml(url)
                 sourceType.komiku,
                 sourceType.comicscan -> client.Comicscan.getHtml(url)
+
                 sourceType.shinigami -> ""
                 sourceType.manhwaindo -> client.Ikiru.getHtml(url)
                 sourceType.doujindesu -> client.Ikiru.getHtml(url)
@@ -37,13 +38,37 @@ class Detail(
             val document = Jsoup.parse(html)
 
             val parsedData = when (type) {
-                sourceType.ikiru -> comicParser.parseIkiru(document, url,applicationContext)
-                sourceType.komikcast -> comicParser.parseKomikcast(document, url ,applicationContext)
-                sourceType.kiryuu -> comicParser.parseKiryuu(document, url,applicationContext)
-                sourceType.comicscan -> comicParser.parseComictoon(document, url,applicationContext)
-                sourceType.shinigami -> comicParser.parseShinigami(url, client,applicationContext)
-                sourceType.manhwaindo -> comicParser.parsemanhwaIndo(document, url, applicationContext)
-                sourceType.doujindesu -> comicParser.parseDoujinDesu(document, url, applicationContext)
+                sourceType.ikiru -> comicParser.parseIkiru(document, url, applicationContext)
+                sourceType.komikcast -> comicParser.parseKomikcast(
+                    document,
+                    url,
+                    applicationContext
+                )
+
+                sourceType.kiryuu -> comicParser.parseKiryuu(document, url, applicationContext)
+                sourceType.comicscan -> comicParser.parseComictoon(
+                    document,
+                    url,
+                    applicationContext
+                )
+
+                sourceType.shinigami -> comicParser.parseShinigami(url, client, applicationContext)
+                sourceType.manhwaindo -> comicParser.parsemanhwaIndo(
+                    document,
+                    url,
+                    applicationContext
+                )
+
+                sourceType.doujindesu -> try {
+
+                    val response = client.Doujindesu.getHtml(url)
+                    comicParser.parseDoujinDesu(url,response, applicationContext)
+
+                } catch (e: Exception) {
+                    Log.d(TAG, "getDetail: ${e.localizedMessage}")
+                    throw e
+                }
+
                 sourceType.batoto_all -> comicParser.parseBatoto(document, url, applicationContext)
                 else -> null
             }
@@ -51,7 +76,7 @@ class Detail(
             Log.d(TAG, "getDetail: ${parsedData}")
 
             return parsedData!!
-        }catch (e:Exception){
+        } catch (e: Exception) {
             Log.d(TAG, "getDetail: ${e.message}")
             return ParsedData(
                 url = url,
@@ -68,7 +93,6 @@ class Detail(
         }
 
     }
-
 
 
     companion object {

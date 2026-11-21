@@ -1,6 +1,8 @@
 package com.komik.komik.service.parser.comic
 
+import android.R
 import android.content.Context
+import android.util.Log
 import com.komik.komik.service.api.model.DataIteme
 import com.komik.komik.service.client
 import com.komik.komik.service.data.model.Chapter
@@ -12,12 +14,16 @@ import com.komik.komik.service.utils.formatWaktuLalu
 import com.komik.komik.service.utils.genereteId
 import com.komik.komik.service.utils.parseDate
 import com.komik.komik.service.utils.parsechapterToInt
+import org.json.JSONObject
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 object comicParser {
 
-    suspend fun parseShinigami(id: String, client: client,context: Context): ParsedData {
+    suspend fun parseShinigami(id: String, client: client, context: Context): ParsedData {
 
         val response = client.Shinigami.getMangaDetail(id)
         val data = response.data
@@ -35,7 +41,7 @@ object comicParser {
         val type = "Manhwa"
         val status = data?.status
 
-        val statusManhwa = when(status){
+        val statusManhwa = when (status) {
             0 -> "Complete"
             1 -> "onGoing"
             else -> "onGoing"
@@ -299,17 +305,17 @@ object comicParser {
 
         val chapters = document.select("ul.clstyle li ")
             .map {
-            val num = it.attr("data-num")
-            Chapter(
-                title = it.select(".eph-num a span")[0].text(),
-                link = it.select(".eph-num a").attr("href"),
-                comicTitle = title,
-                numChapter = extractNumberFromDataNum(num),
-                date = it.select(".eph-num a span")[1].text(),
-                location = "comicscan",
-                comicId = 0
-            )
-        }.distinctBy { it.numChapter }
+                val num = it.attr("data-num")
+                Chapter(
+                    title = it.select(".eph-num a span")[0].text(),
+                    link = it.select(".eph-num a").attr("href"),
+                    comicTitle = title,
+                    numChapter = extractNumberFromDataNum(num),
+                    date = it.select(".eph-num a span")[1].text(),
+                    location = "comicscan",
+                    comicId = 0
+                )
+            }.distinctBy { it.numChapter }
 
         val genres = document.select(".wd-full .mgen a").map {
             Genre(
@@ -338,57 +344,105 @@ object comicParser {
         )
     }
 
-    suspend fun parseDoujinDesu(document: Document, url: String, context: Context): ParsedData {
-        val title = document.select("h1.title").text() ?: ""
-        val imageUrl = document.select("a.permalink img").attr("src") ?: ""
-        val description = document.select(".metadata .pb-2 p").text() ?: ""
-        val author = document.select("tr.pages td").select("i").text() ?: ""
+    suspend fun parseDoujinDesu(url: String, jsonString: String, context: Context): ParsedData {
+        val json = JSONObject(jsonString)
 
-        val alternativeTitle = document.select(".alter i").text()
-        val rating = document.select(".rating-prc").text()
-        val type = document.select(".magazines td")[1].select(" a").text() ?: "Manhwa"
-        val status = document.select(".metadata tr")[0].select("td")[1].text() ?: "onGoing"
+        // 1. Ambil data dasar
+        val title = json.optString("title", "No Title")
+        val slug = json.optString("slug", "")
+        val imageUrl = json.optString("cover_url", "")
+        val status = json.optString("status", "Unknown")
+        val type = json.optString("type", "Manga")
+        val rating = json.optDouble("rating", 0.0).toString()
 
-        val BASE_URL = "https://doujindesu.tv"
+        // 2. Bersihkan deskripsi dari tag HTML (<div>, <br>, dll) & potong teks "Download Batch"
+        val rawDesc = json.optString("description", "")
+        val cleanDesc = Jsoup.parse(rawDesc).text()
+            .substringBefore("Download Batch")
+            .trim()
 
-        val chapters = document.select(".bxcl ul li").map {
-            val chapter = it.select(".epsright a").attr("title")
-            Chapter(
-                title = it.select("span.lchx a").text(),
-                link = BASE_URL + it.select("a").attr("href"),
-                comicTitle = title,
-                numChapter = parsechapterToInt(chapter),
-                date = it.select("span.date").text(),
-                location = "dd",
-                comicId = 0
-
-            )
+        // 3. Handle author / artist yang bernilai null
+        val authorRaw = json.optString("author", "")
+        val artistRaw = json.optString("artist", "")
+        val author = when {
+            authorRaw.isNotEmpty() && authorRaw != "null" -> authorRaw
+            artistRaw.isNotEmpty() && artistRaw != "null" -> artistRaw
+            else -> json.optString("serialization", "Unknown")
         }
 
-        val genres = document.select(".tags a").map {
-            Genre(
-                comicTitle = title,
-                genre = it.text()
-            )
+        // 4. Rapikan alt_titles yang dipisah tanda "|" menjadi koma
+        val altTitles = json.optString("alt_titles", "")
+            .replace("|", ", ")
+            .trim()
+
+        // 5. Parsing Array Genres (nested di dalam object "genres")
+        val genresList =
+            mutableListOf<Genre>() // Sesuaikan tipe datanya jika ParsedData pakai List<String> atau List<Genre>
+        val mangaGenresArray = json.optJSONArray("manga_genres")
+        if (mangaGenresArray != null) {
+            for (i in 0 until mangaGenresArray.length()) {
+                val item = mangaGenresArray.optJSONObject(i)
+                val genreObj = item?.optJSONObject("genres")
+                val genreName = genreObj?.optString("name", "") ?: ""
+                val genreSlug = genreObj?.optString("slug", "") ?: ""
+                if (genreName.isNotEmpty()) {
+                    // Jika genres di ParsedData adalah List<String>, cukup: genresList.add(genreName)
+                    genresList.add(
+                        Genre(
+                            comicTitle = title,
+                            genre = genreName,
+                        )
+                    )
+                }
+            }
         }
 
+        // 6. Parsing Array Chapters
+        val chaptersList = mutableListOf<Chapter>()
+        val chaptersArray = json.optJSONArray("chapters")
+        if (chaptersArray != null) {
+            for (i in 0 until chaptersArray.length()) {
+                val chObj = chaptersArray.optJSONObject(i) ?: continue
+                val chId = chObj.optString("id", "")
+                val chNum = chObj.optString("chapter_number", "")
+                val chTitle = chObj.optString("title", "Chapter $chNum")
+                val createdAt = chObj.optString("created_at", "")
+
+                // Format URL chapter (sesuaikan dengan endpoint API baca chapter Doujindesu kamu)
+                val chapterUrl = "https://doujindesu.xxx/api/chapters/$chId"
+
+                chaptersList.add(
+                    Chapter(
+                        title = chTitle,
+                        link = chapterUrl,
+                        comicTitle = title,
+                        numChapter = chNum.toDouble(),
+                        date = formatIsoDate(createdAt),
+                        location = "dd",
+                        comicId = 0,
+                    )
+                )
+            }
+        }
+
+        // 7. Download gambar lokal untuk cache/offline (sesuai kode bawaanmu)
         val localImage = downloadAndSaveImage(context, imageUrl, genereteId().toLong())
 
         return ParsedData(
             url = url,
             title = title,
             imageUrl = imageUrl,
-            description = description,
+            description = cleanDesc,
             author = author,
             location = "dd",
             tags = "adult",
             localImageUri = localImage,
-            chapters = chapters,
-            genres = genres,
-            alternativeTitle = alternativeTitle,
+            chapters = chaptersList,
+            genres = genresList,
+            alternativeTitle = altTitles,
             rating = rating,
-            type = type,
-            status = status
+            type = type.replaceFirstChar { it.uppercase() }, // "manhwa" -> "Manhwa"
+            status = status.replaceFirstChar { it.uppercase() } // "ongoing" -> "Ongoing"
         )
     }
 
@@ -467,14 +521,16 @@ object comicParser {
             document.select("div").attr("data-name", "chapter-list").select(".space-y-3 .group div")
                 .attr("q:key", "N0_9")
                 .filter { chapterItem -> // <-- Setiap `chapterItem` adalah satu `<li>`
-                    val chapterLinkElement = chapterItem.selectFirst("div.space-x-1 a.link-hover.link-primary")
+                    val chapterLinkElement =
+                        chapterItem.selectFirst("div.space-x-1 a.link-hover.link-primary")
                     val dateElement = chapterItem.selectFirst("div.ml-auto time")
 
                     // Memastikan elemen link chapter dan elemen tanggal ada
                     // DAN TEKS LINK CHAPTER MENGANDUNG KATA "Chapter" (case-insensitive)
                     chapterLinkElement != null &&
                             dateElement != null &&
-                            chapterLinkElement.text().contains("Chapter", ignoreCase = true) // <-- FILTER BARU INI!
+                            chapterLinkElement.text()
+                                .contains("Chapter", ignoreCase = true) // <-- FILTER BARU INI!
                 }
                 .map {
 
@@ -487,7 +543,7 @@ object comicParser {
 
                     Chapter(
                         title = it.select("div.space-x-1 a.link-hover.link-primary").text(),
-                        link = baseURL+ chapterLink,
+                        link = baseURL + chapterLink,
                         comicTitle = title,
                         numChapter = parsechapterToInt(number),
                         date = time,
@@ -500,11 +556,11 @@ object comicParser {
         val genres =
             document.select("div").attr("q:key", "5P_2").select("span span.whitespace-nowrap")
                 .map {
-                Genre(
-                    comicTitle = title,
-                    genre = it.text()
-                )
-            }
+                    Genre(
+                        comicTitle = title,
+                        genre = it.text()
+                    )
+                }
         val localImage = downloadAndSaveImage(context, imageUrl, genereteId().toLong())
 
 
@@ -526,4 +582,17 @@ object comicParser {
         )
     }
 
+    private fun formatIsoDate(isoString: String): String {
+        return try {
+            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale("id", "ID"))
+            val date = inputFormat.parse(isoString)
+            if (date != null) outputFormat.format(date) else isoString
+        } catch (e: Exception) {
+            isoString.substringBefore("T") // Fallback ambil tanggalnya saja (YYYY-MM-DD)
+
+        }
+    }
 }

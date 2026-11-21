@@ -167,7 +167,7 @@ object SourceParser {
                         index = i,
                         title = title,
                         urlImage = coverUrl,
-                        link = "${baseurl}manga/$slug",
+                        link = "${baseurl}api/manga/$slug",
                         location = "dd",
                         tagModel = "komik"
                     )

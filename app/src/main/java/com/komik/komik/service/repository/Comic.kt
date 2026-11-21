@@ -152,6 +152,8 @@ class Comic(val client: client) : RepositroyComic {
                         val json = client.Doujindesu.getHtml(
                             "https://doujin.desu.xxx/api/manga?limit=$limit&type=manhwa&sort=latest_chapter&offset=$offset"
                         )
+
+                        Log.d(TAG, "getComic: ${json}")
                         val pageData = SourceParser.parseDoujindesu(json)
 
                         result.addAll(pageData)
