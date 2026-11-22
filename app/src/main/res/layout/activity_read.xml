@@ -50,6 +50,20 @@
             android:text="Ch. -- • 1/1"
             android:textColor="@color/white"
             android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/tvTurboBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/badge_role_vip"
+            android:fontFamily="@font/interbold"
+            android:paddingHorizontal="5dp"
+            android:paddingVertical="1dp"
+            android:text="⚡ TURBO"
+            android:textColor="#FBBF24"
+            android:textSize="9sp"
+            android:visibility="gone" />
     </LinearLayout>
 
     <!-- Fullscreen HUD Container (Top Bar + Bottom Bar) -->
@@ -152,6 +166,21 @@
                 android:padding="9dp"
                 android:src="@drawable/loop_right_line"
                 app:tint="@color/white" />
+
+            <!-- Report Broken Chapter Button -->
+            <ImageButton
+                android:id="@+id/btnReportChapter"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_read_btn"
+                android:clickable="true"
+                android:clipToOutline="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:padding="9dp"
+                android:src="@drawable/ic_report_problem"
+                app:tint="@color/calm_rose" />
         </LinearLayout>
 
         <!-- Floating Bottom Bar -->

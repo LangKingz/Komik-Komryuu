@@ -12,7 +12,7 @@ object typeSource {
             "kiryuu" -> sourceType.kiryuu
             "komiku" -> sourceType.komiku
             "manhwaindo" -> sourceType.manhwaindo
-            "dd" -> sourceType.doujindesu
+            "doujindesu" -> sourceType.doujindesu
             "batoto-all" -> sourceType.batoto_all
             "otaku" -> sourceType.otakudesu
             else -> sourceType.ikiru

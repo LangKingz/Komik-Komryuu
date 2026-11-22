@@ -19,6 +19,7 @@ import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getImages
 import com.komik.komik.service.utils.downloadImageManager
+import java.io.File
 
 class AdapterImage(
     private val list: MutableList<getImages>,
@@ -75,48 +76,97 @@ class AdapterImage(
                 }
             }
 
-            when (type) {
-                sourceType.doujindesu -> {
-                    val headers = LazyHeaders.Builder()
-                        .addHeader("Referer", refererUrl)
-                        .addHeader(
-                            "User-Agent",
-                            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6_1; like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
-                        )
-                        .addHeader("X-Requested-With", "XMLHttpRequest")
-                        .build()
-                    val glideUrl = GlideUrl(data.image, headers)
-                    loadWithGlide(glideUrl, listener)
+            val imageStr = data.image.trim()
+            val isLocal = imageStr.startsWith("/") || imageStr.startsWith("file://")
+
+            if (isLocal) {
+                // Mode Offline: Muat langsung dari File lokal tanpa header jaringan
+                val localPath = if (imageStr.startsWith("file://")) imageStr.substring(7) else imageStr
+                val localFile = File(localPath)
+                if (localFile.exists() && localFile.length() > 0L) {
+                    loadWithGlide(localFile, listener)
+                } else {
+                    binding.loading.visibility = View.GONE
+                    binding.layoutRetry.visibility = View.VISIBLE
                 }
-                else -> {
-                    loadWithGlide(data.image, listener)
+            } else {
+                // Mode Online: Tambahkan header referer & user-agent sesuai sumber
+                when {
+                    type == sourceType.doujindesu || imageStr.contains("desu.pics") || imageStr.contains("doujindesu") -> {
+                        val effectiveReferer = if (!refererUrl.isNullOrBlank() && refererUrl.startsWith("http")) {
+                            refererUrl
+                        } else {
+                            "https://doujin.desu.xxx/"
+                        }
+                        val headers = LazyHeaders.Builder()
+                            .addHeader("Referer", effectiveReferer)
+                            .addHeader("Origin", "https://doujin.desu.xxx")
+                            .addHeader(
+                                "User-Agent",
+                                "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6_1; like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+                            )
+                            .addHeader("X-Requested-With", "XMLHttpRequest")
+                            .build()
+                        val glideUrl = GlideUrl(imageStr, headers)
+                        loadWithGlide(glideUrl, listener)
+                    }
+                    imageStr.contains("shngm.id") || type == sourceType.shinigami -> {
+                        val headers = LazyHeaders.Builder()
+                            .addHeader("Referer", "https://app.shinigami.asia/")
+                            .addHeader(
+                                "User-Agent",
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                            )
+                            .build()
+                        val glideUrl = GlideUrl(imageStr, headers)
+                        loadWithGlide(glideUrl, listener)
+                    }
+                    !refererUrl.isNullOrBlank() && refererUrl.startsWith("http") -> {
+                        val headers = LazyHeaders.Builder()
+                            .addHeader("Referer", refererUrl)
+                            .addHeader(
+                                "User-Agent",
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                            )
+                            .build()
+                        val glideUrl = GlideUrl(imageStr, headers)
+                        loadWithGlide(glideUrl, listener)
+                    }
+                    else -> {
+                        loadWithGlide(imageStr, listener)
+                    }
                 }
             }
 
-            // Single tap on image or root anywhere toggles HUD
+            // Single tap on PhotoView or root toggles HUD
             binding.imagechapter.setOnViewTapListener { _, _, _ ->
                 onSingleTap?.invoke()
             }
             binding.imagechapter.setOnPhotoTapListener { _, _, _ ->
                 onSingleTap?.invoke()
             }
+            binding.imagechapter.setOnClickListener {
+                onSingleTap?.invoke()
+            }
             binding.root.setOnClickListener {
                 onSingleTap?.invoke()
             }
 
-            // Long-press to download
+            // Long-press to download (khusus gambar online)
             binding.imagechapter.setOnLongClickListener {
-                AlertDialogCostum(
-                    context,
-                    "Unduh Gambar",
-                    "Apakah anda yakin ingin mendownload gambar ini?",
-                    onPositive = { _ ->
-                        downloadImageManager(context, data.image)
-                    },
-                    onNegative = { dialog ->
-                        dialog.dismiss()
-                    }
-                )
+                if (!isLocal) {
+                    AlertDialogCostum(
+                        context,
+                        "Unduh Gambar",
+                        "Apakah anda yakin ingin mendownload gambar ini?",
+                        onPositive = { _ ->
+                            downloadImageManager(context, data.image)
+                        },
+                        onNegative = { dialog ->
+                            dialog.dismiss()
+                        }
+                    )
+                }
                 true
             }
 

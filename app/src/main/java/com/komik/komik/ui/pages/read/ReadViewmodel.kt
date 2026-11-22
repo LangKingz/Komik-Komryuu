@@ -65,14 +65,18 @@ class ReadViewmodel : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             // Check offline downloaded files first
-            if (chapterId != null && context != null) {
+            if (context != null) {
                 try {
                     val db = DatabaseRiwayats.getDatabase(context.applicationContext)
-                    val download = db.downloadDao().getDownloadByChapterIdSync(chapterId)
+                    val download = if (chapterId != null && chapterId != 0) {
+                        db.downloadDao().getDownloadByChapterIdSync(chapterId)
+                    } else {
+                        db.downloadDao().getDownloadByUrlSync(url)
+                    }
                     if (download != null && download.status == DownloadChapter.STATUS_COMPLETED) {
                         val localPaths = download.getLocalImagePaths()
-                        if (localPaths.isNotEmpty() && localPaths.all { java.io.File(it).exists() }) {
-                            Log.d(TAG, "setImage: Loaded completely offline for chapterId=$chapterId (${localPaths.size} images)")
+                        if (localPaths.isNotEmpty() && localPaths.all { val f = java.io.File(it); f.exists() && f.length() > 0L }) {
+                            Log.d(TAG, "setImage: Loaded completely offline for chapterId=${download.chapterId} (${localPaths.size} images)")
                             val localImages = localPaths.mapIndexed { idx, path ->
                                 getImages(index = idx + 1, image = path)
                             }
@@ -120,6 +124,22 @@ class ReadViewmodel : ViewModel() {
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                val appContext = context.applicationContext
+                val db = DatabaseRiwayats.getDatabase(appContext)
+                val offlineDownload = db.downloadDao().getDownloadByChapterIdSync(nextChapterId)
+                    ?: db.downloadDao().getDownloadByUrlSync(nextChapterUrl)
+
+                if (offlineDownload != null && offlineDownload.status == DownloadChapter.STATUS_COMPLETED) {
+                    val localPaths = offlineDownload.getLocalImagePaths()
+                    if (localPaths.isNotEmpty() && localPaths.all { val f = java.io.File(it); f.exists() && f.length() > 0L }) {
+                        preloadedNextChapterId = nextChapterId
+                        preloadedNextImages = localPaths.mapIndexed { idx, path ->
+                            getImages(index = idx + 1, image = path)
+                        }
+                        return@launch
+                    }
+                }
+
                 val data = repository.getImage(nextChapterUrl, type)
                 if (data.isNotEmpty()) {
                     preloadedNextChapterId = nextChapterId

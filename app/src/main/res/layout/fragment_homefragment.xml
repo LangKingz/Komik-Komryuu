@@ -115,16 +115,21 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Scrollable Home Content -->
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/nestedScrollView"
-        android:layout_width="match_parent"
+    <!-- SwipeRefreshLayout wrapping Scrollable Home Content -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshHome"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/headerLayout">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/nestedScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -373,6 +378,66 @@
                 android:nestedScrollingEnabled="false"
                 android:paddingHorizontal="8dp" />
 
+            <!-- Empty / Offline Error State for Extensions -->
+            <LinearLayout
+                android:id="@+id/layoutErrorSource"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/card"
+                android:backgroundTint="#1C1C28"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/cloud_off_line"
+                    app:tint="@color/calm_rose" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:fontFamily="@font/interbold"
+                    android:text="Gagal Memuat Sumber Ekstensi"
+                    android:textColor="@color/white"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/interreguler"
+                    android:gravity="center"
+                    android:text="Periksa koneksi internet kamu lalu coba muat ulang"
+                    android:textColor="@color/gray_400"
+                    android:textSize="12sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRetryLoadSource"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="16dp"
+                    android:backgroundTint="@color/primary_button"
+                    android:fontFamily="@font/intersemi"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingHorizontal="20dp"
+                    android:text="Muat Ulang"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/loop_right_line"
+                    app:iconGravity="textStart"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/white" />
+            </LinearLayout>
+
             <!-- Center Loading Indicator -->
             <com.google.android.material.progressindicator.CircularProgressIndicator
                 android:id="@+id/loading"
@@ -420,5 +485,7 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

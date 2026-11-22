@@ -21,7 +21,8 @@ import kotlinx.coroutines.withContext
 
 class AdapterPustaka(
     private val list: MutableList<LibraryDetail>,
-    var isListMode: Boolean = false
+    var isListMode: Boolean = false,
+    var spanCount: Int = 3
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -85,21 +86,9 @@ class AdapterPustaka(
 
         holder.itemView.setOnLongClickListener {
             if (!isSelectionMode) {
-                AlertDialogCostum(
-                    context,
-                    "Hapus dari Pustaka",
-                    "Yakin ingin menghapus ${item.comic.title} dari pustaka?",
-                    onPositive = { dialog ->
-                        removeItemAt(holder.bindingAdapterPosition, context)
-                        dialog.dismiss()
-                    },
-                    onNegative = { dialog ->
-                        dialog.dismiss()
-                    }
-                ).show()
-            } else {
-                toggleSelection(item.comic.id)
+                isSelectionMode = true
             }
+            toggleSelection(item.comic.id)
             true
         }
 
@@ -119,11 +108,14 @@ class AdapterPustaka(
         }
     }
 
-    private fun toggleSelection(comicId: Int) {
+    fun toggleSelection(comicId: Int) {
         if (selectedIds.contains(comicId)) {
             selectedIds.remove(comicId)
         } else {
             selectedIds.add(comicId)
+        }
+        if (selectedIds.isEmpty()) {
+            isSelectionMode = false
         }
         notifyDataSetChanged()
         onSelectionChangedListener?.invoke(selectedIds.size)
@@ -155,10 +147,15 @@ class AdapterPustaka(
 
         fun bind(data: LibraryDetail, isSelectMode: Boolean, isSelected: Boolean, unreadCount: Int) {
             binding.judul.text = data.comic.title
+            binding.judul.textSize = if (spanCount == 2) 13.5f else 12f
+
+            binding.tvSourceBadge.text = data.comic.location.ifBlank { "Komik" }
+
             binding.tvStatus.text = buildString {
-                append(data.comic.location)
                 if (!data.comic.status.isNullOrBlank()) {
-                    append(" • ").append(data.comic.status)
+                    append(data.comic.status)
+                } else {
+                    append("Tersimpan")
                 }
             }
 
@@ -178,6 +175,9 @@ class AdapterPustaka(
             if (isSelectMode) {
                 binding.cbSelect.visibility = View.VISIBLE
                 binding.cbSelect.isChecked = isSelected
+                binding.cbSelect.setOnClickListener {
+                    toggleSelection(data.comic.id)
+                }
             } else {
                 binding.cbSelect.visibility = View.GONE
             }
@@ -217,6 +217,9 @@ class AdapterPustaka(
             if (isSelectMode) {
                 binding.cbSelect.visibility = View.VISIBLE
                 binding.cbSelect.isChecked = isSelected
+                binding.cbSelect.setOnClickListener {
+                    toggleSelection(data.comic.id)
+                }
                 binding.btnDelete.visibility = View.GONE
             } else {
                 binding.cbSelect.visibility = View.GONE

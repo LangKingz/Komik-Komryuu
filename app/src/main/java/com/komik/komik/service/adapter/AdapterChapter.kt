@@ -33,7 +33,12 @@ class AdapterChapter(
     private var onChapterClicked: ((ChapterwithComic) -> Unit)? = null
 ) : ListAdapter<ChapterwithComic, AdapterChapter.Holder>(DIFF_CALLBACK) {
 
+    enum class FilterType { ALL, UNREAD, OFFLINE }
+
     private var lastReadChapterId: Int? = null
+    private var masterList: List<ChapterwithComic> = initialList
+    private var currentFilterType: FilterType = FilterType.ALL
+    private var downloadedChapterIds: Set<Int> = emptySet()
 
     init {
         if (initialList.isNotEmpty()) {
@@ -124,6 +129,7 @@ class AdapterChapter(
                         } else if (ChapterDownloadManager.isChapterActive(item.chapter.id)) {
                             Toast.makeText(context, "Chapter ${item.chapter.title} sedang dalam proses unduh...", Toast.LENGTH_SHORT).show()
                         } else {
+                            Toast.makeText(context, "Mengunduh ${item.chapter.title}...", Toast.LENGTH_SHORT).show()
                             binding.pbDownload.visibility = View.VISIBLE
                             binding.ivDownload.visibility = View.GONE
                             ChapterDownloadManager.downloadChapter(context, item.chapter, item.comic) {
@@ -226,8 +232,40 @@ class AdapterChapter(
         }
     }
 
+    fun setMasterList(list: List<ChapterwithComic>, downloadedIds: Set<Int> = downloadedChapterIds) {
+        masterList = list
+        downloadedChapterIds = downloadedIds
+        applyFilterInternal()
+    }
+
+    fun updateDownloadedIds(downloadedIds: Set<Int>) {
+        downloadedChapterIds = downloadedIds
+        if (currentFilterType == FilterType.OFFLINE) {
+            applyFilterInternal()
+        }
+    }
+
+    fun setFilterType(filterType: FilterType) {
+        currentFilterType = filterType
+        applyFilterInternal()
+    }
+
+    fun filterDisplayList(filterType: FilterType) {
+        setFilterType(filterType)
+    }
+
+    private fun applyFilterInternal() {
+        val filtered = when (currentFilterType) {
+            FilterType.ALL -> masterList
+            FilterType.UNREAD -> masterList.filter { !it.chapter.isRead }
+            FilterType.OFFLINE -> masterList.filter { downloadedChapterIds.contains(it.chapter.id) }
+        }
+        submitList(filtered)
+    }
+
     fun updateList(newList: List<ChapterwithComic>) {
-        submitList(newList)
+        masterList = newList
+        applyFilterInternal()
     }
 
     fun addData(newData: List<ChapterwithComic>) {

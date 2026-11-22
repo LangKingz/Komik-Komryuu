@@ -1,5 +1,6 @@
 package com.komik.komik.service.parser.comic
 
+import android.util.Log
 import com.komik.komik.service.client
 import com.komik.komik.service.parser.model.getListUpdate
 import org.jsoup.nodes.Document
@@ -37,34 +38,44 @@ object SourceParser {
 
 //    https://api.shinigami.io/v1/manga/list?type=project&is_update=true&sort=latest&sort_order=desc&offset=20&limit=20
 
-    suspend fun parseShinigami(client: client, page: Int): List<getListUpdate>? {
-        val response = client.Shinigami.getMangaList(pageSize = 24, page = page, sortBy = "latest")
+    suspend fun parseShinigami(client: client, limit: Int = 24, offset: Int = 0): List<getListUpdate>? {
+        val response = client.Shinigami.getMangaList(
+            pageSize = limit,
+            limit = limit,
+            offset = offset,
+            sortBy = "latest"
+        )
         val pageData = response.data
 
         return pageData?.mapIndexed { index, item ->
             getListUpdate(
-                index = index,
+                index = offset + index,
                 title = item?.title.toString(),
                 urlImage = item?.coverImageUrl.toString(),
                 link = item?.mangaId.toString(),
                 location = "shinigami",
                 tagModel = "komik"
-
             )
         }
     }
 
 
-    fun parseIkiru(document: Document): List<getListUpdate> {
-        return document.select(".grid div .hidden").filter { it ->
-            it.select("a.relative").isNotEmpty()
-        }.mapIndexed { index, it ->
+    suspend fun parseIkiru(client: client, page: Int): List<getListUpdate>? {
+        val response = client.ikiruService.getProjectManga(
+            page = page,
+            sortBy = "popular",
+            sort = "desc"
+        )
+
+        Log.d("SourcePArser", "parseIkiru: ${response}")
+
+        val pageData = response.data?.mangas
+        return pageData?.mapIndexed { index, item ->
             getListUpdate(
                 index = index,
-                title = it.select(".flex-col a.line-clamp-1").text(),
-                urlImage = it.select("a.relative img").attr("src")
-                    ?: "https://cosmic345.co/img/noimage.png",
-                link = it.select("a.relative").attr("href"),
+                title = item?.title.toString(),
+                urlImage = item?.featuredImage.toString(),
+                link = item?.slug.toString(),
                 location = "ikiru",
                 tagModel = "komik"
             )
@@ -168,7 +179,7 @@ object SourceParser {
                         title = title,
                         urlImage = coverUrl,
                         link = "${baseurl}api/manga/$slug",
-                        location = "dd",
+                        location = "doujindesu",
                         tagModel = "komik"
                     )
                 )

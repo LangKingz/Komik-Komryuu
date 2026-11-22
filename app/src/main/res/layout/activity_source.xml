@@ -408,6 +408,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/swipeRefreshSource" />
 
+    <!-- Small Pagination Loading Indicator at Bottom -->
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressPagination"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginBottom="86dp"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorSize="32dp"
+        app:trackThickness="3dp"
+        app:indicatorColor="@color/primary_button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <!-- Error State: Interactive with Cookie Bypass and Retry Buttons -->
     <LinearLayout
         android:id="@+id/error"

@@ -19,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -33,8 +34,8 @@ import com.komik.komik.R
 import com.komik.komik.databinding.FragmentSettingBinding
 import com.komik.komik.service.api.model.AuthResponse
 import com.komik.komik.service.api.model.DeviceInfo
-import com.komik.komik.service.api.model.SyncHistoryItemDto
-import com.komik.komik.service.api.model.SyncLibraryItemDto
+import com.komik.komik.service.api.model.SyncHistoryItem
+import com.komik.komik.service.api.model.SyncLibraryItem
 import com.komik.komik.service.api.model.SyncRequest
 import com.komik.komik.service.client
 import com.komik.komik.service.component.AlertDialogCostum
@@ -43,8 +44,13 @@ import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.Comic
 import com.komik.komik.service.data.model.Library
+import com.komik.komik.service.adapter.AdapterThemePreset
 import com.komik.komik.service.data.model.Riwayats
+import com.komik.komik.service.utils.AppUpdateChecker
 import com.komik.komik.service.utils.PreferenceManager
+import com.komik.komik.service.utils.ThemeManager
+import com.komik.komik.service.worker.UpdateScheduler
+import com.komik.komik.service.worker.AutoSyncScheduler
 import android.graphics.Color
 import android.util.Log
 import android.widget.FrameLayout
@@ -57,6 +63,9 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
 import com.komik.komik.service.repository.Repository
 import com.komik.komik.ui.pages.admin.AdminManageUserActivity
+import com.komik.komik.ui.pages.admin.AdminManageExtensiActivity
+import com.komik.komik.ui.pages.admin.AdminManageReportsActivity
+import com.komik.komik.ui.pages.admin.AdminBroadcastConfigActivity
 import com.komik.komik.ui.pages.login.LoginActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -105,6 +114,7 @@ class SettingFragment : Fragment() {
         db = DatabaseRiwayats.getDatabase(requireContext())
 
         setupUserProfile()
+        setupThemeSelector()
         setupReadingInsights()
         setupReaderPreferences()
         setupContentAndNotifications()
@@ -175,18 +185,28 @@ class SettingFragment : Fragment() {
 
             binding.btnSyncNow.visibility = View.VISIBLE
             binding.btnSyncNow.setOnClickListener {
-                Snackbar.make(binding.root, "Masuk dengan Google untuk mengaktifkan sinkronisasi cloud", Snackbar.LENGTH_LONG)
-                    .setAction("Login") {
-                        navigateToLogin()
-                    }.show()
+                val uid = FirebaseAuth.getInstance().currentUser?.uid ?: prefManager.userUid
+                if (!uid.isNullOrBlank()) {
+                    syncAccountWithServer(null)
+                } else {
+                    Snackbar.make(binding.root, "Masuk dengan Google untuk mengaktifkan sinkronisasi cloud", Snackbar.LENGTH_LONG)
+                        .setAction("Login") {
+                            navigateToLogin()
+                        }.show()
+                }
             }
 
             binding.btnRestoreCloud.visibility = View.VISIBLE
             binding.btnRestoreCloud.setOnClickListener {
-                Snackbar.make(binding.root, "Masuk dengan Google untuk memulihkan pustaka dari cloud", Snackbar.LENGTH_LONG)
-                    .setAction("Login") {
-                        navigateToLogin()
-                    }.show()
+                val uid = FirebaseAuth.getInstance().currentUser?.uid ?: prefManager.userUid
+                if (!uid.isNullOrBlank()) {
+                    restoreAccountFromCloud(null)
+                } else {
+                    Snackbar.make(binding.root, "Masuk dengan Google untuk memulihkan pustaka dari cloud", Snackbar.LENGTH_LONG)
+                        .setAction("Login") {
+                            navigateToLogin()
+                        }.show()
+                }
             }
 
             binding.btnAuthAction.text = "Masuk Google"
@@ -197,6 +217,92 @@ class SettingFragment : Fragment() {
 
             binding.imgProfile.setImageResource(R.drawable.ppanime)
         }
+
+        setupAutoSyncScheduleControls(prefManager, isLogged = user != null && !isGuest)
+    }
+
+    private fun setupAutoSyncScheduleControls(prefManager: PreferenceManager, isLogged: Boolean) {
+        binding.dividerAutoSync.visibility = if (isLogged) View.VISIBLE else View.GONE
+        binding.layoutAutoSyncSchedule.visibility = if (isLogged) View.VISIBLE else View.GONE
+        if (!isLogged) return
+
+        fun updateAutoSyncDisplay() {
+            val hour = prefManager.autoSyncHour
+            val min = prefManager.autoSyncMinute
+            val timeFormatted = String.format(Locale.getDefault(), "%02d:%02d", hour, min)
+            val interval = prefManager.autoSyncIntervalHours
+
+            binding.tvAutoSyncTime.text = if (interval == 12L) {
+                "Setiap 12 jam (Mulai pukul $timeFormatted)"
+            } else {
+                "Setiap hari pukul $timeFormatted"
+            }
+
+            binding.tvAutoSyncInterval.text = if (interval == 12L) {
+                "Setiap 12 Jam (2x Sehari)"
+            } else {
+                "Setiap 24 Jam (1x Sehari)"
+            }
+        }
+
+        binding.switchAutoSync.isChecked = prefManager.isAutoSyncEnabled
+        binding.switchAutoSync.setOnCheckedChangeListener { _, isChecked ->
+            prefManager.isAutoSyncEnabled = isChecked
+            if (isChecked) {
+                AutoSyncScheduler.scheduleAutoSync(requireContext())
+                Toast.makeText(requireContext(), "Auto Cloud Sync dijadwalkan", Toast.LENGTH_SHORT).show()
+            } else {
+                AutoSyncScheduler.cancelAutoSync(requireContext())
+                Toast.makeText(requireContext(), "Auto Cloud Sync dinonaktifkan", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        binding.itemAutoSyncTime.setOnClickListener {
+            val currentHour = prefManager.autoSyncHour
+            val currentMinute = prefManager.autoSyncMinute
+            val timePicker = android.app.TimePickerDialog(
+                requireContext(),
+                { _, hourOfDay, minute ->
+                    prefManager.autoSyncHour = hourOfDay
+                    prefManager.autoSyncMinute = minute
+                    updateAutoSyncDisplay()
+                    if (prefManager.isAutoSyncEnabled) {
+                        AutoSyncScheduler.scheduleAutoSync(requireContext())
+                    }
+                    val timeStr = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute)
+                    Toast.makeText(requireContext(), "Jadwal sinkronisasi disetel ke pukul $timeStr", Toast.LENGTH_SHORT).show()
+                },
+                currentHour,
+                currentMinute,
+                true
+            )
+            timePicker.setTitle("Pilih Jam Sinkronisasi")
+            timePicker.show()
+        }
+
+        binding.itemAutoSyncInterval.setOnClickListener {
+            val options = arrayOf(
+                "Setiap 24 Jam (1x Sehari pada jam terpilih)",
+                "Setiap 12 Jam (2x Sehari)"
+            )
+            val currentInterval = prefManager.autoSyncIntervalHours
+            val selectedIdx = if (currentInterval == 12L) 1 else 0
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Frekuensi Sinkronisasi Cloud")
+                .setSingleChoiceItems(options, selectedIdx) { dialog, which ->
+                    prefManager.autoSyncIntervalHours = if (which == 1) 12L else 24L
+                    updateAutoSyncDisplay()
+                    if (prefManager.isAutoSyncEnabled) {
+                        AutoSyncScheduler.scheduleAutoSync(requireContext())
+                    }
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Batal", null)
+                .show()
+        }
+
+        updateAutoSyncDisplay()
     }
 
     private fun updateLastSyncDisplay(prefManager: PreferenceManager) {
@@ -225,8 +331,6 @@ class SettingFragment : Fragment() {
         val prefManager = PreferenceManager.getInstance(context)
         val roleLower = role.lowercase()
 
-//        Toast.makeText(requireContext(), "${roleLower}", Toast.LENGTH_SHORT).show()
-
         when (roleLower) {
             "admin" -> {
                 binding.tvRoleBadge.text = "ADMIN"
@@ -239,9 +343,9 @@ class SettingFragment : Fragment() {
                 binding.tvRoleBadge.setTextColor(ContextCompat.getColor(context, R.color.text_violet_400))
             }
             "vip" -> {
-                binding.tvRoleBadge.text = "VIP"
+                binding.tvRoleBadge.text = "VIP MEMBER"
                 binding.tvRoleBadge.setBackgroundResource(R.drawable.badge_role_vip)
-                binding.tvRoleBadge.setTextColor(android.graphics.Color.parseColor("#93C5FD"))
+                binding.tvRoleBadge.setTextColor(android.graphics.Color.parseColor("#FBBF24"))
             }
             "user", "member" -> {
                 binding.tvRoleBadge.text = "MEMBER"
@@ -253,6 +357,18 @@ class SettingFragment : Fragment() {
                 binding.tvRoleBadge.setBackgroundResource(R.drawable.badge_role_guest)
                 binding.tvRoleBadge.setTextColor(ContextCompat.getColor(context, R.color.gray_400))
             }
+        }
+
+        // Tampilan Minimalis Elegan VIP Access Card
+        val isVip = prefManager.isVipOrAbove()
+        if (isVip) {
+            binding.cardUserProfile.strokeColor = android.graphics.Color.parseColor("#F59E0B")
+            binding.cardUserProfile.strokeWidth = (2 * resources.displayMetrics.density).toInt()
+            binding.layoutVipBenefits.visibility = View.VISIBLE
+        } else {
+            binding.cardUserProfile.strokeColor = android.graphics.Color.parseColor("#3A404D")
+            binding.cardUserProfile.strokeWidth = (1 * resources.displayMetrics.density).toInt()
+            binding.layoutVipBenefits.visibility = View.GONE
         }
 
         // Pemisahan Tegas Area Kontrol Admin: Hanya tampil jika role == admin atau moderator
@@ -334,23 +450,54 @@ class SettingFragment : Fragment() {
                 }
             }
 
-        // 4. Tombol Kelola Pengguna
+        // 4. Tombol 2x2 Grid Aksi Kontrol Admin
+        // Card 1: Kelola Pengguna & VIP
         binding.btnAdminManageUsers.setOnClickListener {
             val intent = Intent(requireContext(), AdminManageUserActivity::class.java)
             startActivity(intent)
         }
 
-        // 5. Tombol Kirim Broadcast Pengumuman
-        binding.btnAdminBroadcast.setOnClickListener {
-            showBroadcastDialog(firestore)
-        }
-
-        // 6. Tombol Kelola Ekstensi Sumber
+        // Card 2: Kelola Ekstensi Sumber
         binding.btnAdminManageExtensions.setOnClickListener {
-            showManageExtensionsDialog()
+            val intent = Intent(requireContext(), AdminManageExtensiActivity::class.java)
+            startActivity(intent)
         }
 
-        // 7. Tombol Web Dashboard Admin
+        // Card 3: Tiket Laporan User
+        binding.btnAdminManageReports.setOnClickListener {
+            val intent = Intent(requireContext(), AdminManageReportsActivity::class.java)
+            startActivity(intent)
+        }
+
+        // Card 4: Broadcast & Maintenance Server
+        binding.btnAdminBroadcastConfig.setOnClickListener {
+            val intent = Intent(requireContext(), AdminBroadcastConfigActivity::class.java)
+            startActivity(intent)
+        }
+
+        // 5. Muat Badge Pending Reports Count
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val reportsRes = client.KomryuuxSource.getReports()
+                if (reportsRes.isSuccessful && reportsRes.body() != null) {
+                    val reports = reportsRes.body()?.data.orEmpty()
+                    val pendingCount = reports.count { it.status.equals("pending", true) }
+                    withContext(Dispatchers.Main) {
+                        if (_binding != null) {
+                            if (pendingCount > 0) {
+                                binding.tvPendingReportsBadge.visibility = View.VISIBLE
+                                binding.tvPendingReportsBadge.text = "$pendingCount Baru"
+                            } else {
+                                binding.tvPendingReportsBadge.visibility = View.GONE
+                            }
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+
+        // 6. Tombol Web Dashboard Admin
         binding.btnOpenAdminDashboard.setOnClickListener {
             openAdminDashboard()
         }
@@ -506,6 +653,27 @@ class SettingFragment : Fragment() {
     }
 
     // ----------------------------------------------------
+    // Theme Selector (Multi-Theme Switcher)
+    // ----------------------------------------------------
+    private fun setupThemeSelector() {
+        val currentPreset = ThemeManager.getCurrentPreset(requireContext())
+
+        binding.tvCurrentThemeBadge.text = currentPreset.displayName
+        binding.tvActiveThemeDescription.text = currentPreset.description
+
+        val presets = ThemeManager.getAllPresets()
+        val adapter = AdapterThemePreset(
+            presets = presets,
+            activeKey = currentPreset.key
+        ) { selectedPreset ->
+            ThemeManager.switchTheme(requireActivity(), selectedPreset)
+        }
+
+        binding.rvThemes.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        binding.rvThemes.adapter = adapter
+    }
+
+    // ----------------------------------------------------
     // Reading Insights / Statistik Membaca
     // ----------------------------------------------------
     private fun setupReadingInsights() {
@@ -619,8 +787,16 @@ class SettingFragment : Fragment() {
         startActivity(Intent.createChooser(shareIntent, "Bagikan Rekap Membaca"))
     }
 
-    private fun syncAccountWithServer(user: FirebaseUser) {
+    private fun syncAccountWithServer(user: FirebaseUser? = auth.currentUser) {
         val context = context ?: return
+        val prefManager = PreferenceManager.getInstance(context)
+        val uid = user?.uid ?: FirebaseAuth.getInstance().currentUser?.uid ?: prefManager.userUid
+
+        if (uid.isNullOrBlank()) {
+            Toast.makeText(context, "Silakan login terlebih dahulu untuk menyinkronkan data", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         binding.progressSync.visibility = View.VISIBLE
         binding.btnSyncNow.isEnabled = false
         binding.btnRestoreCloud.isEnabled = false
@@ -633,35 +809,27 @@ class SettingFragment : Fragment() {
                     updateRoleUI(updatedRole)
                 }
 
-                // 2. Ambil data lokal dari Room Database pada background thread
+                // 2. Ambil seluruh data dari LibraryDao dan riwayatDao di Dispatchers.IO
                 val (syncLibrary, syncHistory) = withContext(Dispatchers.IO) {
                     val libList = db.libraryDao().getAllLibraryList().map { detail ->
-                        SyncLibraryItemDto(
+                        SyncLibraryItem(
+                            comicId = detail.comic.url.ifBlank { detail.comic.id.toString() },
                             title = detail.comic.title,
-                            url = detail.comic.url,
-                            imageUrl = detail.comic.imageUrl,
-                            author = detail.comic.author,
-                            rating = detail.comic.rating,
-                            description = detail.comic.description,
-                            location = detail.comic.location,
-                            type = detail.comic.type,
-                            status = detail.comic.status,
-                            isFavorite = detail.library.isFavorite,
-                            createdAt = detail.library.createdAt
+                            coverUrl = detail.comic.imageUrl,
+                            sourceName = detail.comic.location,
+                            updatedAt = detail.library.createdAt
                         )
                     }
 
                     val relasiHistory = db.riwayatdao().getAllRiwayatDetailList().map { detail ->
-                        SyncHistoryItemDto(
+                        SyncHistoryItem(
+                            comicId = detail.comic.url.ifBlank { detail.comic.id.toString() },
                             title = detail.comic.title,
-                            chapter = detail.chapter.title,
-                            url = detail.chapter.link,
-                            imageUrl = detail.comic.imageUrl,
-                            urlWebsite = detail.comic.url,
-                            location = detail.comic.location,
-                            pageRead = detail.riwayat.pageRead,
-                            totalPage = detail.riwayat.totalPage,
-                            createdAt = detail.riwayat.readAt
+                            coverUrl = detail.comic.imageUrl,
+                            sourceName = detail.comic.location,
+                            lastChapterNumber = detail.chapter.title,
+                            lastPage = detail.riwayat.pageRead ?: 1,
+                            updatedAt = detail.riwayat.readAt
                         )
                     }
 
@@ -670,14 +838,14 @@ class SettingFragment : Fragment() {
                     } else {
                         val legacyDb = com.komik.komik.service.data.data.DatabaseRiwayat.getDatabase(context)
                         legacyDb.riwayatdao().getAllRiwayatList().map { r ->
-                            SyncHistoryItemDto(
+                            SyncHistoryItem(
+                                comicId = (r.urlWebsite ?: r.url ?: "").ifBlank { r.title },
                                 title = r.title,
-                                chapter = r.chapter,
-                                url = r.url,
-                                imageUrl = r.imageUrl,
-                                urlWebsite = r.urlWebsite,
-                                location = r.location,
-                                createdAt = r.createdAt
+                                coverUrl = r.imageUrl ?: "",
+                                sourceName = r.location,
+                                lastChapterNumber = r.chapter,
+                                lastPage = 1,
+                                updatedAt = r.createdAt
                             )
                         }
                     }
@@ -685,18 +853,21 @@ class SettingFragment : Fragment() {
                     Pair(libList, finalHistory)
                 }
 
+                // Cetak jumlah item yang akan dikirim ke Logcat
+                Log.d("KOMRYUU_SYNC", "Sending library=${syncLibrary.size}, history=${syncHistory.size}")
+
                 val syncReq = SyncRequest(
-                    uid = user.uid,
-                    lastSync = System.currentTimeMillis(),
+                    uid = uid,
                     library = syncLibrary,
-                    history = syncHistory
+                    history = syncHistory,
+                    lastSync = System.currentTimeMillis()
                 )
 
                 val response = withContext(Dispatchers.IO) {
                     client.KomryuuxSource.syncData(syncReq)
                 }
 
-                Log.d("USER", "${response.message()} ")
+                Log.d("KOMRYUU_SYNC", "Response code=${response.code()}, message=${response.message()}")
 
                 if (_binding == null) return@launch
 
@@ -704,18 +875,44 @@ class SettingFragment : Fragment() {
                 binding.btnSyncNow.isEnabled = true
                 binding.btnRestoreCloud.isEnabled = true
 
-                if (response.isSuccessful && (response.body()?.success == true || response.code() == 200 || response.code() == 201)) {
-                    val prefManager = PreferenceManager.getInstance(context)
+                if (response.isSuccessful) {
+                    val body = response.body()
                     prefManager.lastSync = System.currentTimeMillis()
                     updateLastSyncDisplay(prefManager)
 
-                    val msg = "Sinkronisasi berhasil! ${syncLibrary.size} komik & ${syncHistory.size} riwayat tersimpan di Cloud."
-                    Snackbar.make(binding.root, msg, Snackbar.LENGTH_LONG)
+                    val libCount = body?.syncedLibraryCount ?: body?.data?.syncedLibraryCount ?: syncLibrary.size
+                    val histCount = body?.syncedHistoryCount ?: body?.data?.syncedHistoryCount ?: syncHistory.size
+                    val serverMsg = body?.message
+
+                    val toastMsg = if (!serverMsg.isNullOrBlank()) {
+                        "Sinkronisasi berhasil! $serverMsg ($libCount library, $histCount riwayat tersimpan)"
+                    } else {
+                        "Sinkronisasi berhasil! $libCount library dan $histCount riwayat tersimpan."
+                    }
+                    Toast.makeText(context, toastMsg, Toast.LENGTH_LONG).show()
+
+                    val snackbarMsg = "Sinkronisasi berhasil! $libCount library & $histCount riwayat tersimpan di Cloud."
+                    Snackbar.make(binding.root, snackbarMsg, Snackbar.LENGTH_LONG)
                         .setBackgroundTint(ContextCompat.getColor(context, R.color.bottom_navbar))
                         .show()
                 } else {
-                    val errMsg = response.body()?.message ?: "Gagal menyinkronkan (Kode: ${response.code()})"
-                    Toast.makeText(context, errMsg, Toast.LENGTH_LONG).show()
+                    val errorBodyStr = try {
+                        response.errorBody()?.string()
+                    } catch (_: Exception) {
+                        null
+                    }
+                    val errorMsg = if (!errorBodyStr.isNullOrBlank()) {
+                        try {
+                            val jsonObject = org.json.JSONObject(errorBodyStr)
+                            jsonObject.optString("message", errorBodyStr)
+                        } catch (_: Exception) {
+                            errorBodyStr
+                        }
+                    } else {
+                        response.message().ifBlank { "Terjadi kesalahan pada server" }
+                    }
+                    val failureMsg = "Gagal sinkronisasi (HTTP ${response.code()}): $errorMsg"
+                    Toast.makeText(context, failureMsg, Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 if (_binding != null) {
@@ -728,8 +925,15 @@ class SettingFragment : Fragment() {
         }
     }
 
-    private fun restoreAccountFromCloud(user: FirebaseUser) {
+    private fun restoreAccountFromCloud(user: FirebaseUser? = auth.currentUser) {
         val context = context ?: return
+        val prefManager = PreferenceManager.getInstance(context)
+        val uid = user?.uid ?: FirebaseAuth.getInstance().currentUser?.uid ?: prefManager.userUid
+
+        if (uid.isNullOrBlank()) {
+            Toast.makeText(context, "Silakan login terlebih dahulu untuk memulihkan data", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         MaterialAlertDialogBuilder(context)
             .setTitle("Pulihkan Data dari Cloud?")
@@ -737,7 +941,7 @@ class SettingFragment : Fragment() {
             .setIcon(R.drawable.download_cloud_line)
             .setPositiveButton("Pulihkan Sekarang") { dialog, _ ->
                 dialog.dismiss()
-                executeRestore(user)
+                executeRestore(uid)
             }
             .setNegativeButton("Batal") { dialog, _ ->
                 dialog.dismiss()
@@ -745,7 +949,7 @@ class SettingFragment : Fragment() {
             .show()
     }
 
-    private fun executeRestore(user: FirebaseUser) {
+    private fun executeRestore(uid: String) {
         val context = context ?: return
         binding.progressSync.visibility = View.VISIBLE
         binding.btnSyncNow.isEnabled = false
@@ -755,7 +959,7 @@ class SettingFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
-                    client.KomryuuxSource.restoreData(user.uid)
+                    client.KomryuuxSource.restoreData(uid)
                 }
 
                 if (_binding == null) return@launch
@@ -1094,6 +1298,105 @@ class SettingFragment : Fragment() {
                 pref.edit().putBoolean("notif", isChecked).apply()
             }
         }
+
+        // Auto Chapter Update Background Schedule
+        setupAutoChapterUpdateSchedule()
+    }
+
+    private fun setupAutoChapterUpdateSchedule() {
+        val context = context ?: return
+        val prefManager = PreferenceManager.getInstance(context)
+
+        // 1. Switch Utama
+        binding.switchAutoUpdate.isChecked = prefManager.isAutoUpdateEnabled
+        binding.switchAutoUpdate.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                    launcherPermissionNotification.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+            prefManager.isAutoUpdateEnabled = isChecked
+            UpdateScheduler.schedulePeriodicCheck(context, prefManager.updateIntervalHours)
+            updateIntervalUIState(isChecked)
+        }
+
+        // 2. Pemilih Interval
+        updateIntervalDisplay(prefManager.updateIntervalHours)
+        updateIntervalUIState(prefManager.isAutoUpdateEnabled)
+
+        binding.rowUpdateInterval.setOnClickListener {
+            if (!prefManager.isAutoUpdateEnabled) {
+                Toast.makeText(context, "Aktifkan pengecekan otomatis terlebih dahulu", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            showIntervalSelectionDialog()
+        }
+
+        // 3. Status Terakhir Dicek & Tombol Cek Manual
+        updateLastCheckTimeDisplay(prefManager.lastUpdateCheckMillis)
+
+        binding.btnCheckUpdateNow.setOnClickListener {
+            UpdateScheduler.triggerManualCheckNow(context)
+            Toast.makeText(context, "Pengecekan chapter baru sedang berjalan di latar belakang...", Toast.LENGTH_SHORT).show()
+            binding.tvLastUpdateCheck.text = "Terakhir dicek: Sedang memeriksa..."
+        }
+    }
+
+    private fun updateIntervalUIState(isEnabled: Boolean) {
+        binding.rowUpdateInterval.alpha = if (isEnabled) 1.0f else 0.5f
+    }
+
+    private fun updateIntervalDisplay(hours: Long) {
+        val label = when (hours) {
+            6L -> "Setiap 6 Jam"
+            12L -> "Setiap 12 Jam (Disarankan)"
+            24L -> "Setiap 24 Jam (1 Kali Sehari)"
+            48L -> "Setiap 48 Jam (2 Hari Sekali)"
+            else -> "Setiap $hours Jam"
+        }
+        binding.tvCurrentInterval.text = label
+    }
+
+    private fun updateLastCheckTimeDisplay(millis: Long) {
+        if (millis > 0L) {
+            val dateStr = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date(millis))
+            binding.tvLastUpdateCheck.text = "Terakhir dicek: $dateStr"
+        } else {
+            binding.tvLastUpdateCheck.text = "Terakhir dicek: Belum pernah dicek"
+        }
+    }
+
+    private fun showIntervalSelectionDialog() {
+        val context = context ?: return
+        val prefManager = PreferenceManager.getInstance(context)
+
+        val options = arrayOf(
+            "Setiap 6 Jam",
+            "Setiap 12 Jam (Disarankan — Hemat Server & Baterai)",
+            "Setiap 24 Jam (1 Kali Sehari)",
+            "Setiap 48 Jam (2 Hari Sekali)"
+        )
+        val hoursList = listOf(6L, 12L, 24L, 48L)
+
+        val currentHours = prefManager.updateIntervalHours
+        val selectedIndex = hoursList.indexOf(currentHours).let { if (it >= 0) it else 1 }
+
+        MaterialAlertDialogBuilder(context)
+            .setTitle("Pilih Interval Pengecekan")
+            .setIcon(R.drawable.baseline_history_24)
+            .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
+                val selectedHours = hoursList[which]
+                prefManager.updateIntervalHours = selectedHours
+                updateIntervalDisplay(selectedHours)
+                UpdateScheduler.schedulePeriodicCheck(context, selectedHours)
+                Toast.makeText(context, "Interval diubah menjadi ${options[which]}", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Batal") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     // ----------------------------------------------------
@@ -1328,7 +1631,13 @@ class SettingFragment : Fragment() {
     // 5. System & About
     // ----------------------------------------------------
     private fun setupSystemAndAbout() {
-        binding.tvAppVersion.text = "v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})"
+        binding.tvAppVersion.text = "v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE}) • Ketuk untuk cek pembaruan"
+
+        binding.itemCheckAppUpdate.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                AppUpdateChecker.checkForUpdate(requireContext(), isManual = true)
+            }
+        }
 
         binding.btnTrakteer.setOnClickListener {
             try {
@@ -1380,11 +1689,16 @@ class SettingFragment : Fragment() {
     private val launcherPermissionNotification = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
+        val context = requireContext()
         val pref = requireActivity().getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         pref.edit().putBoolean("notif", granted).apply()
         binding.Notification.isChecked = granted
+        binding.switchAutoUpdate.isChecked = granted
+        val prefManager = PreferenceManager.getInstance(context)
+        prefManager.isAutoUpdateEnabled = granted
+        UpdateScheduler.schedulePeriodicCheck(context, prefManager.updateIntervalHours)
         if (!granted) {
-            Toast.makeText(requireContext(), "Izin Notifikasi Ditolak", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Izin Notifikasi Ditolak", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -1392,6 +1706,11 @@ class SettingFragment : Fragment() {
         super.onResume()
         setupUserProfile()
         calculateImageCacheSize()
+        val context = context
+        if (context != null) {
+            val prefManager = PreferenceManager.getInstance(context)
+            updateLastCheckTimeDisplay(prefManager.lastUpdateCheckMillis)
+        }
     }
 
     override fun onDestroyView() {

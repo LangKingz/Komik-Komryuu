@@ -28,6 +28,7 @@ import com.komik.komik.databinding.BottomsheetFilterSourceBinding
 import com.komik.komik.service.adapter.AdapterManhwa
 import com.komik.komik.service.adapter.AdapterRiwayatSource
 import com.komik.komik.service.adapter.AdapterSource
+import com.komik.komik.service.utils.ThemeManager
 import com.komik.komik.service.component.BottomSheetCookie
 import com.komik.komik.service.component.BottomsheetInfo
 import com.komik.komik.service.data.model.RiwayatDetail
@@ -44,6 +45,7 @@ class sourceActivity : AppCompatActivity() {
     private lateinit var adapterRiwayatSource: AdapterRiwayatSource
 
     private lateinit var locations: String
+    private lateinit var UrlLogoEx: String
     private var urlSource: String = ""
     private var size: String = "0"
     private var fullComicList = mutableListOf<getListUpdate>()
@@ -51,6 +53,7 @@ class sourceActivity : AppCompatActivity() {
     private var isCurrentSourcePinned = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivitySourceBinding.inflate(layoutInflater)
@@ -58,22 +61,24 @@ class sourceActivity : AppCompatActivity() {
 
         compatView()
 
-        window.navigationBarColor = ContextCompat.getColor(this, R.color.bottom_navbar)
+        window.navigationBarColor = ThemeManager.getBackgroundColor(this)
         viewmodel = ViewModelProvider(this)[sourceViewmodel::class.java]
 
         val url = intent.getStringExtra(URL).orEmpty()
         val location = intent.getStringExtra(location).orEmpty()
+        val urlLogo = intent.getStringExtra(LOGOURL).orEmpty()
         urlSource = url
         locations = location
+        UrlLogoEx = urlLogo
 
         setupHeader()
-        setupRecyclerViews()
 
         val source = typeSource.getSourceType(locations)
+        setupRecyclerViews(source)
         initPinState()
         initServerStatusState()
 
-        viewmodel.getSource(source, urlSource, 30)
+        viewmodel.loadInitialData(source, urlSource)
 
         setupQuickFilterChips(source)
         setupRealtimeSearch(source)
@@ -102,15 +107,7 @@ class sourceActivity : AppCompatActivity() {
 
         // Extension Logo / Avatar
         binding.tvSourceAvatar.text = locations.firstOrNull()?.toString()?.uppercase() ?: "S"
-        val logoUrl = when (locations.lowercase()) {
-            "ikiru" -> "https://ikiru.id/favicon-32x32.png"
-            "comicscan" -> "https://lc3.cosmicscans.asia/wp-content/uploads/2024/03/logo_cosmic.png"
-            "shinigami" -> "https://cdn.jsdelivr.net/gh/shinigamiscans/static@latest/emotes/3.webp"
-            "komikcast" -> "https://komikcast.li/wp-content/uploads/2021/02/cropped-logo-kc-32x32.png"
-            "kiryuu" -> "https://kiryuu02.com/wp-content/uploads/2021/10/cropped-logo-icon-kiryuu-1-456248-udlqjluy-194445-3fNc9Wlc-32x32.png"
-            else -> ""
-        }
-
+        val logoUrl = UrlLogoEx
         if (logoUrl.isNotEmpty()) {
             Glide.with(this)
                 .load(logoUrl)
@@ -155,11 +152,29 @@ class sourceActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupRecyclerViews() {
+    private fun setupRecyclerViews(source: sourceType) {
         // Main Comic List
         adapterManhwa = AdapterManhwa(mutableListOf())
-        binding.listSource.layoutManager = GridLayoutManager(this, 3)
+        val gridLayoutManager = GridLayoutManager(this, 3)
+        binding.listSource.layoutManager = gridLayoutManager
         binding.listSource.adapter = adapterManhwa
+
+        // On-demand pagination scroll listener
+        binding.listSource.addOnScrollListener(object : androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: androidx.recyclerview.widget.RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                if (dy <= 0) return
+
+                val query = binding.etSearchSource.text?.toString().orEmpty().trim()
+                if (query.isNotEmpty()) return
+
+                val totalItemCount = gridLayoutManager.itemCount
+                val lastVisible = gridLayoutManager.findLastVisibleItemPosition()
+                if (totalItemCount > 0 && lastVisible >= totalItemCount - 4) {
+                    viewmodel.loadNextOffset(source, urlSource)
+                }
+            }
+        })
 
         // Source Specific History List (Horizontal)
         adapterRiwayatSource = AdapterRiwayatSource(mutableListOf())
@@ -229,7 +244,7 @@ class sourceActivity : AppCompatActivity() {
         binding.swipeRefreshSource.setOnRefreshListener {
             binding.error.visibility = View.GONE
             updateServerStatus(isOnline = true, isChecking = true)
-            viewmodel.getSource(source, urlSource, 30)
+            viewmodel.loadInitialData(source, urlSource)
         }
     }
 
@@ -237,7 +252,7 @@ class sourceActivity : AppCompatActivity() {
         binding.again.setOnClickListener {
             binding.error.visibility = View.GONE
             updateServerStatus(isOnline = true, isChecking = true)
-            viewmodel.getSource(source, urlSource, 30)
+            viewmodel.loadInitialData(source, urlSource)
         }
 
         binding.btnErrorCookie.setOnClickListener {
@@ -375,7 +390,7 @@ class sourceActivity : AppCompatActivity() {
                 .setBackgroundTint(ContextCompat.getColor(this, R.color.bottom_navbar))
                 .setAction("Refresh") {
                     updateServerStatus(isOnline = true, isChecking = true)
-                    viewmodel.getSource(source, urlSource, 30)
+                    viewmodel.loadInitialData(source, urlSource)
                 }
                 .show()
         }
@@ -428,16 +443,25 @@ class sourceActivity : AppCompatActivity() {
         viewmodel.source.observe(this) { source ->
             size = source.size.toString()
             fullComicList = ArrayList(source)
-            adapterManhwa.updateData(source)
+            if (currentCategory == "Semua") {
+                adapterManhwa.updateData(source)
+                binding.emptySearchState.visibility = if (source.isEmpty()) View.VISIBLE else View.GONE
+            } else {
+                filterComicsByCategory(currentCategory)
+            }
             binding.swipeRefreshSource.isRefreshing = false
-            binding.emptySearchState.visibility = if (source.isEmpty()) View.VISIBLE else View.GONE
             updateServerStatus(isOnline = true)
         }
 
-        // Loading
+        // Loading (Initial)
         viewmodel.loading.observe(this) { loading ->
             binding.loading.visibility = if (loading) View.VISIBLE else View.GONE
             if (!loading) binding.swipeRefreshSource.isRefreshing = false
+        }
+
+        // Pagination Loading (Bottom small indicator)
+        viewmodel.isPaginating.observe(this) { isPaginating ->
+            binding.progressPagination.visibility = if (isPaginating) View.VISIBLE else View.GONE
         }
 
         // Ping Latency
@@ -494,6 +518,7 @@ class sourceActivity : AppCompatActivity() {
     companion object {
         const val TAG = "sourceActivity"
         const val URL = "url"
+        const val LOGOURL = "Url"
         const val location = "location"
         const val EXTRA_AUTO_FOCUS_SEARCH = "AUTO_FOCUS_SEARCH"
     }

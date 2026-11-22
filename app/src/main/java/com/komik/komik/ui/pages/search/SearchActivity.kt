@@ -7,17 +7,18 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.komik.komik.R
 import com.komik.komik.databinding.ActivitySearchBinding
+import com.komik.komik.service.utils.ThemeManager
 
 class SearchActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySearchBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         init()
         setContentView(binding.root)
-
     }
 
 

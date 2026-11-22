@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
 
     <uses-feature
@@ -54,13 +54,25 @@
             android:exported="false" />
         <activity
             android:name=".ui.pages.source.sourceActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan|stateHidden" />
         <activity
             android:name=".ui.pages.download.DownloadManagerActivity"
             android:exported="false" />
         <activity
             android:name=".ui.pages.admin.AdminManageUserActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.pages.admin.AdminManageExtensiActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.pages.admin.AdminManageReportsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.pages.admin.AdminBroadcastConfigActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".ui.pages.splash.SplashActivity"
             android:exported="true">

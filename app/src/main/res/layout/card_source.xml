@@ -47,7 +47,6 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <!-- Baris Atas: Action Icons (Kanan) -->
-        <!-- Quick Search, Cek Ping/Refresh, Info, Pin -->
         <LinearLayout
             android:id="@+id/actionIconsLayout"
             android:layout_width="wrap_content"
@@ -131,7 +130,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/imageView7" />
 
-        <!-- Baris Tengah (Sub): Badges (Region, Version, 18+) -->
+        <!-- Baris Tengah (Sub): Badges (Region, Version, 18+, VIP) -->
         <LinearLayout
             android:id="@+id/badgesLayout"
             android:layout_width="0dp"
@@ -182,6 +181,21 @@
                 android:paddingVertical="1dp"
                 android:text="18+"
                 android:textColor="@color/red"
+                android:textSize="9sp"
+                android:visibility="gone" />
+
+            <!-- VIP Only Badge -->
+            <TextView
+                android:id="@+id/badgeVipOnly"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/badge_role_vip"
+                android:fontFamily="@font/interbold"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="1dp"
+                android:text="🔒 VIP"
+                android:textColor="#FDE047"
                 android:textSize="9sp"
                 android:visibility="gone" />
         </LinearLayout>

@@ -15,6 +15,7 @@ import okhttp3.FormBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
+import kotlin.math.log
 
 class Comic(val client: client) : RepositroyComic {
     override suspend fun getComic(type: sourceType, url: String, pages: Int): List<getListUpdate> {
@@ -43,11 +44,12 @@ class Comic(val client: client) : RepositroyComic {
                     val result = mutableListOf<getListUpdate>()
                     for (page in 1..pages) {
                         val html =
-                            client.Ikiru.getHtml("${url}latest-update/?the_page=$page")
+                            client.Ikiru.getHtml("${url}daftar?page=$page")
+                        Log.d(TAG, "getComic: ")
                         val document = Jsoup.parse(html)
-                        val pageData = SourceParser.parseIkiru(document).toList()
+                        val pageData = SourceParser.parseIkiru(client,page)?.toList()
 
-                        result.addAll(pageData)
+                        pageData?.let { result.addAll(it) }
                     }
 
                     result
@@ -55,15 +57,8 @@ class Comic(val client: client) : RepositroyComic {
 
                 sourceType.komiku,
                 sourceType.shinigami -> {
-                    val data = mutableListOf<getListUpdate>()
-
-                    for (page in 1..10) {
-                        val result = SourceParser.parseShinigami(client, page)
-                        Log.d(TAG, "getComic: ${result?.size}")
-                        data.addAll(result!!)
-                    }
-
-                    data
+                    val offset = if (pages > 1) (pages - 1) * 24 else 0
+                    SourceParser.parseShinigami(client, limit = 24, offset = offset) ?: emptyList()
                 }
 
                 sourceType.comicscan -> {
@@ -179,7 +174,124 @@ class Comic(val client: client) : RepositroyComic {
                 else -> emptyList() // Default case, kembalikan list kosong
             }
         }
+    }
 
+    override suspend fun getComicPaged(
+        type: sourceType,
+        url: String,
+        limit: Int,
+        offset: Int
+    ): List<getListUpdate> {
+        return withContext(Dispatchers.IO) {
+            when (type) {
+                sourceType.komiku,
+                sourceType.shinigami -> {
+                    SourceParser.parseShinigami(client, limit = limit, offset = offset) ?: emptyList()
+                }
+
+                sourceType.doujindesu -> {
+                    try {
+                        val response = client.DoujinDesuServiceDyricpted.getMangaList(limit,
+                            offset = offset
+                        )
+                        Log.d(TAG, "getComicPaged: $response")
+
+                        val json = client.Doujindesu.getHtml("https://doujin.desu.xxx/api/manga?limit=${limit}&type=manhwa&sort=latest_chapter&offset=${offset}")
+
+                        SourceParser.parseDoujindesu(json)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        Log.d(TAG, "getComicPaged: ${e.localizedMessage}")
+                        emptyList()
+                    }
+                }
+
+                sourceType.komikcast -> {
+                    val page = (offset / limit) + 1
+                    val targetPage = if (page < 2) 2 else page
+                    try {
+                        val html = client.Komikcast.getHtml("${url}daftar-komik/page/$targetPage/?sortby=update")
+                        val document = Jsoup.parse(html)
+                        SourceParser.parseKomikcast(document).toList()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        emptyList()
+                    }
+                }
+
+                sourceType.ikiru -> {
+                    val page = (offset / limit) + 1
+                    try {
+                        SourceParser.parseIkiru(client,page)?.toList() ?: emptyList()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        emptyList()
+                    }
+                }
+
+                sourceType.comicscan -> {
+                    val page = (offset / limit) + 1
+                    try {
+                        val html = client.Comicscan.getHtml("${url}manga/?page=$page&order=update")
+                        val document = Jsoup.parse(html)
+                        SourceParser.parseComicscan(document).toList()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        emptyList()
+                    }
+                }
+
+                sourceType.kiryuu -> {
+                    val page = (offset / limit) + 1
+                    try {
+                        val html = com.komik.komik.service.client.Ikiru.getHtml("${url}manga/?page=$page&order=update")
+                        val document = Jsoup.parse(html)
+                        SourceParser.parseKiryuu(document)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        emptyList()
+                    }
+                }
+
+                sourceType.manhwaindo -> {
+                    val page = (offset / limit) + 1
+                    try {
+                        val html = client.Ikiru.getHtml("${url}series/?page=$page&order=update")
+                        val document = Jsoup.parse(html)
+                        SourceParser.parseManhwaindo(document)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        emptyList()
+                    }
+                }
+
+                sourceType.batoto_all -> {
+                    val page = (offset / limit) + 1
+                    try {
+                        val html = client.ScrapeDataImage.getHtml("https://bato.si/v4x-latest/$page")
+                        val document = Jsoup.parse(html)
+                        SourceParser.parseBatoto(document)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        emptyList()
+                    }
+                }
+
+                sourceType.otakudesu -> {
+                    val page = (offset / limit) + 1
+                    try {
+                        val html = client.Ikiru.getHtml("${url}ongoing-anime/page/$page/")
+                        val document = Jsoup.parse(html)
+                        CinemaParser.parswerOtakuDesu(document)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        emptyList()
+                    }
+                }
+
+                else -> emptyList()
+            }
+        }
     }
 
     override suspend fun getSearch(type: sourceType, query: String,url: String): List<getListUpdate> {

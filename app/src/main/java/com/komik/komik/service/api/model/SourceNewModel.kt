@@ -3,7 +3,6 @@ package com.komik.komik.service.api.model
 import com.google.gson.annotations.SerializedName
 
 data class SourceNewModel(
-
 	@field:SerializedName("total")
 	val total: Int? = null,
 
@@ -18,7 +17,6 @@ data class SourceNewModel(
 )
 
 data class DataItems(
-
 	@field:SerializedName("createdAt")
 	val createdAt: String? = null,
 
@@ -40,9 +38,32 @@ data class DataItems(
 	@field:SerializedName("id")
 	val id: String? = null,
 
-	@field:SerializedName("BaseUrl")
+	@field:SerializedName("BaseUrl", alternate = ["baseUrl"])
 	val baseUrl: String? = null,
+
+	@field:SerializedName("mirrorUrls")
+	val mirrorUrls: List<String>? = null,
+
+	@field:SerializedName("isActive")
+	val isActive: Boolean? = true,
+
+	@field:SerializedName("isVipOnly")
+	val isVipOnly: Boolean? = false,
+
+	@field:SerializedName("customHeaders")
+	val customHeaders: CustomHeaders? = null,
 
 	@field:SerializedName("type")
 	val type: String? = null
+)
+
+data class CustomHeaders(
+	@field:SerializedName("referer", alternate = ["Referer"])
+	val referer: String? = null,
+
+	@field:SerializedName("userAgent", alternate = ["User-Agent"])
+	val userAgent: String? = null,
+
+	@field:SerializedName("cookie", alternate = ["Cookie"])
+	val cookie: String? = null
 )

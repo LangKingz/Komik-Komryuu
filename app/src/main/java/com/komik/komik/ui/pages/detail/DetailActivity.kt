@@ -1,9 +1,13 @@
 package com.komik.komik.ui.pages.detail
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.transition.TransitionManager
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -24,6 +28,7 @@ import com.komik.komik.service.adapter.AdapterChapter
 import com.komik.komik.service.adapter.AdapterGenre
 import com.komik.komik.service.client
 import com.komik.komik.service.data.Database.DatabaseRiwayats
+import com.komik.komik.service.utils.ThemeManager
 import com.komik.komik.service.data.dao.ComicDao
 import com.komik.komik.service.data.dao.LibraryDao
 import com.komik.komik.service.data.dao.chapterDao
@@ -34,6 +39,7 @@ import com.komik.komik.service.data.model.Comic
 import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.repository.Detail
+import com.komik.komik.service.utils.PreferenceManager
 import com.komik.komik.service.utils.createNotificationChannel
 import com.komik.komik.service.utils.showNotification
 import com.komik.komik.service.utils.typeSource
@@ -66,6 +72,7 @@ class DetailActivity : AppCompatActivity() {
     private lateinit var adapterChapter: AdapterChapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityDetailBinding.inflate(layoutInflater)
@@ -120,20 +127,43 @@ class DetailActivity : AppCompatActivity() {
             finish()
         }
 
-        // Expandable Synopsis
+        // Expandable Synopsis with smooth Transition
         val synopsisToggleAction = View.OnClickListener {
             isSelengkap = !isSelengkap
+            TransitionManager.beginDelayedTransition(binding.layoutSynopsis)
             if (isSelengkap) {
                 binding.sinopsis.maxLines = Int.MAX_VALUE
                 binding.selengkap.text = "Sembunyikan"
             } else {
                 binding.sinopsis.maxLines = 3
-                binding.selengkap.text = "Lihat Selengkapnya"
+                binding.selengkap.text = "Baca Selengkapnya"
             }
         }
         binding.selengkap.setOnClickListener(synopsisToggleAction)
         binding.sinopsis.setOnClickListener(synopsisToggleAction)
         binding.layoutSynopsis.setOnClickListener(synopsisToggleAction)
+
+        // Quick Copy Judul Komik
+        val copyTitleAction: (String) -> Unit = { rawTitle ->
+            val cleanTitle = rawTitle.trim()
+            if (cleanTitle.isNotEmpty()) {
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("Judul Komik", cleanTitle)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(this, "Judul komik disalin", Toast.LENGTH_SHORT).show()
+            }
+        }
+        binding.title.setOnLongClickListener {
+            copyTitleAction(binding.title.text.toString())
+            true
+        }
+        binding.title.setOnClickListener {
+            copyTitleAction(binding.title.text.toString())
+        }
+        binding.tvToolbarTitle.setOnLongClickListener {
+            copyTitleAction(binding.tvToolbarTitle.text.toString())
+            true
+        }
 
         // Chapter Sort Toggle (runs in Dispatchers.Default)
         binding.btnSortChapter.setOnClickListener {
@@ -142,8 +172,18 @@ class DetailActivity : AppCompatActivity() {
             binding.ivSortChapter.animate().rotationBy(180f).setDuration(200).start()
         }
 
-        // Batch Download Action
+        // Batch Download Action (VIP Exclusive)
         binding.btnBatchDownload?.setOnClickListener {
+            val prefManager = PreferenceManager.getInstance(this)
+            if (!prefManager.isVipOrAbove()) {
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                    .setTitle("Fitur VIP: Unduh Batch Chapter")
+                    .setMessage("Fitur unduh banyak chapter sekaligus secara otomatis hanya tersedia untuk pengguna VIP / Moderator / Admin.\n\nUpgrade ke VIP untuk menikmati kemudahan mengunduh chapter tanpa batas!")
+                    .setPositiveButton("Mengerti", null)
+                    .show()
+                return@setOnClickListener
+            }
+
             val comic = currentComic
             if (comic == null) {
                 Snackbar.make(binding.root, "Data komik belum selesai dimuat", Snackbar.LENGTH_SHORT).show()
@@ -218,17 +258,53 @@ class DetailActivity : AppCompatActivity() {
             }
         )
 
-        // Share Comic Button
-        binding.share.setOnClickListener {
+        // Share Comic Button (Action bar and pinned toolbar)
+        val triggerShare = {
+            val title = currentComic?.title ?: binding.title.text.toString().ifEmpty { "Komik" }
+            val comicType = binding.tipe.text.toString().ifEmpty { currentComic?.type ?: "" }
+            val status = binding.status.text.toString().ifEmpty { currentComic?.status ?: "" }
+            val url = urlResume ?: currentComic?.url ?: intent.getStringExtra(URL).orEmpty()
+            val typeStatus = if (comicType.isNotEmpty() && status.isNotEmpty()) " ($comicType - $status)" else if (comicType.isNotEmpty()) " ($comicType)" else ""
+            val shareText = "Baca $title$typeStatus di Komryuu: $url"
+
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_SUBJECT, currentComic?.title ?: "Baca Komik")
-                putExtra(
-                    Intent.EXTRA_TEXT,
-                    "Ayo baca komik ${currentComic?.title ?: ""} di Komryuu: $urlResume"
-                )
+                setType("text/plain")
+                putExtra(Intent.EXTRA_SUBJECT, title)
+                putExtra(Intent.EXTRA_TEXT, shareText)
             }
             startActivity(Intent.createChooser(shareIntent, "Bagikan Komik"))
+        }
+        binding.share.setOnClickListener { triggerShare() }
+        binding.btnShareToolbar?.setOnClickListener { triggerShare() }
+
+        // Filter Chip Daftar Chapter
+        binding.chipFilterAll?.setOnClickListener {
+            adapterChapter.setFilterType(AdapterChapter.FilterType.ALL)
+            checkEmptyChapterState()
+        }
+        binding.chipFilterUnread?.setOnClickListener {
+            adapterChapter.setFilterType(AdapterChapter.FilterType.UNREAD)
+            checkEmptyChapterState()
+        }
+        binding.chipFilterOffline?.setOnClickListener {
+            CoroutineScope(Dispatchers.IO).launch {
+                val downloaded = dbUtama.downloadDao().getCompletedDownloads().map { it.chapterId }.toSet()
+                withContext(Dispatchers.Main) {
+                    adapterChapter.updateDownloadedIds(downloaded)
+                    adapterChapter.setFilterType(AdapterChapter.FilterType.OFFLINE)
+                    checkEmptyChapterState()
+                }
+            }
+        }
+
+        // Tombol Loncat Cepat ke Ch. Awal
+        binding.btnJumpFirstChapter?.setOnClickListener {
+            val count = adapterChapter.itemCount
+            if (count > 0) {
+                val isDesc = viewModel.isSortDescending()
+                val targetPos = if (isDesc) count - 1 else 0
+                binding.chapter.smoothScrollToPosition(targetPos)
+            }
         }
 
         // Migrate Source Button
@@ -246,6 +322,23 @@ class DetailActivity : AppCompatActivity() {
                 Snackbar.make(binding.root, "Data komik belum selesai dimuat", Snackbar.LENGTH_SHORT).show()
             }
         }
+
+        // Report Issue Button (Action bar and pinned toolbar)
+        val openReportDialog: (View) -> Unit = {
+            val title = currentComic?.title ?: binding.title.text.toString().ifEmpty { "Komik" }
+            val source = locations ?: currentComic?.location ?: sources?.name ?: ""
+            val url = urlResume ?: currentComic?.url ?: intent.getStringExtra(URL).orEmpty()
+            val bs = com.komik.komik.service.component.BottomSheetReport.newInstance(
+                sourceName = source,
+                comicTitle = title,
+                chapterTitle = null,
+                targetUrl = url,
+                defaultType = "extension_error"
+            )
+            bs.show(supportFragmentManager, com.komik.komik.service.component.BottomSheetReport.TAG)
+        }
+        binding.btnReport?.setOnClickListener(openReportDialog)
+        binding.btnReportToolbar?.setOnClickListener(openReportDialog)
 
         // Toolbar Collapsed Title
         binding.appBarLayout.addOnOffsetChangedListener { appBar, verticalOffset ->
@@ -327,6 +420,9 @@ class DetailActivity : AppCompatActivity() {
                     insertPustaka(data.id, data.imageUrl, data.title)
                 }
             }
+            binding.btnBookmarkAction?.setOnClickListener {
+                binding.button2.performClick()
+            }
         }
 
         viewModel.dataGenre.observe(this) { data ->
@@ -337,10 +433,13 @@ class DetailActivity : AppCompatActivity() {
 
         // Chunked / Paginated Chapters via ListAdapter + DiffUtil
         viewModel.visibleChapters.observe(this) { chapters ->
-            adapterChapter.submitList(chapters)
-            val isChapterLoading = viewModel.isChapterLoading.value == true
-            binding.layoutEmptyChapter.visibility =
-                if (chapters.isEmpty() && !isChapterLoading) View.VISIBLE else View.GONE
+            CoroutineScope(Dispatchers.IO).launch {
+                val downloaded = dbUtama.downloadDao().getCompletedDownloads().map { it.chapterId }.toSet()
+                withContext(Dispatchers.Main) {
+                    adapterChapter.setMasterList(chapters, downloaded)
+                    checkEmptyChapterState()
+                }
+            }
         }
 
         // Skeleton Shimmer Loading Placeholder
@@ -367,6 +466,12 @@ class DetailActivity : AppCompatActivity() {
                 setupInitialReadButton(comic, chapters)
             }
         }
+    }
+
+    private fun checkEmptyChapterState() {
+        val isChapterLoading = viewModel.isChapterLoading.value == true
+        binding.layoutEmptyChapter.visibility =
+            if (adapterChapter.itemCount == 0 && !isChapterLoading) View.VISIBLE else View.GONE
     }
 
     private fun setupInitialReadButton(comic: Comic, chapters: List<ChapterwithComic>) {
@@ -490,9 +595,13 @@ class DetailActivity : AppCompatActivity() {
         if (isBookmarked) {
             binding.button2.setImageResource(R.drawable.bookmark_simple_fill)
             binding.button2.setColorFilter(ContextCompat.getColor(this, R.color.brand))
+            binding.tvBookmarkLabel?.text = "Tersimpan"
+            binding.tvBookmarkLabel?.setTextColor(ContextCompat.getColor(this, R.color.brand))
         } else {
             binding.button2.setImageResource(R.drawable.bookmark_simple)
             binding.button2.setColorFilter(ContextCompat.getColor(this, R.color.white))
+            binding.tvBookmarkLabel?.text = "Pustaka"
+            binding.tvBookmarkLabel?.setTextColor(ContextCompat.getColor(this, R.color.grey_300))
         }
     }
 

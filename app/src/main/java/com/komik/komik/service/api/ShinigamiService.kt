@@ -12,15 +12,16 @@ interface ShinigamiService {
 
     @GET("v1/manga/list")
     suspend fun getMangaList(
-        @Query("page") page:Int=1,
-        @Query("page_size") pageSize:Int,
-        @Query("genre_include_mode") genreIncludeMode:String= "or",
-        @Query("genre_exclude_mode") genreExcludeMode:String= "or",
-        @Query("sort_order") sortOrder:String= "desc",
-        @Query("sort") sortBy:String,
-        @Query("offset") offset: Int = 100,
+        @Query("page") page: Int = 1,
+        @Query("page_size") pageSize: Int = 24,
+        @Query("genre_include_mode") genreIncludeMode: String = "or",
+        @Query("genre_exclude_mode") genreExcludeMode: String = "or",
+        @Query("sort_order") sortOrder: String = "desc",
+        @Query("sort") sortBy: String = "latest",
+        @Query("offset") offset: Int = 0,
         @Query("type") type: String = "project",
-        @Query("limit") limit: Int = 100,
+        @Query("limit") limit: Int = 24,
+        @Query("is_update") isUpdate: Boolean = true,
     ): ShinigamiHomeExplore
 
     @GET("v1/manga/list")

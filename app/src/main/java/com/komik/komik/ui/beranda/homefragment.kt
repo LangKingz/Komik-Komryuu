@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -31,8 +32,8 @@ import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.parser.model.getListUpdate
 import com.komik.komik.service.utils.AppConfigHelper
+import com.komik.komik.service.utils.PreferenceManager
 import com.komik.komik.ui.pages.login.LoginActivity
-import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -73,14 +74,33 @@ class homefragment : Fragment() {
         setupBroadcastBanner()
         setupRecyclerViews()
         setupScrollBehavior()
+        setupSwipeRefresh()
         observeViewModel()
         loadQuickResume()
 
         binding.refresh.setOnClickListener {
-            adapterSource.refreshPings()
-            viewmodel.loadHomeData()
-            setupBroadcastBanner()
+            refreshHomeContent()
         }
+
+        binding.btnRetryLoadSource.setOnClickListener {
+            refreshHomeContent()
+        }
+    }
+
+    private fun setupSwipeRefresh() {
+        binding.swipeRefreshHome.setColorSchemeColors(
+            ContextCompat.getColor(requireContext(), R.color.primary_button)
+        )
+        binding.swipeRefreshHome.setOnRefreshListener {
+            refreshHomeContent()
+        }
+    }
+
+    private fun refreshHomeContent() {
+        binding.layoutErrorSource.visibility = View.GONE
+        adapterSource.refreshPings()
+        viewmodel.loadHomeData()
+        setupBroadcastBanner()
     }
 
     // ----------------------------------------------------
@@ -244,22 +264,50 @@ class homefragment : Fragment() {
             }
         }
 
-        // Source Extensions
+        // Source Extensions (Filter isActive == true unless Admin/Moderator)
         viewmodel.source.observe(viewLifecycleOwner) { sources ->
             if (!sources.isNullOrEmpty()) {
+                binding.layoutErrorSource.visibility = View.GONE
+                binding.listSource.visibility = View.VISIBLE
                 adapterSource.initPinnedCache(requireContext())
-                adapterSource.updateData(sources)
+
+                val pref = PreferenceManager.getInstance(requireContext())
+                val isPrivileged = pref.userRole.equals("admin", ignoreCase = true) ||
+                        pref.userRole.equals("moderator", ignoreCase = true)
+                val filteredSources = if (isPrivileged) sources else sources.filter { it.isActive != false }
+
+                adapterSource.updateData(filteredSources)
+            } else if (viewmodel.loading.value != true) {
+                binding.layoutErrorSource.visibility = View.VISIBLE
+                binding.listSource.visibility = View.GONE
             }
         }
 
         // Loading
         viewmodel.loading.observe(viewLifecycleOwner) { loading ->
             binding.loading.visibility = if (loading) View.VISIBLE else View.GONE
+            if (!loading) {
+                binding.swipeRefreshHome.isRefreshing = false
+                if (viewmodel.source.value.isNullOrEmpty()) {
+                    binding.layoutErrorSource.visibility = View.VISIBLE
+                    binding.listSource.visibility = View.GONE
+                } else {
+                    binding.layoutErrorSource.visibility = View.GONE
+                    binding.listSource.visibility = View.VISIBLE
+                }
+            }
         }
 
         // Error
         viewmodel.error.observe(viewLifecycleOwner) { error ->
             binding.layoutRefresh.visibility = if (error != null) View.VISIBLE else View.GONE
+            if (error != null) {
+                binding.swipeRefreshHome.isRefreshing = false
+                if (viewmodel.source.value.isNullOrEmpty()) {
+                    binding.layoutErrorSource.visibility = View.VISIBLE
+                    binding.listSource.visibility = View.GONE
+                }
+            }
         }
     }
 
@@ -308,6 +356,12 @@ class homefragment : Fragment() {
                         iconBgColor = android.graphics.Color.parseColor("#3D2612")
                         iconTint = android.graphics.Color.parseColor("#FBBF24")
                         iconRes = R.drawable.bell_ringing
+                    }
+                    "update" -> {
+                        strokeColor = android.graphics.Color.parseColor("#10B981")
+                        iconBgColor = android.graphics.Color.parseColor("#1A382B")
+                        iconTint = android.graphics.Color.parseColor("#34D399")
+                        iconRes = R.drawable.baseline_browser_updated_24
                     }
                     else -> { // info
                         strokeColor = android.graphics.Color.parseColor("#4F46E5")

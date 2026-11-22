@@ -273,83 +273,190 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Action Buttons: Main Read, Bookmark, Share -->
+                <!-- Action Buttons Container (2 Levels: Hero CTA + Secondary Dock) -->
                 <LinearLayout
                     android:id="@+id/layoutActionButtons"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:layout_marginTop="14dp"
+                    android:layout_marginTop="16dp"
                     android:layout_marginEnd="16dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
+                    android:orientation="vertical"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/CardInfo">
 
+                    <!-- Level 1: Primary Hero CTA Button (Full-Width) -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnBaca"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/btn_background_read"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginBottom="12dp"
+                        android:backgroundTint="#4F46E5"
                         android:fontFamily="@font/interbold"
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:text="Mulai Baca Ch. 1"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="14sp"
-                        app:backgroundTint="@color/primary_button"
+                        android:textSize="15sp"
+                        app:cornerRadius="14dp"
                         app:icon="@drawable/play_circle_fill__1_"
                         app:iconGravity="textStart"
-                        app:iconSize="20dp"
+                        app:iconSize="22dp"
                         app:iconTint="@color/white" />
 
-                    <!-- Bookmark / Pustaka Button -->
-                    <ImageButton
-                        android:id="@+id/button2"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="10dp"
-                        android:background="@drawable/card"
-                        android:clickable="true"
-                        android:clipToOutline="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:padding="12dp"
-                        android:src="@drawable/bookmark_simple"
-                        app:tint="@color/white" />
+                    <!-- Level 2: Secondary Action Dock (Balanced Horizontal Row) -->
+                    <LinearLayout
+                        android:id="@+id/layoutSecondaryActions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:baselineAligned="false"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:weightSum="4">
 
-                    <!-- Share / Open Web Button -->
-                    <ImageButton
-                        android:id="@+id/share"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="10dp"
-                        android:background="@drawable/card"
-                        android:clickable="true"
-                        android:clipToOutline="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:padding="12dp"
-                        android:src="@drawable/globe_hemisphere_west__1_"
-                        app:tint="@color/white" />
+                        <!-- 1. Bookmark / Pustaka -->
+                        <LinearLayout
+                            android:id="@+id/btnBookmarkAction"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_detail_action_btn"
+                            android:clickable="true"
+                            android:clipToOutline="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="10dp">
 
-                    <!-- Migrate / Pindah Sumber Button -->
-                    <ImageButton
-                        android:id="@+id/btnMigrate"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="10dp"
-                        android:background="@drawable/card"
-                        android:clickable="true"
-                        android:clipToOutline="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground"
-                        android:padding="12dp"
-                        android:src="@drawable/loop_right_line"
-                        app:tint="@color/mint_teal" />
+                            <ImageView
+                                android:id="@+id/button2"
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:src="@drawable/bookmark_simple"
+                                app:tint="@color/white" />
+
+                            <TextView
+                                android:id="@+id/tvBookmarkLabel"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/intersemi"
+                                android:maxLines="1"
+                                android:text="Pustaka"
+                                android:textColor="@color/grey_300"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <!-- 2. Migrate Source -->
+                        <LinearLayout
+                            android:id="@+id/btnMigrate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_detail_action_btn"
+                            android:clickable="true"
+                            android:clipToOutline="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="10dp">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:src="@drawable/loop_right_line"
+                                app:tint="@color/mint_teal" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/intersemi"
+                                android:maxLines="1"
+                                android:text="Migrasi"
+                                android:textColor="@color/grey_300"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <!-- 3. Share -->
+                        <LinearLayout
+                            android:id="@+id/share"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_detail_action_btn"
+                            android:clickable="true"
+                            android:clipToOutline="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="10dp">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:src="@drawable/share_forward_box_fill"
+                                app:tint="@color/white" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/intersemi"
+                                android:maxLines="1"
+                                android:text="Bagikan"
+                                android:textColor="@color/grey_300"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <!-- 4. Report -->
+                        <LinearLayout
+                            android:id="@+id/btnReport"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_detail_action_btn"
+                            android:clickable="true"
+                            android:clipToOutline="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="10dp">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:src="@drawable/ic_report_problem"
+                                app:tint="@color/calm_rose" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/intersemi"
+                                android:maxLines="1"
+                                android:text="Lapor"
+                                android:textColor="@color/grey_300"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
@@ -388,6 +495,7 @@
                         android:layout_centerVertical="true"
                         android:layout_marginStart="12dp"
                         android:layout_toEndOf="@+id/back"
+                        android:layout_toStartOf="@+id/toolbarActions"
                         android:ellipsize="end"
                         android:fontFamily="@font/interbold"
                         android:maxLines="1"
@@ -395,6 +503,43 @@
                         android:textSize="16sp"
                         android:visibility="gone"
                         tools:text="Judul Komik" />
+
+                    <LinearLayout
+                        android:id="@+id/toolbarActions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="16dp"
+                        android:orientation="horizontal">
+
+                        <ImageButton
+                            android:id="@+id/btnShareToolbar"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="@drawable/btn_background_opacity"
+                            android:clickable="true"
+                            android:clipToOutline="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:padding="8dp"
+                            android:src="@drawable/share_forward_box_fill"
+                            app:tint="@color/white" />
+
+                        <ImageButton
+                            android:id="@+id/btnReportToolbar"
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/btn_background_opacity"
+                            android:clickable="true"
+                            android:clipToOutline="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_report_problem"
+                            app:tint="@color/calm_rose" />
+                    </LinearLayout>
                 </RelativeLayout>
             </androidx.appcompat.widget.Toolbar>
 
@@ -536,6 +681,19 @@
                             android:text="Unduh Batch"
                             android:textColor="@color/white"
                             android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvBatchVipTag"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:background="@drawable/badge_role_vip"
+                            android:fontFamily="@font/interbold"
+                            android:paddingHorizontal="4dp"
+                            android:paddingVertical="1dp"
+                            android:text="VIP"
+                            android:textColor="#FBBF24"
+                            android:textSize="9sp" />
                     </LinearLayout>
 
                     <!-- Sort Chapter Toggle Button -->
@@ -614,6 +772,104 @@
                         android:src="@drawable/baseline_close_24"
                         android:visibility="gone"
                         app:tint="@color/gray_400" />
+                </LinearLayout>
+
+                <!-- Filter Chips & Jump to First Chapter Bar -->
+                <LinearLayout
+                    android:id="@+id/layoutChapterFilters"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <HorizontalScrollView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:scrollbars="none">
+
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/chipGroupChapterFilter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:singleLine="true"
+                            app:singleSelection="true">
+
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipFilterAll"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:checked="true"
+                                android:fontFamily="@font/intersemi"
+                                android:text="Semua"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                app:chipBackgroundColor="#23262B"
+                                app:chipStrokeColor="#3A404D"
+                                app:chipStrokeWidth="1dp" />
+
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipFilterUnread"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/intersemi"
+                                android:text="Belum Dibaca"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                app:chipBackgroundColor="#23262B"
+                                app:chipStrokeColor="#3A404D"
+                                app:chipStrokeWidth="1dp" />
+
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipFilterOffline"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/intersemi"
+                                android:text="Offline"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                app:chipBackgroundColor="#23262B"
+                                app:chipStrokeColor="#3A404D"
+                                app:chipStrokeWidth="1dp" />
+
+                        </com.google.android.material.chip.ChipGroup>
+                    </HorizontalScrollView>
+
+                    <!-- Tombol Loncat ke Ch. Awal -->
+                    <LinearLayout
+                        android:id="@+id/btnJumpFirstChapter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="34dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/card"
+                        android:clickable="true"
+                        android:clipToOutline="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="10dp">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:layout_marginEnd="4dp"
+                            android:src="@drawable/caret_left"
+                            app:tint="@color/text_violet_400" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/intersemi"
+                            android:text="Ke Ch. Awal"
+                            android:textColor="@color/white"
+                            android:textSize="11sp" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <!-- Skeleton / Shimmer Placeholder while loading chapters -->

@@ -23,6 +23,7 @@ import com.komik.komik.service.api.model.DeviceInfo
 import com.komik.komik.service.client
 import com.komik.komik.service.utils.AppConfigHelper
 import com.komik.komik.service.utils.PreferenceManager
+import com.komik.komik.service.utils.ThemeManager
 import com.komik.komik.ui.pages.login.LoginActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -43,6 +44,7 @@ class SplashActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivitySplashBinding.inflate(layoutInflater)

@@ -39,6 +39,19 @@ class PreferenceManager(context: Context) {
         const val KEY_CAN_ACCESS_NSFW = "can_access_nsfw"
         const val KEY_BYPASS_RATE_LIMIT = "bypass_rate_limit"
         const val KEY_PINNED_SOURCES = "pinned_source_keys"
+        const val KEY_AUTO_UPDATE_ENABLED = "auto_update_enabled"
+        const val KEY_UPDATE_INTERVAL_HOURS = "update_interval_hours"
+        const val KEY_LAST_UPDATE_CHECK = "last_update_check_timestamp"
+        const val KEY_AUTO_SYNC_ENABLED = "auto_sync_enabled"
+        const val KEY_AUTO_SYNC_HOUR = "auto_sync_hour"
+        const val KEY_AUTO_SYNC_MINUTE = "auto_sync_minute"
+        const val KEY_AUTO_SYNC_INTERVAL_HOURS = "auto_sync_interval_hours"
+        const val KEY_LAST_CLOUD_SYNC_MILLIS = "last_cloud_sync_millis"
+        const val KEY_IGNORED_UPDATE_DATE = "ignored_update_date"
+        const val KEY_IGNORED_UPDATE_VERSION = "ignored_update_version"
+        const val KEY_SELECTED_THEME = "selected_theme_key"
+        const val DEFAULT_THEME_KEY = "midnight"
+        const val KEY_PUSTAKA_GRID_SPAN = "pustaka_grid_span"
 
         @Volatile
         private var instance: PreferenceManager? = null
@@ -225,6 +238,93 @@ class PreferenceManager(context: Context) {
     var bypassRateLimit: Boolean
         get() = pref.getBoolean(KEY_BYPASS_RATE_LIMIT, false)
         set(value) = pref.edit().putBoolean(KEY_BYPASS_RATE_LIMIT, value).apply()
+
+    var isAutoUpdateEnabled: Boolean
+        get() = pref.getBoolean(KEY_AUTO_UPDATE_ENABLED, true)
+        set(value) = pref.edit().putBoolean(KEY_AUTO_UPDATE_ENABLED, value).apply()
+
+    var updateIntervalHours: Long
+        get() = pref.getLong(KEY_UPDATE_INTERVAL_HOURS, 12L)
+        set(value) = pref.edit().putLong(KEY_UPDATE_INTERVAL_HOURS, value).apply()
+
+    var lastUpdateCheckMillis: Long
+        get() = pref.getLong(KEY_LAST_UPDATE_CHECK, 0L)
+        set(value) = pref.edit().putLong(KEY_LAST_UPDATE_CHECK, value).apply()
+
+    var selectedThemeKey: String
+        get() = pref.getString(KEY_SELECTED_THEME, DEFAULT_THEME_KEY) ?: DEFAULT_THEME_KEY
+        set(value) = pref.edit().putString(KEY_SELECTED_THEME, value).apply()
+
+    fun saveSelectedThemeSync(key: String): Boolean {
+        return pref.edit().putString(KEY_SELECTED_THEME, key).commit()
+    }
+
+    var isAutoSyncEnabled: Boolean
+        get() = pref.getBoolean(KEY_AUTO_SYNC_ENABLED, true)
+        set(value) = pref.edit().putBoolean(KEY_AUTO_SYNC_ENABLED, value).apply()
+
+    var autoSyncHour: Int
+        get() = pref.getInt(KEY_AUTO_SYNC_HOUR, 3)
+        set(value) = pref.edit().putInt(KEY_AUTO_SYNC_HOUR, value).apply()
+
+    var autoSyncMinute: Int
+        get() = pref.getInt(KEY_AUTO_SYNC_MINUTE, 0)
+        set(value) = pref.edit().putInt(KEY_AUTO_SYNC_MINUTE, value).apply()
+
+    var autoSyncIntervalHours: Long
+        get() = pref.getLong(KEY_AUTO_SYNC_INTERVAL_HOURS, 24L)
+        set(value) = pref.edit().putLong(KEY_AUTO_SYNC_INTERVAL_HOURS, value).apply()
+
+    var lastCloudSyncMillis: Long
+        get() = pref.getLong(KEY_LAST_CLOUD_SYNC_MILLIS, lastSync)
+        set(value) {
+            pref.edit().putLong(KEY_LAST_CLOUD_SYNC_MILLIS, value).apply()
+            lastSync = value
+        }
+
+    var pustakaGridSpan: Int
+        get() = pref.getInt(KEY_PUSTAKA_GRID_SPAN, 3)
+        set(value) = pref.edit().putInt(KEY_PUSTAKA_GRID_SPAN, value).apply()
+
+    fun getComicShelfStatus(comicId: Int): String {
+        return pref.getString("shelf_status_$comicId", "all") ?: "all"
+    }
+
+    fun setComicShelfStatus(comicId: Int, status: String) {
+        pref.edit().putString("shelf_status_$comicId", status).apply()
+    }
+
+    fun setBatchComicShelfStatus(comicIds: Collection<Int>, status: String) {
+        val editor = pref.edit()
+        for (id in comicIds) {
+            editor.putString("shelf_status_$id", status)
+        }
+        editor.apply()
+    }
+
+    fun isVipOrAbove(): Boolean {
+        val role = userRole.lowercase().trim()
+        return role == "vip" || role == "moderator" || role == "admin"
+    }
+
+    private fun getTodayDateString(): String {
+        return java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+    }
+
+    fun isUpdateIgnoredToday(version: String): Boolean {
+        val today = getTodayDateString()
+        val savedDate = pref.getString(KEY_IGNORED_UPDATE_DATE, "")
+        val savedVer = pref.getString(KEY_IGNORED_UPDATE_VERSION, "")
+        return savedDate == today && savedVer == version
+    }
+
+    fun setUpdateIgnoredToday(version: String) {
+        val today = getTodayDateString()
+        pref.edit()
+            .putString(KEY_IGNORED_UPDATE_DATE, today)
+            .putString(KEY_IGNORED_UPDATE_VERSION, version)
+            .apply()
+    }
 
     fun saveUserSession(
         user: FirebaseUser,

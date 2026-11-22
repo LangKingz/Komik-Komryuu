@@ -5,6 +5,8 @@ import android.animation.AnimatorListenerAdapter
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
@@ -26,15 +28,22 @@ import com.komik.komik.service.adapter.AdapterChapter
 import com.komik.komik.service.adapter.AdapterImage
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.LibraryDao
+import com.komik.komik.service.utils.ThemeManager
 import com.komik.komik.service.data.dao.chapterDao
 import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.data.model.Chapter
 import com.komik.komik.service.data.model.ChapterwithComic
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.model.GlideUrl
+import com.bumptech.glide.load.model.LazyHeaders
 import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.Riwayats
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getImages
+import com.komik.komik.service.utils.CloudSyncHelper
+import com.komik.komik.service.utils.PreferenceManager
 import com.komik.komik.service.utils.typeSource
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -64,6 +73,7 @@ class ReadActivity : AppCompatActivity() {
     private var currentId: Int = 0
     private var pageRead: Int = 1
     private var totalPage: Int = 1
+    private var initialPageToScroll: Int = 0
 
     // Loaded once per comic, re-used for navigation
     private var allChapters: List<Chapter> = emptyList()
@@ -79,6 +89,7 @@ class ReadActivity : AppCompatActivity() {
     private var autoScrollJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityReadBinding.inflate(layoutInflater)
@@ -97,7 +108,7 @@ class ReadActivity : AppCompatActivity() {
         currentChapter = num
         currentId = comicId
 
-        val lastPageRead = intent.getIntExtra("pageRead", 0)
+        initialPageToScroll = intent.getIntExtra("pageRead", 0)
         currentLocation = typeSource.getSourceType(currentType)
 
         // Setup Header Text
@@ -128,11 +139,21 @@ class ReadActivity : AppCompatActivity() {
             )
             setupSlider(list.size)
             updateQuickPageIndicator(1, list.size)
-            if (lastPageRead > 0) {
+            if (initialPageToScroll > 0) {
+                val targetPage = initialPageToScroll
+                initialPageToScroll = 0 // Hanya berlaku satu kali saat pertama kali dibuka dari Riwayat/Detail
                 binding.listImage.post {
-                    binding.listImage.scrollToPosition(lastPageRead)
+                    binding.listImage.scrollToPosition(targetPage)
+                }
+            } else {
+                binding.listImage.post {
+                    binding.listImage.scrollToPosition(0)
                 }
             }
+
+            val isVip = PreferenceManager.getInstance(this@ReadActivity).isVipOrAbove()
+            binding.tvTurboBadge?.visibility = if (isVip) View.VISIBLE else View.GONE
+            preloadImagesWithGlide(list, currentUrl, isVip)
         }
 
         viewmodel.loading.observe(this) { loading ->
@@ -180,6 +201,22 @@ class ReadActivity : AppCompatActivity() {
             val currentChObj = allChapters.firstOrNull { it.numChapter == currentChapter }
             viewmodel.setImage(currentLocation, currentUrl, currentChObj?.id, this@ReadActivity)
             Toast.makeText(this, "Memuat ulang halaman...", Toast.LENGTH_SHORT).show()
+        }
+
+        // Report broken chapter button
+        binding.btnReportChapter?.setOnClickListener {
+            val title = currentTitle.ifEmpty { binding.judulManhwa.text.toString().ifEmpty { "Komik" } }
+            val chSubtitle = binding.tvChapterSubtitle.text.toString().ifEmpty { "Chapter $currentChapter" }
+            val source = currentLocation.name.ifEmpty { "Ekstensi" }
+            val url = currentUrl
+            val bs = com.komik.komik.service.component.BottomSheetReport.newInstance(
+                sourceName = source,
+                comicTitle = title,
+                chapterTitle = chSubtitle,
+                targetUrl = url,
+                defaultType = "image_failed"
+            )
+            bs.show(supportFragmentManager, com.komik.komik.service.component.BottomSheetReport.TAG)
         }
 
         // Chapter list bottom sheet
@@ -390,7 +427,10 @@ class ReadActivity : AppCompatActivity() {
             insertRiwayat(chapter.id, comicId)
             dao.updateIsRead(chapter.id, true)
             withContext(Dispatchers.Main) {
+                initialPageToScroll = 0
+                pageRead = 1
                 adapter.clear()
+                binding.listImage.scrollToPosition(0)
                 currentChapter = chapter.numChapter
                 currentUrl = chapter.link
                 binding.judulManhwa.text = currentTitle
@@ -485,6 +525,63 @@ class ReadActivity : AppCompatActivity() {
     private fun stopAutoScroll() {
         isAutoScrolling = false
         autoScrollJob?.cancel()
+    }
+
+    private fun preloadImagesWithGlide(list: List<getImages>, refererUrl: String?, isVip: Boolean) {
+        if (list.isEmpty()) return
+        val type = currentLocation
+        // VIP: Pre-load paralel seluruh halaman dalam chapter untuk zero-loading saat scroll cepat
+        // Member: Pre-load standar 2 halaman pertama ke depan
+        val pagesToPreload = if (isVip) list else list.take(2)
+
+        CoroutineScope(Dispatchers.IO).launch {
+            for (item in pagesToPreload) {
+                val imageStr = item.image.trim()
+                if (imageStr.isEmpty()) continue
+                val isLocal = imageStr.startsWith("/") || imageStr.startsWith("file://")
+
+                try {
+                    if (isLocal) {
+                        val localPath = if (imageStr.startsWith("file://")) imageStr.substring(7) else imageStr
+                        val file = File(localPath)
+                        if (file.exists() && file.length() > 0L) {
+                            Glide.with(applicationContext).load(file).preload()
+                        }
+                    } else {
+                        val glideModel: Any = when {
+                            type == sourceType.doujindesu || imageStr.contains("desu.pics") || imageStr.contains("doujindesu") -> {
+                                val effectiveReferer = if (!refererUrl.isNullOrBlank() && refererUrl.startsWith("http")) refererUrl else "https://doujin.desu.xxx/"
+                                val headers = LazyHeaders.Builder()
+                                    .addHeader("Referer", effectiveReferer)
+                                    .addHeader("Origin", "https://doujin.desu.xxx")
+                                    .addHeader("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6_1; like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1")
+                                    .addHeader("X-Requested-With", "XMLHttpRequest")
+                                    .build()
+                                GlideUrl(imageStr, headers)
+                            }
+                            imageStr.contains("shngm.id") || type == sourceType.shinigami -> {
+                                val headers = LazyHeaders.Builder()
+                                    .addHeader("Referer", "https://app.shinigami.asia/")
+                                    .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                                    .build()
+                                GlideUrl(imageStr, headers)
+                            }
+                            !refererUrl.isNullOrBlank() && refererUrl.startsWith("http") -> {
+                                val headers = LazyHeaders.Builder()
+                                    .addHeader("Referer", refererUrl)
+                                    .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                                    .build()
+                                GlideUrl(imageStr, headers)
+                            }
+                            else -> imageStr
+                        }
+                        Glide.with(applicationContext).load(glideModel).preload()
+                    }
+                } catch (_: Exception) {
+                    // Ignore preload error in background
+                }
+            }
+        }
     }
 
     // ---------------------
@@ -596,11 +693,22 @@ class ReadActivity : AppCompatActivity() {
         settingsBinding.sliderAutoScrollSpeed.value = savedAutoScrollSpeed.toFloat()
         settingsBinding.tvAutoScrollSpeed.text = "Kecepatan Gulir: ${savedAutoScrollSpeed}x"
 
-        settingsBinding.switchAutoScroll.setOnCheckedChangeListener { _, isChecked ->
-            settingsBinding.layoutAutoScrollSpeed.visibility = if (isChecked) View.VISIBLE else View.GONE
+        settingsBinding.switchAutoScroll.setOnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
+                val isVip = PreferenceManager.getInstance(this@ReadActivity).isVipOrAbove()
+                if (!isVip) {
+                    buttonView.isChecked = false
+                    com.google.android.material.dialog.MaterialAlertDialogBuilder(this@ReadActivity)
+                        .setTitle("Fitur VIP: Auto-Scroll")
+                        .setMessage("Fitur membaca hands-free (Auto-Scroll) otomatis hanya tersedia untuk pengguna VIP / Moderator / Admin.\n\nUpgrade akun Anda untuk menikmati membaca komik tanpa perlu menyentuh layar!")
+                        .setPositiveButton("Mengerti", null)
+                        .show()
+                    return@setOnCheckedChangeListener
+                }
+                settingsBinding.layoutAutoScrollSpeed.visibility = View.VISIBLE
                 startAutoScroll(settingsBinding.sliderAutoScrollSpeed.value.toInt())
             } else {
+                settingsBinding.layoutAutoScrollSpeed.visibility = View.GONE
                 stopAutoScroll()
             }
         }
@@ -727,8 +835,12 @@ class ReadActivity : AppCompatActivity() {
     private fun initRecyclerView() {
         val pref = getSharedPreferences("app_settings", MODE_PRIVATE)
         val mode = pref.getString("reading_mode", "webtoon")
-        val orientation = if (mode == "horizontal") LinearLayoutManager.HORIZONTAL else LinearLayoutManager.VERTICAL
-        binding.listImage.layoutManager = LinearLayoutManager(this, orientation, false)
+        val layoutManager = if (mode == "horizontal") {
+            LinearLayoutManager(this, RecyclerView.HORIZONTAL, false)
+        } else {
+            LinearLayoutManager(this, RecyclerView.VERTICAL, false)
+        }
+        binding.listImage.layoutManager = layoutManager
 
         adapter = AdapterImage(
             list = mutableListOf(),
@@ -741,6 +853,21 @@ class ReadActivity : AppCompatActivity() {
             onBackToDetailClick = { finish() }
         )
         binding.listImage.adapter = adapter
+
+        // Single tap detector on RecyclerView so tapping anywhere toggles HUD instantly
+        val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                toggleHud()
+                return true
+            }
+        })
+
+        binding.listImage.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                gestureDetector.onTouchEvent(e)
+                return false
+            }
+        })
     }
 
     private fun initView() {

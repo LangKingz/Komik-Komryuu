@@ -126,6 +126,63 @@
                         </LinearLayout>
                     </LinearLayout>
 
+                    <!-- Minimalist Premium VIP Access Card (Visible only for VIP/Admin/Moderator) -->
+                    <LinearLayout
+                        android:id="@+id/layoutVipBenefits"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/card"
+                        android:backgroundTint="#241E15"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="10dp"
+                        android:visibility="gone">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/baseline_star_24"
+                            app:tint="#F59E0B" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/interbold"
+                                android:text="VIP ACCESS"
+                                android:textColor="#FBBF24"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:fontFamily="@font/interreguler"
+                                android:text="Akun Premium Aktif"
+                                android:textColor="#FDE68A"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/badge_role_vip"
+                            android:fontFamily="@font/interbold"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp"
+                            android:text="AKTIF"
+                            android:textColor="#FBBF24"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -222,6 +279,172 @@
                         app:iconGravity="textStart"
                         app:iconSize="16dp"
                         app:iconTint="@color/white" />
+
+                    <!-- Divider Auto-Sync -->
+                    <View
+                        android:id="@+id/dividerAutoSync"
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="14dp"
+                        android:layout_marginBottom="10dp"
+                        android:background="#2E3748" />
+
+                    <!-- Container Auto Cloud Sync Schedule Controls -->
+                    <LinearLayout
+                        android:id="@+id/layoutAutoSyncSchedule"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <!-- Header & Switch Auto Cloud Sync -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingVertical="4dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/download_cloud_line"
+                                app:tint="@color/mint_teal" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="12dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/intersemi"
+                                    android:text="Auto Cloud Sync Terjadwal"
+                                    android:textColor="@color/white"
+                                    android:textSize="13sp" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="1dp"
+                                    android:fontFamily="@font/interreguler"
+                                    android:text="Sinkronisasi riwayat &amp; pustaka otomatis di latar belakang"
+                                    android:textColor="@color/gray_400"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+
+                            <com.google.android.material.materialswitch.MaterialSwitch
+                                android:id="@+id/switchAutoSync"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+                        </LinearLayout>
+
+                        <!-- Pilihan Jam Sinkronisasi (TimePickerDialog) -->
+                        <LinearLayout
+                            android:id="@+id/itemAutoSyncTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingVertical="8dp">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@drawable/baseline_history_24"
+                                app:tint="#F59E0B" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="14dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/intersemi"
+                                    android:text="Jam Sinkronisasi"
+                                    android:textColor="@color/white"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/tvAutoSyncTime"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="1dp"
+                                    android:fontFamily="@font/interreguler"
+                                    android:text="Setiap hari pukul 03:00"
+                                    android:textColor="#FBBF24"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/caret_right"
+                                app:tint="@color/gray_400" />
+                        </LinearLayout>
+
+                        <!-- Pemilih Frekuensi / Interval Sinkronisasi -->
+                        <LinearLayout
+                            android:id="@+id/itemAutoSyncInterval"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingVertical="8dp">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:src="@drawable/loop_right_line"
+                                app:tint="@color/text_violet_400" />
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="14dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:fontFamily="@font/intersemi"
+                                    android:text="Frekuensi Sinkronisasi"
+                                    android:textColor="@color/white"
+                                    android:textSize="12sp" />
+
+                                <TextView
+                                    android:id="@+id/tvAutoSyncInterval"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="1dp"
+                                    android:fontFamily="@font/interreguler"
+                                    android:text="Setiap 24 Jam (1x Sehari)"
+                                    android:textColor="@color/mint_teal"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="14dp"
+                                android:layout_height="14dp"
+                                android:src="@drawable/caret_right"
+                                app:tint="@color/gray_400" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -451,86 +674,285 @@
                         android:layout_marginVertical="12dp"
                         android:background="#2E2850" />
 
-                    <!-- 3. Tombol Aksi Kontrol Admin -->
+                    <!-- 3. Tombol Aksi Kontrol Admin: 2x2 Grid Modern -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical">
 
-                        <!-- Kelola Pengguna Button -->
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnAdminManageUsers"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                        <!-- Row 1: Pengguna & VIP + Ekstensi Sumber -->
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:backgroundTint="#2E1C4E"
-                            android:fontFamily="@font/intersemi"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:text="Kelola Pengguna (Ban &amp; Role)"
-                            android:textAllCaps="false"
-                            android:textColor="#C4B5FD"
-                            android:textSize="12sp"
-                            app:cornerRadius="10dp"
-                            app:icon="@drawable/baseline_manage_accounts_24"
-                            app:iconGravity="textStart"
-                            app:iconSize="16dp"
-                            app:iconTint="#C4B5FD"
-                            app:strokeColor="#7C3AED"
-                            app:strokeWidth="1dp" />
+                            android:layout_height="wrap_content"
+                            android:baselineAligned="false"
+                            android:orientation="horizontal">
 
-                        <!-- Kirim Broadcast Banner Pengumuman -->
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnAdminBroadcast"
-                            style="@style/Widget.Material3.Button.TonalButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:layout_marginTop="8dp"
-                            android:backgroundTint="#26334155"
-                            android:fontFamily="@font/intersemi"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:text="Kirim Broadcast Pengumuman"
-                            android:textAllCaps="false"
-                            android:textColor="@color/golden_sand"
-                            android:textSize="12sp"
-                            app:cornerRadius="10dp"
-                            app:icon="@drawable/bell_ringing"
-                            app:iconGravity="textStart"
-                            app:iconSize="16dp"
-                            app:iconTint="@color/golden_sand"
-                            app:strokeColor="#D97706"
-                            app:strokeWidth="1dp" />
+                            <!-- Card 1: Kelola Pengguna & VIP -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/btnAdminManageUsers"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                app:cardBackgroundColor="#1A182E"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="1dp"
+                                app:strokeColor="#372F5E"
+                                app:strokeWidth="1dp">
 
-                        <!-- Kelola Ekstensi Sumber Button -->
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnAdminManageExtensions"
-                            style="@style/Widget.Material3.Button.TonalButton"
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="12dp">
+
+                                    <FrameLayout
+                                        android:layout_width="36dp"
+                                        android:layout_height="36dp"
+                                        android:background="@drawable/oval_picture"
+                                        android:backgroundTint="#2E1C4E">
+
+                                        <ImageView
+                                            android:layout_width="18dp"
+                                            android:layout_height="18dp"
+                                            android:layout_gravity="center"
+                                            android:src="@drawable/baseline_manage_accounts_24"
+                                            app:tint="#C4B5FD" />
+                                    </FrameLayout>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:fontFamily="@font/interbold"
+                                        android:text="Pengguna &amp; VIP"
+                                        android:textColor="@color/white"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:fontFamily="@font/interreguler"
+                                        android:text="Role, durasi VIP &amp; ban"
+                                        android:textColor="@color/gray_400"
+                                        android:textSize="10sp" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Card 2: Kelola Ekstensi Sumber -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/btnAdminManageExtensions"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:layout_weight="1"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                app:cardBackgroundColor="#1A182E"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="1dp"
+                                app:strokeColor="#253A42"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="12dp">
+
+                                    <FrameLayout
+                                        android:layout_width="36dp"
+                                        android:layout_height="36dp"
+                                        android:background="@drawable/oval_picture"
+                                        android:backgroundTint="#1F163331">
+
+                                        <ImageView
+                                            android:layout_width="18dp"
+                                            android:layout_height="18dp"
+                                            android:layout_gravity="center"
+                                            android:src="@drawable/squares_four"
+                                            app:tint="@color/text_emerald_400" />
+                                    </FrameLayout>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:fontFamily="@font/interbold"
+                                        android:text="Ekstensi Sumber"
+                                        android:textColor="@color/white"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:fontFamily="@font/interreguler"
+                                        android:text="Domain, mirror &amp; cookie"
+                                        android:textColor="@color/gray_400"
+                                        android:textSize="10sp" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+                        </LinearLayout>
+
+                        <!-- Row 2: Tiket Laporan User + Broadcast Server -->
+                        <LinearLayout
                             android:layout_width="match_parent"
-                            android:layout_height="44dp"
-                            android:layout_marginTop="8dp"
-                            android:backgroundTint="#1F163331"
-                            android:fontFamily="@font/intersemi"
-                            android:insetTop="0dp"
-                            android:insetBottom="0dp"
-                            android:text="Kelola Ekstensi Sumber"
-                            android:textAllCaps="false"
-                            android:textColor="@color/text_emerald_400"
-                            android:textSize="12sp"
-                            app:cornerRadius="10dp"
-                            app:icon="@drawable/squares_four"
-                            app:iconGravity="textStart"
-                            app:iconSize="16dp"
-                            app:iconTint="@color/text_emerald_400"
-                            app:strokeColor="#10B981"
-                            app:strokeWidth="1dp" />
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:baselineAligned="false"
+                            android:orientation="horizontal">
+
+                            <!-- Card 3: Tiket Laporan User -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/btnAdminManageReports"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                app:cardBackgroundColor="#1A182E"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="1dp"
+                                app:strokeColor="#3F3223"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="12dp">
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:gravity="center_vertical"
+                                        android:orientation="horizontal">
+
+                                        <FrameLayout
+                                            android:layout_width="36dp"
+                                            android:layout_height="36dp"
+                                            android:background="@drawable/oval_picture"
+                                            android:backgroundTint="#382715">
+
+                                            <ImageView
+                                                android:layout_width="18dp"
+                                                android:layout_height="18dp"
+                                                android:layout_gravity="center"
+                                                android:src="@drawable/discuss_line"
+                                                app:tint="#FBBF24" />
+                                        </FrameLayout>
+
+                                        <View
+                                            android:layout_width="0dp"
+                                            android:layout_height="0dp"
+                                            android:layout_weight="1" />
+
+                                        <!-- Badge Jumlah Laporan Pending -->
+                                        <TextView
+                                            android:id="@+id/tvPendingReportsBadge"
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:background="@drawable/badge_last_read"
+                                            android:fontFamily="@font/interbold"
+                                            android:paddingHorizontal="6dp"
+                                            android:paddingVertical="1dp"
+                                            android:text="0 Baru"
+                                            android:textColor="@color/white"
+                                            android:textSize="9sp"
+                                            android:visibility="gone" />
+                                    </LinearLayout>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:fontFamily="@font/interbold"
+                                        android:text="Tiket Laporan"
+                                        android:textColor="@color/white"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:fontFamily="@font/interreguler"
+                                        android:text="Komik error &amp; chapter rusak"
+                                        android:textColor="@color/gray_400"
+                                        android:textSize="10sp" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Card 4: Broadcast & Maintenance -->
+                            <com.google.android.material.card.MaterialCardView
+                                android:id="@+id/btnAdminBroadcastConfig"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:layout_weight="1"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:foreground="?attr/selectableItemBackground"
+                                app:cardBackgroundColor="#1A182E"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="1dp"
+                                app:strokeColor="#25314C"
+                                app:strokeWidth="1dp">
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="vertical"
+                                    android:padding="12dp">
+
+                                    <FrameLayout
+                                        android:layout_width="36dp"
+                                        android:layout_height="36dp"
+                                        android:background="@drawable/oval_picture"
+                                        android:backgroundTint="#1E293B">
+
+                                        <ImageView
+                                            android:layout_width="18dp"
+                                            android:layout_height="18dp"
+                                            android:layout_gravity="center"
+                                            android:src="@drawable/bell_ringing"
+                                            app:tint="#60A5FA" />
+                                    </FrameLayout>
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="10dp"
+                                        android:fontFamily="@font/interbold"
+                                        android:text="Broadcast Server"
+                                        android:textColor="@color/white"
+                                        android:textSize="12sp" />
+
+                                    <TextView
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="2dp"
+                                        android:fontFamily="@font/interreguler"
+                                        android:text="Maintenance, banner &amp; APK"
+                                        android:textColor="@color/gray_400"
+                                        android:textSize="10sp" />
+                                </LinearLayout>
+                            </com.google.android.material.card.MaterialCardView>
+                        </LinearLayout>
 
                         <!-- Buka Web Admin Dashboard Button -->
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnOpenAdminDashboard"
                             android:layout_width="match_parent"
                             android:layout_height="44dp"
-                            android:layout_marginTop="8dp"
+                            android:layout_marginTop="12dp"
                             android:backgroundTint="#4F46E5"
                             android:fontFamily="@font/intersemi"
                             android:insetTop="0dp"
@@ -903,6 +1325,99 @@
                                 android:textSize="10sp" />
                         </LinearLayout>
                     </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+
+            <!-- Section: TAMPILAN & TEMA APLIKASI -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginBottom="8dp"
+                android:fontFamily="@font/interbold"
+                android:text="🎨  TAMPILAN &amp; TEMA APLIKASI"
+                android:textColor="@color/text_violet_400"
+                android:textSize="12sp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardAppThemes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="#1C1C28"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="2dp"
+                app:strokeColor="#2E2E42"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/interbold"
+                                android:text="Preset Tema Komryuu"
+                                android:textColor="@color/white"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:id="@+id/tvActiveThemeDescription"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="@font/interreguler"
+                                android:text="Pilih suasana warna favoritmu"
+                                android:textColor="@color/gray_400"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvCurrentThemeBadge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_badge_update"
+                            android:fontFamily="@font/intersemi"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp"
+                            android:text="Midnight"
+                            android:textColor="#A5B4FC"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="#2E2E42" />
+
+                    <!-- Horizontal List of Theme Cards -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvThemes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        android:nestedScrollingEnabled="false"
+                        android:orientation="horizontal"
+                        android:overScrollMode="never" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -1376,6 +1891,190 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Section: NOTIFIKASI UPDATE CHAPTER OTOMATIS -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginBottom="8dp"
+                android:fontFamily="@font/interbold"
+                android:text="🔄  PEMBARUAN CHAPTER OTOMATIS"
+                android:textColor="@color/mint_teal"
+                android:textSize="12sp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardAutoUpdateSchedule"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="#1C1C28"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#2E2E3E"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <!-- Switch Utama: Pengecekan Otomatis -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
+
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/bell_ringing"
+                            app:tint="@color/mint_teal" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/Costumtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/interbold"
+                                android:text="Pengecekan Chapter Otomatis"
+                                android:textColor="@color/white"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="@font/interreguler"
+                                android:text="Cek chapter baru komik pustaka di latar belakang"
+                                android:textColor="@color/gray_400"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switchAutoUpdate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginHorizontal="14dp"
+                        android:background="#2E2E3E" />
+
+                    <!-- Pemilih Interval Waktu -->
+                    <LinearLayout
+                        android:id="@+id/rowUpdateInterval"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/baseline_history_24"
+                            app:tint="@color/text_violet_400" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                style="@style/Costumtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/intersemi"
+                                android:text="Interval Pengecekan"
+                                android:textColor="@color/white"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/tvCurrentInterval"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="@font/interreguler"
+                                android:text="Setiap 12 Jam (Disarankan)"
+                                android:textColor="@color/mint_teal"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/caret_right"
+                            app:tint="@color/gray_400" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginHorizontal="14dp"
+                        android:background="#2E2E3E" />
+
+                    <!-- Info Waktu Terakhir & Tombol Cek Manual -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvLastUpdateCheck"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/interreguler"
+                                android:text="Terakhir dicek: Belum pernah dicek"
+                                android:textColor="@color/text_slate_400"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnCheckUpdateNow"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:backgroundTint="#2634D399"
+                            android:fontFamily="@font/intersemi"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:paddingHorizontal="12dp"
+                            android:text="Cek Sekarang"
+                            android:textColor="@color/mint_teal"
+                            android:textSize="11sp"
+                            app:cornerRadius="8dp"
+                            app:icon="@drawable/loop_right_line"
+                            app:iconGravity="textStart"
+                            app:iconSize="14dp"
+                            app:iconTint="@color/mint_teal" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
 
             <!-- 4. Section: PENYIMPANAN & CADANGAN DATA -->
             <TextView
@@ -1714,11 +2413,14 @@
                         android:layout_marginHorizontal="14dp"
                         android:background="#262D3D" />
 
-                    <!-- App Version -->
+                    <!-- Tentang & Cek Update Aplikasi -->
                     <LinearLayout
-                        android:id="@+id/itemAppVersion"
+                        android:id="@+id/itemCheckAppUpdate"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
                         android:padding="14dp">
@@ -1726,8 +2428,8 @@
                         <ImageView
                             android:layout_width="22dp"
                             android:layout_height="22dp"
-                            android:src="@drawable/info"
-                            app:tint="@color/gray_400" />
+                            android:src="@drawable/baseline_browser_updated_24"
+                            app:tint="#818CF8" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -1740,7 +2442,7 @@
                                 style="@style/Costumtitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Versi Aplikasi"
+                                android:text="Tentang &amp; Cek Update Aplikasi"
                                 android:textColor="@color/white"
                                 android:textSize="15sp" />
 
@@ -1749,10 +2451,16 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="v1.0 (Build 1)"
+                                android:text="v1.0 • Ketuk untuk memeriksa pembaruan"
                                 android:textColor="@color/gray_400"
                                 android:textSize="12sp" />
                         </LinearLayout>
+
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/caret_right"
+                            app:tint="@color/gray_400" />
                     </LinearLayout>
 
                     <View

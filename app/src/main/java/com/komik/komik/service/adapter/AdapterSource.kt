@@ -58,6 +58,7 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
     private var currentCategory: String = "Semua"
     private var currentQuery: String = ""
     private var pinnedKeysCache = mutableSetOf<String>()
+    private var userRole: String = "user"
 
     init {
         rebuildGroupedItems()
@@ -97,9 +98,14 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
 
     fun initPinnedCache(context: Context) {
         val prefManager = PreferenceManager.getInstance(context)
+        userRole = prefManager.userRole
         pinnedKeysCache = HashSet(prefManager.getPinnedSources())
-        rebuildGroupedItems()
-        notifyDataSetChanged()
+        applyFilters()
+    }
+
+    private fun isPrivilegedUser(): Boolean {
+        val r = userRole.lowercase().trim()
+        return r == "admin" || r == "moderator"
     }
 
     private fun togglePin(context: Context, key: String): Boolean {
@@ -130,6 +136,9 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
 
     private fun applyFilters() {
         val filtered = masterList.filter { item ->
+            // Sembunyikan ekstensi yang isActive == false kecuali Admin/Moderator
+            val matchesActive = isPrivilegedUser() || (item.isActive != false)
+
             val matchesCategory = when (currentCategory) {
                 "Semua" -> true
                 "Disematkan" -> isItemPinned(item.id ?: item.name ?: "")
@@ -147,7 +156,7 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                 item.baseUrl?.contains(currentQuery, ignoreCase = true) == true
             }
 
-            matchesCategory && matchesQuery
+            matchesActive && matchesCategory && matchesQuery
         }
 
         displayedList = ArrayList(filtered)
@@ -194,6 +203,7 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
 
                 if (pinnedKeysCache.isEmpty()) {
                     val prefManager = PreferenceManager.getInstance(context)
+                    userRole = prefManager.userRole
                     pinnedKeysCache = HashSet(prefManager.getPinnedSources())
                 }
 
@@ -212,7 +222,7 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                         .setBackgroundTint(ContextCompat.getColor(context, R.color.bottom_navbar))
                         .show()
                 }, onQuickSearchClick = {
-                    openSource(context, currentItem, autoFocusSearch = true)
+                    handleSourceClick(context, currentItem, autoFocusSearch = true, view = holder.itemView)
                 }, onCheckPingClick = {
                     checkLivePing(context, currentItem, holder)
                 })
@@ -230,18 +240,31 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                     }
                 }
 
-                // Klik biasa: Buka sumber
+                // Klik biasa: Buka sumber (dengan pengecekan VIP)
                 holder.itemView.setOnClickListener {
-                    openSource(context, currentItem, autoFocusSearch = false)
+                    handleSourceClick(context, currentItem, autoFocusSearch = false, view = holder.itemView)
                 }
 
                 // Long click: Quick Search langsung di sumber
                 holder.itemView.setOnLongClickListener {
-                    openSource(context, currentItem, autoFocusSearch = true)
+                    handleSourceClick(context, currentItem, autoFocusSearch = true, view = holder.itemView)
                     true
                 }
             }
         }
+    }
+
+    private fun handleSourceClick(context: Context, item: DataItems, autoFocusSearch: Boolean, view: View) {
+        val prefManager = PreferenceManager.getInstance(context)
+        if (item.isVipOnly == true && !prefManager.isVipOrAbove()) {
+            Snackbar.make(view, "🔒 Sumber '${item.name}' khusus untuk member VIP!", Snackbar.LENGTH_LONG)
+                .setAction("Info VIP") {
+                    Toast.makeText(context, "Status VIP diperlukan untuk membaca di sumber ini.", Toast.LENGTH_SHORT).show()
+                }
+                .show()
+            return
+        }
+        openSource(context, item, autoFocusSearch)
     }
 
     private fun openSource(context: Context, item: DataItems, autoFocusSearch: Boolean) {
@@ -251,6 +274,7 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
             val intent = Intent(context, sourceActivity::class.java).apply {
                 putExtra(sourceActivity.URL, item.baseUrl)
                 putExtra(sourceActivity.location, item.location)
+                putExtra(sourceActivity.LOGOURL, item.logo)
                 if (autoFocusSearch) {
                     putExtra(sourceActivity.EXTRA_AUTO_FOCUS_SEARCH, true)
                 }
@@ -317,7 +341,6 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                         url = item.baseUrl.toString(),
                         imageUrl = item.logo.toString(),
                         location = item.location.toString(),
-                        createdAt = System.currentTimeMillis()
                     )
                 )
             } else {
@@ -326,22 +349,21 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                         extensi = item.name.toString(),
                         url = item.baseUrl.toString(),
                         imageUrl = item.logo.toString(),
-                        location = item.location.toString()
+                        location = item.location.toString(),
                     )
                 )
             }
         }
     }
 
-    class HeaderViewHolder(private val binding: HeaderExtensiBinding) :
+    inner class HeaderViewHolder(val binding: HeaderExtensiBinding) :
         RecyclerView.ViewHolder(binding.root) {
-
         fun bind(title: String) {
-            binding.headerText.text = if (title.startsWith("Favorit")) "📌 $title" else "⭐ Ekstensi $title"
+            binding.headerText.text = title
         }
     }
 
-    class SourceViewHolder(val binding: CardSourceBinding) :
+    inner class SourceViewHolder(val binding: CardSourceBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
@@ -364,6 +386,13 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                 binding.tag.text = "18+"
             } else {
                 binding.tag.visibility = View.GONE
+            }
+
+            // Lencana VIP Only
+            if (item.isVipOnly == true) {
+                binding.badgeVipOnly.visibility = View.VISIBLE
+            } else {
+                binding.badgeVipOnly.visibility = View.GONE
             }
 
             // Image logo & avatar fallback
@@ -401,10 +430,9 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                 applyPingUI(cachedPing)
             } else {
                 applyPingUI(null)
-                // Trigger auto ping asynchronously if not already testing
                 if (pingChecking[sourceKey] != true && !item.baseUrl.isNullOrBlank()) {
                     pingChecking[sourceKey] = true
-                    measureAutoPing(item.baseUrl) { latency ->
+                    measureLatency(item.baseUrl) { latency ->
                         pingCache[sourceKey] = latency
                         pingChecking.remove(sourceKey)
                         applyPingUI(latency)
@@ -447,30 +475,6 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                     binding.badgeServerStatus.text = "● Online"
                     binding.badgeServerStatus.setBackgroundResource(R.drawable.badge_status_online)
                     binding.badgeServerStatus.setTextColor(Color.parseColor("#F59E0B"))
-                }
-            }
-        }
-
-        private fun measureAutoPing(url: String, onResult: (Long) -> Unit) {
-            CoroutineScope(Dispatchers.IO).launch {
-                val start = System.currentTimeMillis()
-                val latency = try {
-                    val req = Request.Builder()
-                        .url(url)
-                        .get()
-                        .header("User-Agent", "Mozilla/5.0 (Linux; Android 14)")
-                        .build()
-                    val resp = pingClient.newCall(req).execute()
-                    val duration = System.currentTimeMillis() - start
-                    val success = resp.isSuccessful || resp.code in 200..399 || resp.code == 403
-                    resp.close()
-                    if (success) duration else -1L
-                } catch (_: Exception) {
-                    -1L
-                }
-
-                withContext(Dispatchers.Main) {
-                    onResult(latency)
                 }
             }
         }

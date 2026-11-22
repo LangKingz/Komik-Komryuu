@@ -10,19 +10,23 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.komik.komik.service.data.dao.LibraryDao
 import com.komik.komik.service.data.model.LibraryDetail
+import com.komik.komik.service.utils.PreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 enum class FilterStatus {
-    ALL, READING, COMPLETED, PLAN
+    ALL, READING, PLAN, COMPLETED, ON_HOLD
 }
 
 enum class SortOrder {
-    NEWEST, TITLE_AZ, LAST_READ
+    NEWEST, TITLE_AZ, TITLE_ZA, LAST_READ
 }
 
-class PustakaViewmodel(private val library: LibraryDao) : ViewModel() {
+class PustakaViewmodel(
+    private val library: LibraryDao,
+    var prefManager: PreferenceManager? = null
+) : ViewModel() {
 
     private val _rawLibrary = library.getLibrary()
     val filteredData = MediatorLiveData<List<LibraryDetail>>()
@@ -67,6 +71,10 @@ class PustakaViewmodel(private val library: LibraryDao) : ViewModel() {
         applyFiltersAndSort(_rawLibrary.value)
     }
 
+    fun refreshFilters() {
+        applyFiltersAndSort(_rawLibrary.value)
+    }
+
     private fun applyFiltersAndSort(rawList: List<LibraryDetail>?) {
         if (rawList == null) {
             filteredData.value = emptyList()
@@ -89,17 +97,36 @@ class PustakaViewmodel(private val library: LibraryDao) : ViewModel() {
             }
         }
 
-        // 3. Status Baca Filter
+        // 3. Status Baca / Shelf Filter
         result = when (currentStatusFilter) {
             FilterStatus.ALL -> result
-            FilterStatus.READING -> result.filter {
-                !it.library.isRead && (it.comic.status?.contains("Ongoing", ignoreCase = true) == true || !it.library.isRead)
+            FilterStatus.READING -> result.filter { item ->
+                val shelf = prefManager?.getComicShelfStatus(item.comic.id)
+                if (!shelf.isNullOrBlank() && shelf != "all") {
+                    shelf.equals("reading", ignoreCase = true)
+                } else {
+                    !item.library.isRead && (item.comic.status?.contains("Ongoing", ignoreCase = true) == true || !item.library.isRead)
+                }
             }
-            FilterStatus.COMPLETED -> result.filter {
-                it.library.isRead || it.comic.status?.contains("Completed", ignoreCase = true) == true
+            FilterStatus.PLAN -> result.filter { item ->
+                val shelf = prefManager?.getComicShelfStatus(item.comic.id)
+                if (!shelf.isNullOrBlank() && shelf != "all") {
+                    shelf.equals("plan", ignoreCase = true)
+                } else {
+                    !item.library.isRead && item.comic.status?.contains("Ongoing", ignoreCase = true) != true
+                }
             }
-            FilterStatus.PLAN -> result.filter {
-                !it.library.isRead && it.comic.status?.contains("Ongoing", ignoreCase = true) != true
+            FilterStatus.COMPLETED -> result.filter { item ->
+                val shelf = prefManager?.getComicShelfStatus(item.comic.id)
+                if (!shelf.isNullOrBlank() && shelf != "all") {
+                    shelf.equals("completed", ignoreCase = true)
+                } else {
+                    item.library.isRead || item.comic.status?.contains("Completed", ignoreCase = true) == true
+                }
+            }
+            FilterStatus.ON_HOLD -> result.filter { item ->
+                val shelf = prefManager?.getComicShelfStatus(item.comic.id)
+                shelf?.equals("on_hold", ignoreCase = true) == true
             }
         }
 
@@ -107,6 +134,7 @@ class PustakaViewmodel(private val library: LibraryDao) : ViewModel() {
         result = when (currentSortOrder) {
             SortOrder.NEWEST -> result.sortedByDescending { it.library.createdAt }
             SortOrder.TITLE_AZ -> result.sortedBy { it.comic.title.lowercase() }
+            SortOrder.TITLE_ZA -> result.sortedByDescending { it.comic.title.lowercase() }
             SortOrder.LAST_READ -> result.sortedByDescending { it.library.createdAt }
         }
 

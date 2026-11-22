@@ -61,7 +61,11 @@ object ChapterDownloadManager {
     private const val TAG = "ChapterDownloadManager"
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val semaphore = Semaphore(2) // Max 2 concurrent image downloads
-    private val okHttpClient = OkHttpClient()
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+        .followRedirects(true)
+        .build()
 
     private val activeJobs = ConcurrentHashMap<Int, Job>()
 
@@ -135,6 +139,7 @@ object ChapterDownloadManager {
 
                 val savedFilePaths = mutableListOf<String>()
                 var totalBytes = 0L
+                var failedPages = 0
 
                 imagesList.forEachIndexed { index, imgObj ->
                     val file = File(downloadDir, "page_${index + 1}.jpg")
@@ -145,6 +150,9 @@ object ChapterDownloadManager {
                     if (downloadedBytes > 0) {
                         totalBytes += downloadedBytes
                         savedFilePaths.add(file.absolutePath)
+                    } else {
+                        failedPages++
+                        Log.e(TAG, "Gagal mengunduh halaman ${index + 1} dari ${imagesList.size}: ${imgObj.image}")
                     }
 
                     val progress = ((index + 1) * 100) / imagesList.size
@@ -154,7 +162,7 @@ object ChapterDownloadManager {
                         chapterId = chapterId,
                         status = DownloadChapter.STATUS_DOWNLOADING,
                         progress = progress,
-                        downloadedPages = index + 1,
+                        downloadedPages = savedFilePaths.size,
                         totalPages = imagesList.size,
                         totalSizeBytes = totalBytes,
                         localDir = downloadDir.absolutePath,
@@ -162,6 +170,11 @@ object ChapterDownloadManager {
                         completedAt = null,
                         error = null
                     )
+                }
+
+                // Validasi bahwa seluruh halaman berhasil diunduh tanpa korup
+                if (failedPages > 0 || savedFilePaths.size < imagesList.size) {
+                    throw IllegalStateException("Gagal mengunduh $failedPages dari ${imagesList.size} halaman (file kosong atau ditolak server)")
                 }
 
                 // Selesai sukses
@@ -199,6 +212,9 @@ object ChapterDownloadManager {
 
             } catch (e: Exception) {
                 Log.e(TAG, "Download failed for chapter $chapterId", e)
+                val downloadDir = File(appContext.filesDir, "downloads/${comic.id}/${chapter.id}")
+                if (downloadDir.exists()) downloadDir.deleteRecursively()
+
                 dao.updateDownloadState(
                     chapterId = chapterId,
                     status = DownloadChapter.STATUS_FAILED,
@@ -291,22 +307,75 @@ object ChapterDownloadManager {
         type: sourceType,
         destinationFile: File
     ): Long {
+        if (imageUrl.isBlank()) return 0L
+
         val requestBuilder = Request.Builder().url(imageUrl)
-        if (type == sourceType.doujindesu) {
-            requestBuilder.addHeader("Referer", referer)
-            requestBuilder.addHeader("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6_1; like Mac OS X) AppleWebKit/605.1.15")
-        }
 
-        val response = okHttpClient.newCall(requestBuilder.build()).execute()
-        if (!response.isSuccessful) return 0L
+        // Browser modern default User-Agent & Accept
+        val defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        requestBuilder.addHeader("User-Agent", defaultUserAgent)
+        requestBuilder.addHeader("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
 
-        val body = response.body ?: return 0L
-        body.byteStream().use { input ->
-            FileOutputStream(destinationFile).use { output ->
-                input.copyTo(output)
+        val lowerUrl = imageUrl.lowercase()
+        val isDoujin = lowerUrl.contains("desu.pics") || lowerUrl.contains("doujindesu") || type == sourceType.doujindesu
+        val isShinigami = lowerUrl.contains("shngm.id") || type == sourceType.shinigami
+
+        if (isDoujin) {
+            val ddReferer = if (referer.isNotBlank() && (referer.contains("doujin") || referer.contains("desu"))) {
+                referer
+            } else {
+                "https://doujin.desu.xxx/"
             }
+            requestBuilder.header("Referer", ddReferer)
+            requestBuilder.header("Origin", "https://doujin.desu.xxx")
+            requestBuilder.header("User-Agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6_1; like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1")
+            requestBuilder.header("X-Requested-With", "XMLHttpRequest")
+        } else if (isShinigami) {
+            requestBuilder.header("Referer", "https://app.shinigami.asia/")
+        } else if (referer.isNotBlank() && referer.startsWith("http")) {
+            requestBuilder.header("Referer", referer)
         }
-        return destinationFile.length()
+
+        return try {
+            val response = okHttpClient.newCall(requestBuilder.build()).execute()
+            response.use { resp ->
+                if (!resp.isSuccessful) {
+                    Log.w(TAG, "downloadSingleImage gagal HTTP ${resp.code}: $imageUrl")
+                    if (destinationFile.exists()) destinationFile.delete()
+                    return 0L
+                }
+
+                val contentType = resp.header("Content-Type")?.lowercase().orEmpty()
+                if (contentType.contains("html") || contentType.contains("text")) {
+                    Log.w(TAG, "downloadSingleImage respons bukan gambar (contentType: $contentType): $imageUrl")
+                    if (destinationFile.exists()) destinationFile.delete()
+                    return 0L
+                }
+
+                val body = resp.body ?: run {
+                    if (destinationFile.exists()) destinationFile.delete()
+                    return 0L
+                }
+
+                body.byteStream().use { input ->
+                    FileOutputStream(destinationFile).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+
+                if (!destinationFile.exists() || destinationFile.length() <= 0L) {
+                    Log.w(TAG, "downloadSingleImage file kosong (0 bytes): $imageUrl")
+                    if (destinationFile.exists()) destinationFile.delete()
+                    return 0L
+                }
+
+                destinationFile.length()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "downloadSingleImage error for $imageUrl: ${e.message}")
+            if (destinationFile.exists()) destinationFile.delete()
+            0L
+        }
     }
 
     private fun updateProgressState(chapterId: Int, progress: Int) {

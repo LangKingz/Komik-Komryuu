@@ -418,7 +418,7 @@ object comicParser {
                         comicTitle = title,
                         numChapter = chNum.toDouble(),
                         date = formatIsoDate(createdAt),
-                        location = "dd",
+                        location = "doujindesu",
                         comicId = 0,
                     )
                 )
@@ -434,7 +434,7 @@ object comicParser {
             imageUrl = imageUrl,
             description = cleanDesc,
             author = author,
-            location = "dd",
+            location = "doujindesu",
             tags = "adult",
             localImageUri = localImage,
             chapters = chaptersList,
