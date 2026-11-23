@@ -29,11 +29,49 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:minHeight="?attr/actionBarSize"
                 app:menu="@menu/menu_pustaka"
                 app:title="Pustaka Saya"
                 app:titleTextAppearance="@style/TextAppearance.Material3.TitleMedium"
                 app:titleTextColor="@color/white" />
+
+            <!-- Tombol Lonceng Update Chapter Baru dengan Badge Angka -->
+            <FrameLayout
+                android:id="@+id/btnChapterUpdates"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/circle_back_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/bell_ringing"
+                    app:tint="@color/white"
+                    android:contentDescription="Riwayat Update Chapter" />
+
+                <!-- Badge Angka Merah -->
+                <TextView
+                    android:id="@+id/tvUpdateBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="16dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/badge_last_read"
+                    android:fontFamily="@font/interbold"
+                    android:gravity="center"
+                    android:minWidth="16dp"
+                    android:paddingHorizontal="4dp"
+                    android:textColor="@color/white"
+                    android:textSize="9sp"
+                    android:visibility="gone"
+                    tools:text="3"
+                    tools:visibility="visible" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tvTotalBadge"

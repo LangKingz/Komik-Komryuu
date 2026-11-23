@@ -23,7 +23,7 @@ class Detail(
         try {
             val html = when (type) {
                 sourceType.komikcast -> client.Komikcast.getHtml(url)
-                sourceType.ikiru -> client.Ikiru.getHtml(url)
+                sourceType.ikiru -> "" // Ikiru menggunakan REST API IkiruService
                 sourceType.kiryuu -> client.Ikiru.getHtml(url)
                 sourceType.komiku,
                 sourceType.comicscan -> client.Comicscan.getHtml(url)
@@ -38,7 +38,7 @@ class Detail(
             val document = Jsoup.parse(html)
 
             val parsedData = when (type) {
-                sourceType.ikiru -> comicParser.parseIkiru(document, url, applicationContext)
+                sourceType.ikiru -> comicParser.parseIkiru(applicationContext, url)
                 sourceType.komikcast -> comicParser.parseKomikcast(
                     document,
                     url,
@@ -62,7 +62,7 @@ class Detail(
                 sourceType.doujindesu -> try {
 
                     val response = client.Doujindesu.getHtml(url)
-                    comicParser.parseDoujinDesu(url,response, applicationContext)
+                    comicParser.parseDoujinDesu(url, response, applicationContext)
 
                 } catch (e: Exception) {
                     Log.d(TAG, "getDetail: ${e.localizedMessage}")

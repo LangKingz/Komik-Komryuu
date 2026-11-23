@@ -94,8 +94,13 @@ object client {
     }
 
     val ikiruService: IkiruService by lazy {
+        val gson = GsonBuilder()
+            .setLenient()
+            .create()
+
         Retrofit.Builder()
             .baseUrl(getIkiruUrl())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .client(
                 OkHttpClient.Builder()
                     .addInterceptor(dynamicHeaderInterceptor)
@@ -103,17 +108,19 @@ object client {
                         val request = chain.request().newBuilder()
                             .header(
                                 "User-Agent",
-                                "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1"
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                             )
+                            .header("Referer", getIkiruUrl())
+                            .header("Origin", getIkiruUrl().trimEnd('/'))
                             .header(
                                 "Accept",
-                                "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+                                "application/json, text/plain, */*"
                             )
                             .build()
                         chain.proceed(request)
                     }
-                    .build())
-            .addConverterFactory(GsonConverterFactory.create())
+                    .build()
+            )
             .build()
             .create(IkiruService::class.java)
     }

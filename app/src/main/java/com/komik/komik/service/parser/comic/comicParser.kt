@@ -10,6 +10,7 @@ import com.komik.komik.service.data.model.Genre
 import com.komik.komik.service.parser.model.ParsedData
 import com.komik.komik.service.utils.downloadAndSaveImage
 import com.komik.komik.service.utils.extractNumberFromDataNum
+import com.komik.komik.service.utils.formatChapterNumber
 import com.komik.komik.service.utils.formatWaktuLalu
 import com.komik.komik.service.utils.genereteId
 import com.komik.komik.service.utils.parseDate
@@ -57,13 +58,14 @@ object comicParser {
         }
 
         val chapters = chapter?.map {
-            val chapterString = "Chapter ${it?.chapterNumber?.toInt().toString()}"
+            val num = it?.chapterNumber ?: 0.0
+            val chapterString = "Chapter ${num.formatChapterNumber()}"
             val date = it?.releaseDate
             Chapter(
                 comicTitle = title.toString(),
                 title = chapterString,
                 location = "shinigami",
-                numChapter = extractNumberFromDataNum(chapterString),
+                numChapter = num,
                 link = it?.chapterId.toString(),
                 date = parseDate(date.toString()),
                 comicId = 0
@@ -192,63 +194,99 @@ object comicParser {
     }
 
 
-    suspend fun parseIkiru(document: Document, url: String, context: Context): ParsedData {
-        val bodyClasses = document.body().className().split(" ")
-        val mangaId =
-            bodyClasses.firstOrNull { it.startsWith("postid-") }?.removePrefix("postid-")
+    suspend fun parseIkiru(context: Context, url: String): ParsedData {
+        val slug = if (url.startsWith("http://") || url.startsWith("https://")) {
+            url.trimEnd('/').substringAfterLast('/')
+        } else {
+            url.trim('/')
+        }
 
-        val idparser =
-            client.Ikiru.getHtml("https://id.ikiru.wtf/ajax-call?manga_id=${mangaId}&page=1&action=chapter_list")
-        val document2 = Jsoup.parse(idparser)
+        val response = client.ikiruService.getDetailManga(url)
+        val data = response.data
 
-        val title = document.select(".flex h1.text-2xl")[0].text()
-        val imageUrl = document.select(".contents img").attr("src")
-        val deskripsitable = document.select("div.p-4").attr("itemprop", "description").text()
-        val author = document.select("span.komik_info-content-info").text()
+        val title = data?.title?.takeIf { it.isNotBlank() } ?: "Komik Ikiru"
+        val rawImage = data?.featuredImage.orEmpty()
+        val imageUrl = if (rawImage.startsWith("http://") || rawImage.startsWith("https://")) {
+            rawImage
+        } else if (rawImage.isNotBlank()) {
+            "${client.getIkiruUrl().trimEnd('/')}/${rawImage.trimStart('/')}"
+        } else {
+            ""
+        }
 
-        val rating = document.select("span.to-accent-2").text()
-        val type = document.select("p.ml-1").text()
-
-        val alternative = document.select("div.text-text").text()
-
-
-        val chapters =
-            document2.select("div#chapter-list div.cursor-pointer").map {
-                Chapter(
-                    title = it.select("span").text(),
-                    link = it.select("a").attr("href"),
-                    comicTitle = title,
-                    numChapter = it.attr("data-chapter-number").toDouble(),
-                    date = it.select("time").text(),
-                    location = "ikiru",
-                    comicId = 0
-
-
-                )
+        val localImageUri = if (imageUrl.isNotBlank()) {
+            try {
+                downloadAndSaveImage(context, imageUrl, System.currentTimeMillis())
+            } catch (_: Exception) {
+                null
             }
+        } else null
 
+        val description = data?.description.orEmpty()
+        val authorList = data?.metadata?.author?.mapNotNull { it?.name }?.filter { it.isNotBlank() }
+        val artistList = data?.metadata?.artist?.mapNotNull { it?.name }?.filter { it.isNotBlank() }
+        val author = when {
+            !authorList.isNullOrEmpty() -> authorList.joinToString(", ")
+            !artistList.isNullOrEmpty() -> artistList.joinToString(", ")
+            else -> "Author Tidak Diketahui"
+        }
 
-        val genres = document.select("span.text-inherit")
-            .map {
-                Genre(
+        val altTitle = data?.metadata?.alternateTitles?.filterNotNull()?.filter { it.isNotBlank() }?.joinToString(", ")
+            ?: data?.searchKeywords.orEmpty()
+
+        val typeManga = data?.type ?: "Manga"
+        val statusManga = when (data?.status?.lowercase()) {
+            "completed", "tamat", "complete" -> "Complete"
+            else -> "onGoing"
+        }
+
+        val rating = data?.metadata?.score?.toString() ?: "0.0"
+
+        val genres = data?.metadata?.genre?.mapNotNull { gItem ->
+            val gName = gItem?.name.orEmpty()
+            if (gName.isNotBlank()) {
+                com.komik.komik.service.data.model.Genre(
                     comicTitle = title,
-                    genre = it.text()
+                    genre = gName,
+                    location = "ikiru"
                 )
-            }
+            } else null
+        } ?: emptyList()
+
+        val rawChapters = data?.chapters?.chapters.orEmpty().filterNotNull()
+        val chapters = rawChapters.map { chItem ->
+            val numChapter = chItem.number ?: 0.0
+            val formattedNum = numChapter.formatChapterNumber()
+            val chTitle = chItem.title?.takeIf { it.isNotBlank() } ?: "Chapter $formattedNum"
+            val chSlug = if (!chItem.slug.isNullOrBlank()) chItem.slug else "chapter-$formattedNum"
+            val chLink = "$slug/$chSlug"
+            val chDate = chItem.createdAt.orEmpty()
+
+            com.komik.komik.service.data.model.Chapter(
+                comicTitle = title,
+                title = chTitle,
+                location = "ikiru",
+                numChapter = numChapter,
+                link = chLink,
+                date = chDate,
+                comicId = 0
+            )
+        }
 
         return ParsedData(
             url = url,
             title = title,
-            alternativeTitle = alternative,
             imageUrl = imageUrl,
-            localImageUri = downloadAndSaveImage(context, imageUrl, genereteId().toLong()),
-            description = deskripsitable,
-            rating = rating,
-            type = type,
+            localImageUri = localImageUri,
+            description = description,
             author = author,
             location = "ikiru",
             chapters = chapters,
-            genres = genres
+            genres = genres,
+            alternativeTitle = altTitle,
+            type = typeManga,
+            rating = rating,
+            status = statusManga
         )
     }
 

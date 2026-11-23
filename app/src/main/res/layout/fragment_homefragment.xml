@@ -30,7 +30,8 @@
             android:src="@drawable/logo_komryu_rb"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="Avatar Pengguna" />
 
         <!-- Greeting & Name -->
         <LinearLayout
@@ -76,7 +77,7 @@
             android:orientation="horizontal"
             android:paddingHorizontal="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btnQuickSearch"
+            app:layout_constraintEnd_toStartOf="@+id/btnHeaderReportInfo"
             app:layout_constraintTop_toTopOf="parent">
 
             <View
@@ -96,9 +97,9 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Quick Search Button -->
+        <!-- Report & Help Info Button -->
         <ImageButton
-            android:id="@+id/btnQuickSearch"
+            android:id="@+id/btnHeaderReportInfo"
             android:layout_width="38dp"
             android:layout_height="38dp"
             android:background="@drawable/circle_back_btn"
@@ -106,12 +107,13 @@
             android:clipToOutline="true"
             android:focusable="true"
             android:foreground="?attr/selectableItemBackground"
-            android:padding="8dp"
-            android:src="@drawable/baseline_search_24"
+            android:padding="9dp"
+            android:src="@drawable/discuss_line"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/white" />
+            app:tint="@color/white"
+            android:contentDescription="Pusat Laporan &amp; Bantuan" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -131,360 +133,387 @@
             android:layout_height="match_parent"
             android:fillViewport="true">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="96dp">
-
-            <!-- Broadcast Banner Card (Hidden by default) -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardBroadcastBanner"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="4dp"
-                android:visibility="gone"
-                app:cardBackgroundColor="#1A202C"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="2dp"
-                app:strokeColor="#4F46E5"
-                app:strokeWidth="1.5dp"
-                tools:visibility="visible">
+                android:orientation="vertical"
+                android:paddingBottom="96dp">
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/layoutBannerContent"
+                <!-- 1. Ecosystem Info Status Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardEcosystemStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingHorizontal="14dp"
-                    android:paddingVertical="12dp">
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginBottom="6dp"
+                    app:cardBackgroundColor="#1C1C28"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="#2A2A3C"
+                    app:strokeWidth="1dp">
 
-                    <!-- Icon Frame -->
-                    <FrameLayout
-                        android:id="@+id/bannerIconFrame"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/oval_picture"
-                        android:backgroundTint="#264F46E5"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="12dp">
+
+                        <FrameLayout
+                            android:layout_width="38dp"
+                            android:layout_height="38dp"
+                            android:background="@drawable/oval_picture"
+                            android:backgroundTint="#1F163331">
+
+                            <ImageView
+                                android:id="@+id/ivEcosystemIcon"
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/squares_four"
+                                app:tint="@color/mint_teal"
+                                android:contentDescription="Ikon Ekosistem" />
+                        </FrameLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvEcosystemTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/interbold"
+                                android:text="Memuat status ekstensi..."
+                                android:textColor="@color/white"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/tvEcosystemSubtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="@font/interreguler"
+                                android:text="Cloud Sync: Belum disinkronkan"
+                                android:textColor="@color/gray_400"
+                                android:textSize="11sp" />
+                        </LinearLayout>
 
                         <ImageView
-                            android:id="@+id/ivBannerIcon"
-                            android:layout_width="18dp"
-                            android:layout_height="18dp"
-                            android:layout_gravity="center"
-                            android:src="@drawable/bell_ringing"
-                            app:tint="#818CF8" />
-                    </FrameLayout>
-
-                    <!-- Text Info -->
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_marginEnd="8dp"
-                        android:orientation="vertical"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@+id/btnCloseBanner"
-                        app:layout_constraintStart_toEndOf="@+id/bannerIconFrame"
-                        app:layout_constraintTop_toTopOf="parent">
-
-                        <TextView
-                            android:id="@+id/tvBannerTitle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:ellipsize="end"
-                            android:fontFamily="@font/interbold"
-                            android:maxLines="1"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            tools:text="Pengumuman Penting" />
-
-                        <TextView
-                            android:id="@+id/tvBannerMessage"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:fontFamily="@font/interreguler"
-                            android:textColor="@color/grey_300"
-                            android:textSize="12sp"
-                            tools:text="Server sedang mengalami peningkatan kapasitas." />
+                            android:id="@+id/btnEcosystemAction"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:padding="6dp"
+                            android:src="@drawable/discuss_line"
+                            app:tint="#A5B4FC"
+                            android:contentDescription="Laporkan Masalah" />
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Close Button -->
-                    <ImageView
-                        android:id="@+id/btnCloseBanner"
-                        android:layout_width="26dp"
-                        android:layout_height="26dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:padding="4dp"
-                        android:src="@drawable/baseline_close_24"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/gray_400" />
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Hero Carousel ViewPager2 -->
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/vpCarousel"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="6dp"
-                android:visibility="gone" />
-
-            <!-- Carousel Dots Indicator -->
-            <LinearLayout
-                android:id="@+id/layoutDots"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="10dp"
-                android:gravity="center"
-                android:orientation="horizontal" />
-
-            <!-- Section: Quick Resume ("Lanjut Baca") -->
-            <LinearLayout
-                android:id="@+id/sectionQuickResume"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <TextView
-                    style="@style/Costumtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:fontFamily="@font/interbold"
-                    android:text="📖 Lanjut Baca"
-                    android:textColor="@color/white"
-                    android:textSize="16sp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvQuickResume"
+                <!-- 2. Broadcast Banner Card (Hidden by default) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardBroadcastBanner"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="16dp" />
-            </LinearLayout>
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="#1A202C"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="2dp"
+                    app:strokeColor="#4F46E5"
+                    app:strokeWidth="1.5dp"
+                    tools:visibility="visible">
 
-            <!-- Section: Filter Genre Chips -->
-            <TextView
-                style="@style/Costumtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="18dp"
-                android:layout_marginBottom="8dp"
-                android:fontFamily="@font/interbold"
-                android:text="🏷️ Genre Populer"
-                android:textColor="@color/white"
-                android:textSize="16sp" />
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/layoutBannerContent"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="12dp">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvGenres"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:orientation="horizontal"
-                android:paddingHorizontal="12dp" />
+                        <!-- Icon Frame -->
+                        <FrameLayout
+                            android:id="@+id/bannerIconFrame"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/oval_picture"
+                            android:backgroundTint="#264F46E5"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
 
-            <!-- Section: Rilis Terbaru Hari Ini -->
-            <LinearLayout
-                android:id="@+id/sectionLatest"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="vertical"
-                android:visibility="gone">
+                            <ImageView
+                                android:id="@+id/ivBannerIcon"
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/bell_ringing"
+                                app:tint="#818CF8"
+                                android:contentDescription="Ikon Pengumuman" />
+                        </FrameLayout>
 
-                <TextView
-                    style="@style/Costumtitle"
-                    android:layout_width="wrap_content"
+                        <!-- Text Info -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_marginEnd="8dp"
+                            android:orientation="vertical"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@+id/btnCloseBanner"
+                            app:layout_constraintStart_toEndOf="@+id/bannerIconFrame"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <TextView
+                                android:id="@+id/tvBannerTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:fontFamily="@font/interbold"
+                                android:maxLines="1"
+                                android:textColor="@color/white"
+                                android:textSize="13sp"
+                                tools:text="Pengumuman Penting" />
+
+                            <TextView
+                                android:id="@+id/tvBannerMessage"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:fontFamily="@font/interreguler"
+                                android:textColor="@color/grey_300"
+                                android:textSize="12sp"
+                                tools:text="Server sedang mengalami peningkatan kapasitas." />
+                        </LinearLayout>
+
+                        <!-- Close Button -->
+                        <ImageView
+                            android:id="@+id/btnCloseBanner"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:padding="4dp"
+                            android:src="@drawable/baseline_close_24"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:tint="@color/gray_400"
+                            android:contentDescription="Tutup Banner" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 3. Section: Quick Resume ("Lanjut Baca") -->
+                <LinearLayout
+                    android:id="@+id/sectionQuickResume"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        style="@style/Costumtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginBottom="8dp"
+                        android:fontFamily="@font/interbold"
+                        android:text="📖 Lanjut Baca"
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvQuickResume"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:clipToPadding="false"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="16dp" />
+                </LinearLayout>
+
+                <!-- 4. Section: Sumber Ekstensi with Grid / List Toggle -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="18dp"
                     android:layout_marginBottom="8dp"
-                    android:fontFamily="@font/interbold"
-                    android:text="⚡ Rilis Terbaru Hari Ini"
-                    android:textColor="@color/white"
-                    android:textSize="16sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/Costumtitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="@font/interbold"
+                        android:text="🌐 Sumber Ekstensi"
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
+
+                    <!-- Button Toggle Grid / List Mode -->
+                    <LinearLayout
+                        android:id="@+id/btnToggleSourceViewMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:background="@drawable/card"
+                        android:backgroundTint="#1C1C28"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="10dp">
+
+                        <ImageView
+                            android:id="@+id/ivViewModeIcon"
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/squares_four"
+                            app:tint="@color/mint_teal"
+                            android:contentDescription="Ikon Mode Tampilan" />
+
+                        <TextView
+                            android:id="@+id/tvViewModeLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:fontFamily="@font/intersemi"
+                            android:text="Grid"
+                            android:textColor="@color/white"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvLatestComics"
+                    android:id="@+id/listSource"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:clipToPadding="false"
                     android:nestedScrollingEnabled="false"
-                    android:paddingHorizontal="12dp" />
-            </LinearLayout>
+                    android:paddingHorizontal="6dp" />
 
-            <!-- Section: Populer / Trending -->
-            <LinearLayout
-                android:id="@+id/sectionPopular"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <TextView
-                    style="@style/Costumtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:fontFamily="@font/interbold"
-                    android:text="🔥 Populer / Trending"
-                    android:textColor="@color/white"
-                    android:textSize="16sp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvPopularComics"
+                <!-- Empty / Offline Error State for Extensions -->
+                <LinearLayout
+                    android:id="@+id/layoutErrorSource"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:clipToPadding="false"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="12dp" />
-            </LinearLayout>
-
-            <!-- Section: Sumber Ekstensi -->
-            <TextView
-                style="@style/Costumtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="8dp"
-                android:fontFamily="@font/interbold"
-                android:text="🌐 Sumber Ekstensi"
-                android:textColor="@color/white"
-                android:textSize="16sp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/listSource"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:nestedScrollingEnabled="false"
-                android:paddingHorizontal="8dp" />
-
-            <!-- Empty / Offline Error State for Extensions -->
-            <LinearLayout
-                android:id="@+id/layoutErrorSource"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/card"
-                android:backgroundTint="#1C1C28"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="24dp"
-                android:visibility="gone">
-
-                <ImageView
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:src="@drawable/cloud_off_line"
-                    app:tint="@color/calm_rose" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:fontFamily="@font/interbold"
-                    android:text="Gagal Memuat Sumber Ekstensi"
-                    android:textColor="@color/white"
-                    android:textSize="15sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:fontFamily="@font/interreguler"
-                    android:gravity="center"
-                    android:text="Periksa koneksi internet kamu lalu coba muat ulang"
-                    android:textColor="@color/gray_400"
-                    android:textSize="12sp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRetryLoadSource"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
+                    android:layout_marginHorizontal="20dp"
                     android:layout_marginTop="16dp"
-                    android:backgroundTint="@color/primary_button"
-                    android:fontFamily="@font/intersemi"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:paddingHorizontal="20dp"
-                    android:text="Muat Ulang"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="13sp"
-                    app:cornerRadius="12dp"
-                    app:icon="@drawable/loop_right_line"
-                    app:iconGravity="textStart"
-                    app:iconSize="16dp"
-                    app:iconTint="@color/white" />
-            </LinearLayout>
+                    android:background="@drawable/card"
+                    android:backgroundTint="#1C1C28"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="24dp"
+                    android:visibility="gone">
 
-            <!-- Center Loading Indicator -->
-            <com.google.android.material.progressindicator.CircularProgressIndicator
-                android:id="@+id/loading"
-                style="@style/Widget.Material3.CircularProgressIndicator"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="20dp"
-                android:indeterminate="true"
-                android:visibility="gone"
-                app:indicatorColor="@color/primary_button" />
+                    <ImageView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:src="@drawable/cloud_off_line"
+                        app:tint="@color/calm_rose"
+                        android:contentDescription="Ikon Offline" />
 
-            <!-- Error Refresh Layout -->
-            <LinearLayout
-                android:id="@+id/layoutRefresh"
-                android:layout_width="match_parent"
-                android:layout_height="140dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:visibility="gone">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:fontFamily="@font/interbold"
+                        android:text="Gagal Memuat Sumber Ekstensi"
+                        android:textColor="@color/white"
+                        android:textSize="15sp" />
 
-                <TextView
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:fontFamily="@font/interreguler"
+                        android:gravity="center"
+                        android:text="Periksa koneksi internet kamu lalu coba muat ulang"
+                        android:textColor="@color/gray_400"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRetryLoadSource"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="16dp"
+                        android:backgroundTint="@color/primary_button"
+                        android:fontFamily="@font/intersemi"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:paddingHorizontal="20dp"
+                        android:text="Muat Ulang"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/loop_right_line"
+                        app:iconGravity="textStart"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/white" />
+                </LinearLayout>
+
+                <!-- Center Loading Indicator -->
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/loading"
+                    style="@style/Widget.Material3.CircularProgressIndicator"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="@font/interreguler"
-                    android:text="Gagal memuat beberapa konten"
-                    android:textColor="@color/gray_400"
-                    android:textSize="13sp" />
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="20dp"
+                    android:indeterminate="true"
+                    android:visibility="gone"
+                    app:indicatorColor="@color/primary_button" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/refresh"
-                    android:layout_width="wrap_content"
-                    android:layout_height="38dp"
-                    android:layout_marginTop="8dp"
-                    android:backgroundTint="@color/primary_button"
-                    android:fontFamily="@font/interbold"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:text="Muat Ulang"
-                    android:textAllCaps="false"
-                    android:textColor="@color/white"
-                    android:textSize="12sp"
-                    app:cornerRadius="12dp" />
+                <!-- Error Refresh Layout -->
+                <LinearLayout
+                    android:id="@+id/layoutRefresh"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/interreguler"
+                        android:text="Gagal memuat beberapa konten"
+                        android:textColor="@color/gray_400"
+                        android:textSize="13sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/refresh"
+                        android:layout_width="wrap_content"
+                        android:layout_height="38dp"
+                        android:layout_marginTop="8dp"
+                        android:backgroundTint="@color/primary_button"
+                        android:fontFamily="@font/interbold"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        android:text="Muat Ulang"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        app:cornerRadius="12dp" />
+                </LinearLayout>
+
             </LinearLayout>
-
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+        </androidx.core.widget.NestedScrollView>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 

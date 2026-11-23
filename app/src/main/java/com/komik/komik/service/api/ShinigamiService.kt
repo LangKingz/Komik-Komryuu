@@ -22,6 +22,7 @@ interface ShinigamiService {
         @Query("type") type: String = "project",
         @Query("limit") limit: Int = 24,
         @Query("is_update") isUpdate: Boolean = true,
+        @Query("format") format: String
     ): ShinigamiHomeExplore
 
     @GET("v1/manga/list")

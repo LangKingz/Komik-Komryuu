@@ -14,14 +14,62 @@ class Image(private val client: client) : RepositoryImage {
         try {
             return when (type) {
                 sourceType.ikiru -> {
+                    try {
+                        val cleanUrl = url.trim().trimEnd('/')
+                        val pathParts = cleanUrl.substringAfter("://").substringAfter('/')
+                            .split('/')
+                            .filter { it.isNotBlank() && it != "manga" && it != "api" && it != "public" }
 
-                    val html = client.Ikiru.getHtml(url)
-                    val document = Jsoup.parse(html)
-                    val pagedData = ImageParser.ikiruParse(document)
+                        val (mangaSlug, chapterSlug) = if (pathParts.size >= 2) {
+                            Pair(pathParts[pathParts.size - 2], pathParts[pathParts.size - 1])
+                        } else if (cleanUrl.contains('/')) {
+                            val segments = cleanUrl.split('/').filter { it.isNotBlank() }
+                            if (segments.size >= 2) {
+                                Pair(segments[segments.size - 2], segments[segments.size - 1])
+                            } else {
+                                Pair("", "")
+                            }
+                        } else {
+                            Pair("", "")
+                        }
 
-                    Log.d(TAG, "getImage: $pagedData")
+                        if (mangaSlug.isNotBlank() && chapterSlug.isNotBlank()) {
+                            val response = client.ikiruService.getChapterImages(mangaSlug, chapterSlug)
+                            val medias = response.data?.medias.orEmpty().filterNotNull()
+                            val sortedMedias = medias.sortedBy { it.pageNumber ?: 0 }
+                            val imagesList = sortedMedias.mapIndexedNotNull { index, mediaItem ->
+                                val rawPath = mediaItem.filePath?.trim().orEmpty()
+                                if (rawPath.isNotBlank()) {
+                                    val fullUrl = if (rawPath.startsWith("http://") || rawPath.startsWith("https://")) {
+                                        rawPath
+                                    } else {
+                                        "${client.getIkiruUrl().trimEnd('/')}/${rawPath.trimStart('/')}"
+                                    }
+                                    getImages(
+                                        index = mediaItem.pageNumber ?: (index + 1),
+                                        image = fullUrl
+                                    )
+                                } else null
+                            }
 
-                    return pagedData
+                            if (imagesList.isNotEmpty()) {
+                                Log.d(TAG, "Ikiru API getImage: ${imagesList.size} pages")
+                                return imagesList
+                            }
+                        }
+
+                        // Fallback ke scraping HTML jika slug tidak valid atau medias kosong
+                        val html = client.Ikiru.getHtml(url)
+                        val document = Jsoup.parse(html)
+                        val pagedData = ImageParser.ikiruParse(document)
+                        Log.d(TAG, "Ikiru HTML fallback getImage: $pagedData")
+                        pagedData
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Ikiru API getChapterImages error for $url: ${e.message}, fallback to HTML")
+                        val html = client.Ikiru.getHtml(url)
+                        val document = Jsoup.parse(html)
+                        ImageParser.ikiruParse(document)
+                    }
                 }
 
                 sourceType.komikcast-> {

@@ -12,7 +12,8 @@ class Repository(private val client:client): RepositorySource {
             pageSize = pageSize,
             limit = pageSize,
             offset = 0,
-            sortBy = sortBy
+            sortBy = sortBy,
+            format = "manhwa"
         )
 
         val data = response.data as List<DataItem>
@@ -20,8 +21,8 @@ class Repository(private val client:client): RepositorySource {
         return data
     }
 
-    override suspend fun getSourceExtension(): List<DataItems> {
-        val response = client.KomryuuxSource.getSource()
+    override suspend fun getSourceExtension(includeInactive: Boolean): List<DataItems> {
+        val response = client.KomryuuxSource.getSource(includeInactive = includeInactive)
         val data = response.data?.filterNotNull() ?: emptyList()
         if (data.isNotEmpty()) {
             RemoteSourceConfigManager.saveSourceConfigs(items = data)

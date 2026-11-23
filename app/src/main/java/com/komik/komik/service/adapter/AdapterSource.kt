@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
 import com.komik.komik.R
 import com.komik.komik.databinding.CardSourceBinding
+import com.komik.komik.databinding.CardSourceListBinding
 import com.komik.komik.databinding.HeaderExtensiBinding
 import com.komik.komik.service.api.model.DataItems
 import com.komik.komik.service.component.BottomsheetInfo
@@ -39,6 +40,8 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
     companion object {
         const val VIEW_TYPE_HEADER = 0
         const val VIEW_TYPE_ITEM = 1
+        const val VIEW_TYPE_ITEM_GRID = 1
+        const val VIEW_TYPE_ITEM_LIST = 2
         const val PREF_PINNED = PreferenceManager.PREF_USER
         const val KEY_PINNED = PreferenceManager.KEY_PINNED_SOURCES
 
@@ -59,6 +62,17 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
     private var currentQuery: String = ""
     private var pinnedKeysCache = mutableSetOf<String>()
     private var userRole: String = "user"
+    var viewMode: String = "grid"
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyDataSetChanged()
+            }
+        }
+
+    fun switchViewMode(mode: String) {
+        viewMode = mode
+    }
 
     init {
         rebuildGroupedItems()
@@ -176,19 +190,18 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (groupItems[position] is String) VIEW_TYPE_HEADER else VIEW_TYPE_ITEM
+        if (groupItems[position] is String) return VIEW_TYPE_HEADER
+        return if (viewMode == "list") VIEW_TYPE_ITEM_LIST else VIEW_TYPE_ITEM_GRID
     }
 
     override fun getItemCount(): Int = groupItems.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        return if (viewType == VIEW_TYPE_HEADER) {
-            val binding = HeaderExtensiBinding.inflate(inflater, parent, false)
-            HeaderViewHolder(binding)
-        } else {
-            val binding = CardSourceBinding.inflate(inflater, parent, false)
-            SourceViewHolder(binding)
+        return when (viewType) {
+            VIEW_TYPE_HEADER -> HeaderViewHolder(HeaderExtensiBinding.inflate(inflater, parent, false))
+            VIEW_TYPE_ITEM_LIST -> SourceListViewHolder(CardSourceListBinding.inflate(inflater, parent, false))
+            else -> SourceViewHolder(CardSourceBinding.inflate(inflater, parent, false))
         }
     }
 
@@ -197,9 +210,9 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
             is HeaderViewHolder -> {
                 holder.bind(groupItems[position] as String)
             }
-            is SourceViewHolder -> {
+            is SourceItemHolder -> {
                 val currentItem = groupItems[position] as DataItems
-                val context = holder.itemView.context
+                val context = (holder as RecyclerView.ViewHolder).itemView.context
 
                 if (pinnedKeysCache.isEmpty()) {
                     val prefManager = PreferenceManager.getInstance(context)
@@ -217,17 +230,17 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                     } else {
                         "Pin sumber '${currentItem.name}' dilepas"
                     }
-                    Snackbar.make(holder.itemView, message, Snackbar.LENGTH_SHORT)
+                    Snackbar.make((holder as RecyclerView.ViewHolder).itemView, message, Snackbar.LENGTH_SHORT)
                         .setTextColor(ContextCompat.getColor(context, R.color.white))
                         .setBackgroundTint(ContextCompat.getColor(context, R.color.bottom_navbar))
                         .show()
                 }, onQuickSearchClick = {
-                    handleSourceClick(context, currentItem, autoFocusSearch = true, view = holder.itemView)
+                    handleSourceClick(context, currentItem, autoFocusSearch = true, view = (holder as RecyclerView.ViewHolder).itemView)
                 }, onCheckPingClick = {
                     checkLivePing(context, currentItem, holder)
                 })
 
-                holder.binding.btnInfoSource.setOnClickListener {
+                holder.setOnInfoClickListener {
                     val activity = context as? AppCompatActivity
                     if (activity != null) {
                         val bottomSheet = BottomsheetInfo.newInstance(
@@ -241,13 +254,13 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
                 }
 
                 // Klik biasa: Buka sumber (dengan pengecekan VIP)
-                holder.itemView.setOnClickListener {
-                    handleSourceClick(context, currentItem, autoFocusSearch = false, view = holder.itemView)
+                (holder as RecyclerView.ViewHolder).itemView.setOnClickListener {
+                    handleSourceClick(context, currentItem, autoFocusSearch = false, view = (holder as RecyclerView.ViewHolder).itemView)
                 }
 
                 // Long click: Quick Search langsung di sumber
-                holder.itemView.setOnLongClickListener {
-                    handleSourceClick(context, currentItem, autoFocusSearch = true, view = holder.itemView)
+                (holder as RecyclerView.ViewHolder).itemView.setOnLongClickListener {
+                    handleSourceClick(context, currentItem, autoFocusSearch = true, view = (holder as RecyclerView.ViewHolder).itemView)
                     true
                 }
             }
@@ -285,12 +298,11 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
         }
     }
 
-    private fun checkLivePing(context: Context, item: DataItems, holder: SourceViewHolder) {
+    private fun checkLivePing(context: Context, item: DataItems, holder: SourceItemHolder) {
         val url = item.baseUrl
         val sourceKey = item.id ?: item.name ?: url.orEmpty()
 
-        holder.binding.tvPing.text = "Menguji..."
-        holder.binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#9CA3AF"))
+        holder.setTestingPing()
         Toast.makeText(context, "Mengukur ping '${item.name}'...", Toast.LENGTH_SHORT).show()
 
         measureLatency(url) { latency ->
@@ -363,16 +375,32 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
         }
     }
 
-    inner class SourceViewHolder(val binding: CardSourceBinding) :
-        RecyclerView.ViewHolder(binding.root) {
-
+    interface SourceItemHolder {
         fun bind(
             item: DataItems,
             isPinned: Boolean,
             onPinClick: () -> Unit,
             onQuickSearchClick: () -> Unit,
             onCheckPingClick: () -> Unit
+        )
+        fun applyPingUI(ping: Long?)
+        fun setTestingPing()
+        fun setOnInfoClickListener(listener: () -> Unit)
+    }
+
+    inner class SourceViewHolder(val binding: CardSourceBinding) :
+        RecyclerView.ViewHolder(binding.root), SourceItemHolder {
+
+        private var currentItem: DataItems? = null
+
+        override fun bind(
+            item: DataItems,
+            isPinned: Boolean,
+            onPinClick: () -> Unit,
+            onQuickSearchClick: () -> Unit,
+            onCheckPingClick: () -> Unit
         ) {
+            this.currentItem = item
             val context = itemView.context
             binding.JudulExtensi.text = item.name ?: "Sumber"
             binding.profilExtensi.text = item.name?.firstOrNull()?.toString()?.uppercase() ?: "S"
@@ -380,6 +408,12 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
             binding.tvRegion.text = item.location?.take(8) ?: "ID"
             binding.tvCategory.text = item.type?.replaceFirstChar { it.uppercase() } ?: "Komik"
             binding.tvVersion.text = "v1.2.0"
+
+            if (item.isActive == false) {
+                binding.root.strokeColor = Color.parseColor("#78350F")
+            } else {
+                binding.root.strokeColor = Color.parseColor("#2A2A3C")
+            }
 
             if (item.type?.equals("dewasa", ignoreCase = true) == true) {
                 binding.tag.visibility = View.VISIBLE
@@ -441,8 +475,207 @@ class AdapterSource(private val rawList: MutableList<DataItems>) :
             }
         }
 
-        fun applyPingUI(ping: Long?) {
+        override fun setTestingPing() {
+            binding.tvPing.text = "Menguji..."
+            binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#9CA3AF"))
+            if (currentItem?.isActive == false) {
+                binding.badgeServerStatus.text = "● MAINTENANCE (ADMIN TEST)"
+                binding.badgeServerStatus.setBackgroundResource(R.drawable.badge_status_maintenance)
+                binding.badgeServerStatus.setTextColor(Color.parseColor("#FBBF24"))
+            }
+        }
+
+        override fun setOnInfoClickListener(listener: () -> Unit) {
+            binding.btnInfoSource.setOnClickListener { listener() }
+        }
+
+        override fun applyPingUI(ping: Long?) {
             val context = itemView.context
+            if (currentItem?.isActive == false) {
+                binding.badgeServerStatus.text = "● MAINTENANCE (ADMIN TEST)"
+                binding.badgeServerStatus.setBackgroundResource(R.drawable.badge_status_maintenance)
+                binding.badgeServerStatus.setTextColor(Color.parseColor("#FBBF24"))
+                when {
+                    ping == null -> {
+                        binding.tvPing.text = "-- ms"
+                        binding.tvPing.setTextColor(ContextCompat.getColor(context, R.color.gray_400))
+                        binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F59E0B"))
+                    }
+                    ping < 0 -> {
+                        binding.tvPing.text = "Offline"
+                        binding.tvPing.setTextColor(ContextCompat.getColor(context, R.color.red))
+                        binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#EF4444"))
+                    }
+                    else -> {
+                        binding.tvPing.text = "${ping}ms"
+                        binding.tvPing.setTextColor(Color.parseColor("#F59E0B"))
+                        binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F59E0B"))
+                    }
+                }
+                return
+            }
+
+            when {
+                ping == null -> {
+                    binding.tvPing.text = "-- ms"
+                    binding.tvPing.setTextColor(ContextCompat.getColor(context, R.color.gray_400))
+                    binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#9CA3AF"))
+                    binding.badgeServerStatus.text = "● Siap"
+                    binding.badgeServerStatus.setBackgroundResource(R.drawable.badge_status_online)
+                    binding.badgeServerStatus.setTextColor(ContextCompat.getColor(context, R.color.text_emerald_400))
+                }
+                ping < 0 -> {
+                    binding.tvPing.text = "Offline"
+                    binding.tvPing.setTextColor(ContextCompat.getColor(context, R.color.red))
+                    binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#EF4444"))
+                    binding.badgeServerStatus.text = "● Maintenance"
+                    binding.badgeServerStatus.setBackgroundResource(R.drawable.badge_status_offline)
+                    binding.badgeServerStatus.setTextColor(ContextCompat.getColor(context, R.color.red))
+                }
+                ping < 300 -> {
+                    binding.tvPing.text = "${ping}ms"
+                    binding.tvPing.setTextColor(ContextCompat.getColor(context, R.color.text_emerald_400))
+                    binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#10B981"))
+                    binding.badgeServerStatus.text = "● Online"
+                    binding.badgeServerStatus.setBackgroundResource(R.drawable.badge_status_online)
+                    binding.badgeServerStatus.setTextColor(ContextCompat.getColor(context, R.color.text_emerald_400))
+                }
+                else -> {
+                    binding.tvPing.text = "${ping}ms"
+                    binding.tvPing.setTextColor(Color.parseColor("#F59E0B"))
+                    binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F59E0B"))
+                    binding.badgeServerStatus.text = "● Online"
+                    binding.badgeServerStatus.setBackgroundResource(R.drawable.badge_status_online)
+                    binding.badgeServerStatus.setTextColor(Color.parseColor("#F59E0B"))
+                }
+            }
+        }
+    }
+
+    inner class SourceListViewHolder(val binding: CardSourceListBinding) :
+        RecyclerView.ViewHolder(binding.root), SourceItemHolder {
+
+        private var currentItem: DataItems? = null
+
+        override fun bind(
+            item: DataItems,
+            isPinned: Boolean,
+            onPinClick: () -> Unit,
+            onQuickSearchClick: () -> Unit,
+            onCheckPingClick: () -> Unit
+        ) {
+            this.currentItem = item
+            val context = itemView.context
+            binding.JudulExtensi.text = item.name ?: "Sumber"
+            binding.profilExtensi.text = item.name?.firstOrNull()?.toString()?.uppercase() ?: "S"
+
+            binding.tvRegion.text = item.location?.take(8) ?: "ID"
+            binding.tvCategory.text = item.type?.replaceFirstChar { it.uppercase() } ?: "Komik"
+            binding.tvVersion.text = "v1.2.0"
+            binding.tvDomain.text = item.baseUrl.orEmpty().ifEmpty { "Domain otomatis" }
+
+            if (item.isActive == false) {
+                binding.root.strokeColor = Color.parseColor("#78350F")
+            } else {
+                binding.root.strokeColor = Color.parseColor("#2A2A3C")
+            }
+
+            if (item.type?.equals("dewasa", ignoreCase = true) == true) {
+                binding.tag.visibility = View.VISIBLE
+                binding.tag.text = "18+"
+            } else {
+                binding.tag.visibility = View.GONE
+            }
+
+            if (item.isVipOnly == true) {
+                binding.badgeVipOnly.visibility = View.VISIBLE
+            } else {
+                binding.badgeVipOnly.visibility = View.GONE
+            }
+
+            if (!item.logo.isNullOrBlank()) {
+                binding.imageView7.visibility = View.VISIBLE
+                binding.profilExtensi.visibility = View.GONE
+                Glide.with(context)
+                    .load(item.logo)
+                    .placeholder(R.drawable.ppanime)
+                    .error(R.drawable.ppanime)
+                    .into(binding.imageView7)
+            } else {
+                binding.imageView7.visibility = View.GONE
+                binding.profilExtensi.visibility = View.VISIBLE
+            }
+
+            if (isPinned) {
+                binding.star.setImageResource(R.drawable.push_pin_fill)
+                binding.star.setColorFilter(ContextCompat.getColor(context, R.color.color_star))
+            } else {
+                binding.star.setImageResource(R.drawable.push_pin)
+                binding.star.setColorFilter(ContextCompat.getColor(context, R.color.gray_400))
+            }
+
+            binding.star.setOnClickListener { onPinClick() }
+            binding.btnSearchSource.setOnClickListener { onQuickSearchClick() }
+            binding.btnCheckPing.setOnClickListener { onCheckPingClick() }
+
+            val sourceKey = item.id ?: item.name ?: item.baseUrl.orEmpty()
+            val cachedPing = pingCache[sourceKey]
+
+            if (cachedPing != null) {
+                applyPingUI(cachedPing)
+            } else {
+                applyPingUI(null)
+                if (pingChecking[sourceKey] != true && !item.baseUrl.isNullOrBlank()) {
+                    pingChecking[sourceKey] = true
+                    measureLatency(item.baseUrl) { latency ->
+                        pingCache[sourceKey] = latency
+                        pingChecking.remove(sourceKey)
+                        applyPingUI(latency)
+                    }
+                }
+            }
+        }
+
+        override fun setTestingPing() {
+            binding.tvPing.text = "Menguji..."
+            binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#9CA3AF"))
+            if (currentItem?.isActive == false) {
+                binding.badgeServerStatus.text = "● MAINTENANCE (ADMIN TEST)"
+                binding.badgeServerStatus.setBackgroundResource(R.drawable.badge_status_maintenance)
+                binding.badgeServerStatus.setTextColor(Color.parseColor("#FBBF24"))
+            }
+        }
+
+        override fun setOnInfoClickListener(listener: () -> Unit) {
+            binding.btnInfoSource.setOnClickListener { listener() }
+        }
+
+        override fun applyPingUI(ping: Long?) {
+            val context = itemView.context
+            if (currentItem?.isActive == false) {
+                binding.badgeServerStatus.text = "● MAINTENANCE (ADMIN TEST)"
+                binding.badgeServerStatus.setBackgroundResource(R.drawable.badge_status_maintenance)
+                binding.badgeServerStatus.setTextColor(Color.parseColor("#FBBF24"))
+                when {
+                    ping == null -> {
+                        binding.tvPing.text = "-- ms"
+                        binding.tvPing.setTextColor(ContextCompat.getColor(context, R.color.gray_400))
+                        binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F59E0B"))
+                    }
+                    ping < 0 -> {
+                        binding.tvPing.text = "Offline"
+                        binding.tvPing.setTextColor(ContextCompat.getColor(context, R.color.red))
+                        binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#EF4444"))
+                    }
+                    else -> {
+                        binding.tvPing.text = "${ping}ms"
+                        binding.tvPing.setTextColor(Color.parseColor("#F59E0B"))
+                        binding.ivPingDot.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#F59E0B"))
+                    }
+                }
+                return
+            }
+
             when {
                 ping == null -> {
                     binding.tvPing.text = "-- ms"

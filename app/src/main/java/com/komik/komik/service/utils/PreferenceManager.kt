@@ -52,6 +52,7 @@ class PreferenceManager(context: Context) {
         const val KEY_SELECTED_THEME = "selected_theme_key"
         const val DEFAULT_THEME_KEY = "midnight"
         const val KEY_PUSTAKA_GRID_SPAN = "pustaka_grid_span"
+        const val KEY_SOURCE_VIEW_MODE = "source_view_mode" // "grid" or "list"
 
         @Volatile
         private var instance: PreferenceManager? = null
@@ -285,6 +286,10 @@ class PreferenceManager(context: Context) {
     var pustakaGridSpan: Int
         get() = pref.getInt(KEY_PUSTAKA_GRID_SPAN, 3)
         set(value) = pref.edit().putInt(KEY_PUSTAKA_GRID_SPAN, value).apply()
+
+    var sourceViewMode: String
+        get() = pref.getString(KEY_SOURCE_VIEW_MODE, "grid") ?: "grid"
+        set(value) = pref.edit().putString(KEY_SOURCE_VIEW_MODE, value).apply()
 
     fun getComicShelfStatus(comicId: Int): String {
         return pref.getString("shelf_status_$comicId", "all") ?: "all"

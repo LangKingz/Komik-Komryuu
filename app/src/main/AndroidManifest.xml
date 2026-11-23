@@ -60,6 +60,9 @@
             android:name=".ui.pages.download.DownloadManagerActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.pages.updates.ChapterUpdatesActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.pages.admin.AdminManageUserActivity"
             android:exported="false" />
         <activity

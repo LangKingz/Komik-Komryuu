@@ -121,6 +121,24 @@ class AdapterImage(
                         val glideUrl = GlideUrl(imageStr, headers)
                         loadWithGlide(glideUrl, listener)
                     }
+                    type == sourceType.ikiru || imageStr.contains("ikiru") -> {
+                        val effectiveReferer = if (!refererUrl.isNullOrBlank() && refererUrl.startsWith("http")) {
+                            refererUrl
+                        } else {
+                            com.komik.komik.service.client.getIkiruUrl()
+                        }
+                        val headers = LazyHeaders.Builder()
+                            .addHeader("Referer", effectiveReferer)
+                            .addHeader("Origin", com.komik.komik.service.client.getIkiruUrl().trimEnd('/'))
+                            .addHeader(
+                                "User-Agent",
+                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                            )
+                            .addHeader("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+                            .build()
+                        val glideUrl = GlideUrl(imageStr, headers)
+                        loadWithGlide(glideUrl, listener)
+                    }
                     !refererUrl.isNullOrBlank() && refererUrl.startsWith("http") -> {
                         val headers = LazyHeaders.Builder()
                             .addHeader("Referer", refererUrl)

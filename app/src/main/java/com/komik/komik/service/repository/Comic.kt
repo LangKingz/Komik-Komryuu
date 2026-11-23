@@ -40,18 +40,52 @@ class Comic(val client: client) : RepositroyComic {
                 }
 
                 sourceType.ikiru -> {
-
                     val result = mutableListOf<getListUpdate>()
                     for (page in 1..pages) {
-                        val html =
-                            client.Ikiru.getHtml("${url}daftar?page=$page")
-                        Log.d(TAG, "getComic: ")
-                        val document = Jsoup.parse(html)
-                        val pageData = SourceParser.parseIkiru(client,page)?.toList()
-
-                        pageData?.let { result.addAll(it) }
+                        try {
+                            val response = client.ikiruService.getProjectManga(
+                                page = page,
+                                sortBy = "popular",
+                                sort = "desc"
+                            )
+                            val mangas = response.data?.mangas?.mapIndexed { index, item ->
+                                getListUpdate(
+                                    index = index,
+                                    title = item?.title ?: "Manga",
+                                    urlImage = formatIkiruCover(item?.featuredImage),
+                                    link = item?.slug ?: item?.id.orEmpty(),
+                                    location = "ikiru",
+                                    tagModel = "komik"
+                                )
+                            }
+                            if (!mangas.isNullOrEmpty()) {
+                                result.addAll(mangas)
+                            } else {
+                                val projectResponse = client.ikiruService.getProjects(page = page)
+                                val projects = projectResponse.data?.project?.mapIndexed { index, item ->
+                                    getListUpdate(
+                                        index = index,
+                                        title = item?.title ?: "Project Manga",
+                                        urlImage = formatIkiruCover(item?.featuredImage),
+                                        link = item?.slug ?: item?.id.orEmpty(),
+                                        location = "ikiru",
+                                        tagModel = "komik"
+                                    )
+                                }
+                                if (!projects.isNullOrEmpty()) {
+                                    result.addAll(projects)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "getComic ikiru error page $page: ${e.message}")
+                            try {
+                                val fallback = SourceParser.parseIkiru(client, page)?.toList()
+                                if (!fallback.isNullOrEmpty()) {
+                                    result.addAll(fallback)
+                                }
+                            } catch (_: Exception) {}
+                        }
                     }
-
                     result
                 }
 
@@ -225,7 +259,7 @@ class Comic(val client: client) : RepositroyComic {
                         SourceParser.parseIkiru(client,page)?.toList() ?: emptyList()
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        emptyList()
+                        SourceParser.parseIkiru(client, page)?.toList() ?: emptyList()
                     }
                 }
 
@@ -312,50 +346,36 @@ class Comic(val client: client) : RepositroyComic {
             }
 
             sourceType.ikiru -> {
-                val response = client.Ikiru.getHtml(url)
-                val document = Jsoup.parse(response)
-                val urlString = document.select("form.items-center").attr("hx-post")
-                withContext(Dispatchers.IO) {
-                    val client = OkHttpClient()
-
-                    val formBody = FormBody.Builder()
-                        .add("query", query)
-                        .build()
-
-                    val request = Request.Builder()
-                        .url(urlString)
-                        .post(formBody) // Tentukan metode POST dengan body yang sudah dibuat
-                        .header(
-                            "User-Agent",
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                try {
+                    val response = client.ikiruService.searchManga(
+                        query = query,
+                        page = 1,
+                        sortBy = "popular",
+                        sort = "desc"
+                    )
+                    val searchData = response.data?.mangas?.mapIndexed { index, item ->
+                        getListUpdate(
+                            index = index,
+                            title = item?.title ?: "Manga",
+                            urlImage = formatIkiruCover(item?.featuredImage),
+                            link = item?.slug ?: item?.id.orEmpty(),
+                            location = "ikiru",
+                            tagModel = "komik"
                         )
-                        .build()
-
-                    try {
-                        // 4. Eksekusi request dan dapatkan response
-                        val response = client.newCall(request).execute()
-                        response.use {
-                            if (!it.isSuccessful) {
-                                Log.e(TAG, "Request Gagal! Kode: ${it.code}")
-                                return@withContext emptyList<getListUpdate>()
-                            }
-                            val htmlString = it.body?.string()
-
-                            if (htmlString != null) {
-                                val doc = Jsoup.parse(htmlString)
-                                val pageData = SearchParser.parseIkiru(doc)
-                                Log.d(TAG, "OkHttp & Jsoup: Ditemukan ${pageData.size} item.")
-                                return@withContext pageData
-                            } else {
-                                Log.w(TAG, "Response body dari OkHttp kosong.")
-                                return@withContext emptyList<getListUpdate>()
-                            }
-                        }
-
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Gagal menjalankan OkHttp: ${e.message}")
-                        return@withContext emptyList<getListUpdate>()
                     }
+                    if (!searchData.isNullOrEmpty()) {
+                        result.addAll(searchData)
+                        result
+                    } else {
+                        val legacyResult = runLegacyIkiruSearch(query, url)
+                        result.addAll(legacyResult)
+                        result
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "getSearch ikiru API error: ${e.message}, fallback to legacy")
+                    val legacyResult = runLegacyIkiruSearch(query, url)
+                    result.addAll(legacyResult)
+                    result
                 }
             }
 
@@ -420,6 +440,52 @@ class Comic(val client: client) : RepositroyComic {
 //            }
 
             else -> emptyList()
+        }
+    }
+
+    private fun formatIkiruCover(rawPath: String?): String {
+        if (rawPath.isNullOrBlank()) return ""
+        return if (rawPath.startsWith("http://") || rawPath.startsWith("https://")) {
+            rawPath
+        } else {
+            "${client.getIkiruUrl().trimEnd('/')}/${rawPath.trimStart('/')}"
+        }
+    }
+
+    private suspend fun runLegacyIkiruSearch(query: String, url: String): List<getListUpdate> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val searchUrl = if (url.startsWith("http")) url else "${client.getIkiruUrl().trimEnd('/')}/daftar"
+                val response = client.Ikiru.getHtml(searchUrl)
+                val document = Jsoup.parse(response)
+                val urlString = document.select("form.items-center").attr("hx-post")
+                if (urlString.isBlank()) return@withContext emptyList<getListUpdate>()
+
+                val okClient = OkHttpClient()
+                val formBody = FormBody.Builder()
+                    .add("query", query)
+                    .build()
+
+                val request = Request.Builder()
+                    .url(urlString)
+                    .post(formBody)
+                    .header(
+                        "User-Agent",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+                    )
+                    .build()
+
+                val callResponse = okClient.newCall(request).execute()
+                callResponse.use {
+                    if (!it.isSuccessful) return@withContext emptyList<getListUpdate>()
+                    val htmlString = it.body?.string() ?: return@withContext emptyList<getListUpdate>()
+                    val doc = Jsoup.parse(htmlString)
+                    SearchParser.parseIkiru(doc)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Gagal menjalankan legacy OkHttp search: ${e.message}")
+                emptyList()
+            }
         }
     }
 

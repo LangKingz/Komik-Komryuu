@@ -50,7 +50,7 @@ data class DataImageIkiru(
 	val sourceUrl: Any? = null,
 
 	@field:SerializedName("number")
-	val number: Int? = null,
+	val number: Double? = null,
 
 	@field:SerializedName("createdAt")
 	val createdAt: String? = null,
@@ -92,7 +92,7 @@ data class DataImageIkiru(
 data class PrevChapter(
 
 	@field:SerializedName("number")
-	val number: Int? = null,
+	val number: Double? = null,
 
 	@field:SerializedName("id")
 	val id: String? = null,
@@ -104,7 +104,7 @@ data class PrevChapter(
 data class NextChapter(
 
 	@field:SerializedName("number")
-	val number: Int? = null,
+	val number: Double? = null,
 
 	@field:SerializedName("id")
 	val id: String? = null,

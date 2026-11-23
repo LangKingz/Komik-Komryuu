@@ -13,9 +13,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -78,6 +80,10 @@ class PustakaFragment : Fragment() {
     private fun setupToolbar() {
         val activity = activity as? AppCompatActivity
         activity?.setSupportActionBar(binding.appbar)
+
+        binding.btnChapterUpdates.setOnClickListener {
+            startActivity(Intent(requireContext(), com.komik.komik.ui.pages.updates.ChapterUpdatesActivity::class.java))
+        }
 
         binding.appbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
@@ -359,9 +365,9 @@ class PustakaFragment : Fragment() {
 
     private fun setupEmptyState() {
         binding.btnExplore.setOnClickListener {
-            val bottomNav = requireActivity().findViewById<BottomNavigationView>(R.id.bottom_navigation)
-            if (bottomNav != null) {
-                bottomNav.selectedItemId = R.id.homefragment
+            val mainActivity = activity as? com.komik.komik.MainActivity
+            if (mainActivity != null) {
+                mainActivity.selectTab(R.id.homefragment)
             } else {
                 val intent = Intent(requireContext(), SearchActivity::class.java)
                 startActivity(intent)
@@ -429,6 +435,20 @@ class PustakaFragment : Fragment() {
                             startActivity(intent)
                         }
                         .show()
+                }
+            }
+        }
+
+        // Pantau badge unread update chapter baru
+        viewLifecycleOwner.lifecycleScope.launch {
+            db.chapterUpdateDao().getUnreadCount().collectLatest { unreadCount ->
+                if (_binding != null) {
+                    if (unreadCount > 0) {
+                        binding.tvUpdateBadge.visibility = View.VISIBLE
+                        binding.tvUpdateBadge.text = if (unreadCount > 99) "99+" else unreadCount.toString()
+                    } else {
+                        binding.tvUpdateBadge.visibility = View.GONE
+                    }
                 }
             }
         }

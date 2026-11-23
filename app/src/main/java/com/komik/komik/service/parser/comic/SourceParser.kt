@@ -43,7 +43,9 @@ object SourceParser {
             pageSize = limit,
             limit = limit,
             offset = offset,
-            sortBy = "latest"
+            sortBy = "latest",
+            type = "mirror",
+            format = "manhwa"
         )
         val pageData = response.data
 

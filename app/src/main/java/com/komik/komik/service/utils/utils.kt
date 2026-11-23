@@ -22,21 +22,36 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
-// === FUNGSI PEMBANTU BARU UNTUK EKSTRAKSI ANGKA ===
+// === FUNGSI PEMBANTU BARU UNTUK EKSTRAKSI & FORMAT ANGKA CHAPTER ===
 fun extractNumberFromDataNum(dataNumString: String): Double {
     // Regex: \d+(\.\d+)?
     // \d+   : Mencocokkan satu atau lebih digit (0-9)
     // (\.\d+)?: Opsional (?), cocokkan satu titik (.) diikuti satu atau lebih digit
-    // Ini akan menangkap "314", "316", "1.5", dll., tapi mengabaikan " Fix"
+    // Ini akan menangkap "314", "316", "7.1", "8.2", dll.
     val regex = Regex("""\d+(\.\d+)?""")
 
     val matchResult = regex.find(dataNumString) // Cari pola angka di dalam string `dataNumString`
 
-    // Ambil nilai yang cocok (misalnya "314" dari "314 Fix")
+    // Ambil nilai yang cocok (misalnya "8.2" dari "Chapter 8.2")
     val numberString = matchResult?.value
 
     // Konversi ke Double. Jika tidak ada angka yang cocok atau konversi gagal, return 0.0.
     return numberString?.toDoubleOrNull() ?: 0.0
+}
+
+fun Double.formatChapterNumber(): String {
+    return if (this % 1.0 == 0.0) {
+        this.toLong().toString()
+    } else {
+        // Hilangkan trailing zeros jika ada, tapi pertahankan desimal (misal 8.2, 7.1)
+        val formatted = this.toString()
+        if (formatted.endsWith(".0")) formatted.substringBefore(".0") else formatted
+    }
+}
+
+fun Double?.formatChapterNumberOrEmpty(): String {
+    if (this == null) return ""
+    return this.formatChapterNumber()
 }
 
 fun formatWaktuLalu(createdAt: Long): String {

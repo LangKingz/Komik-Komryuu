@@ -47,10 +47,10 @@ data class Datan(
 	val chapter: Chapter? = null,
 
 	@field:SerializedName("prev_chapter_number")
-	val prevChapterNumber: Int? = null,
+	val prevChapterNumber: Double? = null,
 
 	@field:SerializedName("chapter_number")
-	val chapterNumber: Int? = null,
+	val chapterNumber: Double? = null,
 
 	@field:SerializedName("base_url")
 	val baseUrl: String? = null,

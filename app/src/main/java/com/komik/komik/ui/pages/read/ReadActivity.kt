@@ -42,6 +42,7 @@ import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getImages
 import com.komik.komik.service.utils.CloudSyncHelper
 import com.komik.komik.service.utils.PreferenceManager
+import com.komik.komik.service.utils.formatChapterNumber
 import com.komik.komik.service.utils.typeSource
 import java.io.File
 import kotlinx.coroutines.CoroutineScope
@@ -901,7 +902,7 @@ class ReadActivity : AppCompatActivity() {
     }
 
     private fun formatChapterNum(num: Double): String {
-        return if (num % 1.0 == 0.0) num.toInt().toString() else num.toString()
+        return num.formatChapterNumber()
     }
 
     companion object {

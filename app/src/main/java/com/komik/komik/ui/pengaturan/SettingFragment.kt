@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import kotlinx.coroutines.flow.collectLatest
 import com.bumptech.glide.Glide
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -1333,6 +1334,23 @@ class SettingFragment : Fragment() {
             showIntervalSelectionDialog()
         }
 
+        binding.itemChapterUpdatesCenter.setOnClickListener {
+            startActivity(Intent(requireContext(), com.komik.komik.ui.pages.updates.ChapterUpdatesActivity::class.java))
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            db.chapterUpdateDao().getUnreadCount().collectLatest { unreadCount ->
+                if (_binding != null) {
+                    if (unreadCount > 0) {
+                        binding.tvSettingUpdateBadge.visibility = View.VISIBLE
+                        binding.tvSettingUpdateBadge.text = "$unreadCount Baru"
+                    } else {
+                        binding.tvSettingUpdateBadge.visibility = View.GONE
+                    }
+                }
+            }
+        }
+
         // 3. Status Terakhir Dicek & Tombol Cek Manual
         updateLastCheckTimeDisplay(prefManager.lastUpdateCheckMillis)
 
@@ -1705,6 +1723,7 @@ class SettingFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         setupUserProfile()
+        (activity as? com.komik.komik.MainActivity)?.refreshNavProfileAvatar()
         calculateImageCacheSize()
         val context = context
         if (context != null) {

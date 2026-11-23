@@ -8,9 +8,7 @@ import com.komik.komik.service.api.model.DataItem
 import com.komik.komik.service.api.model.DataItems
 import com.komik.komik.service.client
 import com.komik.komik.service.data.model.Genre
-import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getListUpdate
-import com.komik.komik.service.repository.Comic
 import com.komik.komik.service.repository.Repository
 import com.komik.komik.service.utils.AppConfigHelper
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +18,6 @@ import kotlinx.coroutines.withContext
 class Homeviewmodel : ViewModel() {
 
     val repository = Repository(client)
-    private val comicRepo = Comic(client)
 
     private val _source = MutableLiveData<List<DataItems>?>()
     val source: LiveData<List<DataItems>?> get() = _source
@@ -46,77 +43,32 @@ class Homeviewmodel : ViewModel() {
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> get() = _error
 
-    init {
-        loadHomeData()
-    }
+    private var lastIncludeInactive: Boolean = false
 
-    fun loadHomeData() {
+    fun loadHomeData(includeInactive: Boolean = false) {
+        lastIncludeInactive = includeInactive
         _loading.value = true
         _error.value = null
         viewModelScope.launch {
-            _genres.postValue(
-                listOf(
-                    Genre(comicTitle = "", genre = "Semua"),
-                    Genre(comicTitle = "", genre = "Action"),
-                    Genre(comicTitle = "", genre = "Romance"),
-                    Genre(comicTitle = "", genre = "Fantasy"),
-                    Genre(comicTitle = "", genre = "Manhwa"),
-                    Genre(comicTitle = "", genre = "Comedy"),
-                    Genre(comicTitle = "", genre = "Isekai"),
-                    Genre(comicTitle = "", genre = "Drama"),
-                    Genre(comicTitle = "", genre = "Adventure"),
-                    Genre(comicTitle = "", genre = "School Life")
-                )
-            )
-
-            // 1. Fetch extensions & Server Config
+            // Fetch extensions & Server Config
             try {
                 val exts = withContext(Dispatchers.IO) {
                     AppConfigHelper.fetchConfig()
-                    repository.getSourceExtension()
+                    repository.getSourceExtension(includeInactive = includeInactive)
                 }
                 _source.postValue(exts)
                 _isServerOnline.postValue(true)
             } catch (e: Exception) {
                 e.printStackTrace()
                 _isServerOnline.postValue(false)
+                _error.postValue(e.localizedMessage ?: "Gagal memuat sumber ekstensi")
+            } finally {
+                _loading.postValue(false)
             }
-
-            // 2. Fetch Explore / Carousel
-            try {
-                val explore = withContext(Dispatchers.IO) {
-                    repository.getExplore(pageSize = 6, sortBy = "popular")
-                }
-                _carousel.postValue(explore)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            // 3. Fetch latest comics
-            try {
-                val latest = withContext(Dispatchers.IO) {
-                    comicRepo.getComic(sourceType.komikcast, "https://komikcast.li/", 1)
-                }
-                _latestComics.postValue(latest.take(12))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            // 4. Fetch popular comics
-            try {
-                val popular = withContext(Dispatchers.IO) {
-                    comicRepo.getComic(sourceType.ikiru, "https://id.ikiru.wtf/", 1)
-                }
-                _popularComics.postValue(popular.take(12))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            _loading.postValue(false)
         }
     }
 
-    fun fetchSource() {
-        loadHomeData()
+    fun fetchSource(includeInactive: Boolean = lastIncludeInactive) {
+        loadHomeData(includeInactive)
     }
 }

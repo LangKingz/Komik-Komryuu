@@ -2,40 +2,35 @@ package com.komik.komik.ui.beranda
 
 import android.content.Context
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.komik.komik.MainActivity
 import com.komik.komik.R
 import com.komik.komik.databinding.FragmentHomefragmentBinding
-import com.komik.komik.service.adapter.AdapterCorousel
-import com.komik.komik.service.adapter.AdapterGenre
-import com.komik.komik.service.adapter.AdapterManhwa
 import com.komik.komik.service.adapter.AdapterQuickResume
 import com.komik.komik.service.adapter.AdapterSource
 import com.komik.komik.service.api.model.DataItems
+import com.komik.komik.service.component.BottomSheetReport
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.riwayatRelationDao
-import com.komik.komik.service.parser.model.getListUpdate
 import com.komik.komik.service.utils.AppConfigHelper
 import com.komik.komik.service.utils.PreferenceManager
 import com.komik.komik.ui.pages.login.LoginActivity
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class homefragment : Fragment() {
 
@@ -47,13 +42,7 @@ class homefragment : Fragment() {
     private lateinit var riwayatdao: riwayatRelationDao
 
     private lateinit var adapterSource: AdapterSource
-    private lateinit var adapterLatest: AdapterManhwa
-    private lateinit var adapterPopular: AdapterManhwa
     private lateinit var adapterQuickResume: AdapterQuickResume
-
-    private val carouselHandler = Handler(Looper.getMainLooper())
-    private var carouselRunnable: Runnable? = null
-    private var carouselCount = 0
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -73,10 +62,18 @@ class homefragment : Fragment() {
         setupHeader()
         setupBroadcastBanner()
         setupRecyclerViews()
-        setupScrollBehavior()
+        setupViewModeToggle()
+        setupEcosystemStatusCard()
         setupSwipeRefresh()
         observeViewModel()
         loadQuickResume()
+
+        val pref = PreferenceManager.getInstance(requireContext())
+        val isPrivileged = pref.userRole.equals("admin", ignoreCase = true) ||
+                pref.userRole.equals("moderator", ignoreCase = true)
+        if (viewmodel.source.value == null) {
+            viewmodel.loadHomeData(includeInactive = isPrivileged)
+        }
 
         binding.refresh.setOnClickListener {
             refreshHomeContent()
@@ -99,8 +96,12 @@ class homefragment : Fragment() {
     private fun refreshHomeContent() {
         binding.layoutErrorSource.visibility = View.GONE
         adapterSource.refreshPings()
-        viewmodel.loadHomeData()
+        val pref = PreferenceManager.getInstance(requireContext())
+        val isPrivileged = pref.userRole.equals("admin", ignoreCase = true) ||
+                pref.userRole.equals("moderator", ignoreCase = true)
+        viewmodel.loadHomeData(includeInactive = isPrivileged)
         setupBroadcastBanner()
+        updateEcosystemStatus(viewmodel.source.value)
     }
 
     // ----------------------------------------------------
@@ -133,12 +134,8 @@ class homefragment : Fragment() {
             binding.ivUserAvatar.setImageResource(R.drawable.logo_komryu_rb)
         }
 
-        binding.btnQuickSearch.setOnClickListener {
-            try {
-                findNavController().navigate(R.id.searchFragment)
-            } catch (_: Exception) {
-                Toast.makeText(requireContext(), "Cari komik...", Toast.LENGTH_SHORT).show()
-            }
+        binding.btnHeaderReportInfo.setOnClickListener {
+            showHelpReportDialog()
         }
     }
 
@@ -152,7 +149,65 @@ class homefragment : Fragment() {
     }
 
     // ----------------------------------------------------
-    // 2. Setup RecyclerViews & Hero Carousel
+    // 2. Ecosystem Status Card & Help Report
+    // ----------------------------------------------------
+    private fun setupEcosystemStatusCard() {
+        binding.btnEcosystemAction.setOnClickListener {
+            showHelpReportDialog()
+        }
+        binding.cardEcosystemStatus.setOnClickListener {
+            showHelpReportDialog()
+        }
+        updateEcosystemStatus(viewmodel.source.value)
+    }
+
+    private fun updateEcosystemStatus(sources: List<DataItems>?) {
+        if (_binding == null) return
+        val pref = PreferenceManager.getInstance(requireContext())
+
+        // Active extensions count
+        if (!sources.isNullOrEmpty()) {
+            val isPrivileged = pref.userRole.equals("admin", ignoreCase = true) ||
+                    pref.userRole.equals("moderator", ignoreCase = true)
+            val activeCount = sources.count { it.isActive != false }
+            val inactiveCount = sources.size - activeCount
+
+            if (isPrivileged && inactiveCount > 0) {
+                binding.tvEcosystemTitle.text = "$activeCount Aktif • $inactiveCount Maintenance (Admin Test)"
+            } else {
+                binding.tvEcosystemTitle.text = "$activeCount Sumber Ekstensi Aktif • Siap Membaca"
+            }
+        } else {
+            binding.tvEcosystemTitle.text = "Memuat status ekstensi..."
+        }
+
+        // Cloud sync status
+        val lastSync = pref.lastCloudSyncMillis
+        if (lastSync > 0L) {
+            val sdf = SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault())
+            binding.tvEcosystemSubtitle.text = "Cloud Sync: ${sdf.format(Date(lastSync))}"
+        } else {
+            binding.tvEcosystemSubtitle.text = "Cloud Sync: Belum disinkronkan"
+        }
+    }
+
+    private fun showHelpReportDialog() {
+        try {
+            val reportSheet = BottomSheetReport.newInstance(
+                sourceName = "Komryuu Ecosystem",
+                comicTitle = "Pusat Bantuan & Laporan",
+                chapterTitle = null,
+                targetUrl = "app://home",
+                defaultType = "other"
+            )
+            reportSheet.show(childFragmentManager, BottomSheetReport.TAG)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Gagal membuka pusat bantuan: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // ----------------------------------------------------
+    // 3. Setup RecyclerViews (Quick Resume & Source Extensions)
     // ----------------------------------------------------
     private fun setupRecyclerViews() {
         // Quick Resume
@@ -161,30 +216,19 @@ class homefragment : Fragment() {
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         binding.rvQuickResume.adapter = adapterQuickResume
 
-        // Genres
-        binding.rvGenres.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-
-        // Latest Comics (3 Columns Grid)
-        adapterLatest = AdapterManhwa(mutableListOf())
-        binding.rvLatestComics.layoutManager = GridLayoutManager(requireContext(), 3)
-        binding.rvLatestComics.adapter = adapterLatest
-
-        // Popular Comics (Horizontal)
-        adapterPopular = AdapterManhwa(mutableListOf())
-        binding.rvPopularComics.layoutManager =
-            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        binding.rvPopularComics.adapter = adapterPopular
-
-        // Source Extensions (2 Columns with Header span)
+        // Source Extensions (Grid / List dynamic span)
         adapterSource = AdapterSource(mutableListOf())
         adapterSource.initPinnedCache(requireContext())
-        val spanCount = 2
-        val sourceLayoutManager = GridLayoutManager(requireContext(), spanCount).apply {
+
+        val pref = PreferenceManager.getInstance(requireContext())
+        val currentMode = pref.sourceViewMode
+        val initialSpan = if (currentMode == "list") 1 else 2
+
+        val sourceLayoutManager = GridLayoutManager(requireContext(), initialSpan).apply {
             spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
                 override fun getSpanSize(position: Int): Int {
                     return when (adapterSource.getItemViewType(position)) {
-                        AdapterSource.VIEW_TYPE_HEADER -> spanCount
+                        AdapterSource.VIEW_TYPE_HEADER -> this@apply.spanCount
                         else -> 1
                     }
                 }
@@ -192,17 +236,40 @@ class homefragment : Fragment() {
         }
         binding.listSource.layoutManager = sourceLayoutManager
         binding.listSource.adapter = adapterSource
+
+        applySourceViewMode(currentMode)
     }
 
     // ----------------------------------------------------
-    // 3. Scroll Behavior
+    // 4. View Mode Toggle (Grid ↔ List)
     // ----------------------------------------------------
-    private fun setupScrollBehavior() {
-        // Bottom nav is docked to bottom; keeping stable view bounds
+    private fun setupViewModeToggle() {
+        binding.btnToggleSourceViewMode.setOnClickListener {
+            val pref = PreferenceManager.getInstance(requireContext())
+            val newMode = if (pref.sourceViewMode == "list") "grid" else "list"
+            pref.sourceViewMode = newMode
+            applySourceViewMode(newMode)
+        }
+    }
+
+    private fun applySourceViewMode(mode: String) {
+        val isList = mode.equals("list", ignoreCase = true)
+        val spanCount = if (isList) 1 else 2
+
+        (binding.listSource.layoutManager as? GridLayoutManager)?.spanCount = spanCount
+        adapterSource.switchViewMode(if (isList) "list" else "grid")
+
+        if (isList) {
+            binding.ivViewModeIcon.setImageResource(R.drawable.ic_view_list)
+            binding.tvViewModeLabel.text = "List"
+        } else {
+            binding.ivViewModeIcon.setImageResource(R.drawable.squares_four)
+            binding.tvViewModeLabel.text = "Grid"
+        }
     }
 
     // ----------------------------------------------------
-    // 4. Observe ViewModel
+    // 5. Observe ViewModel
     // ----------------------------------------------------
     private fun observeViewModel() {
         // Server Status
@@ -218,54 +285,9 @@ class homefragment : Fragment() {
             }
         }
 
-        // Hero Carousel
-        viewmodel.carousel.observe(viewLifecycleOwner) { items ->
-            if (!items.isNullOrEmpty()) {
-                carouselCount = items.size
-                val carouselAdapter = AdapterCorousel(items)
-                binding.vpCarousel.adapter = carouselAdapter
-                setupCarouselDots(carouselCount, 0)
-
-                binding.vpCarousel.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-                    override fun onPageSelected(position: Int) {
-                        super.onPageSelected(position)
-                        setupCarouselDots(carouselCount, position)
-                    }
-                })
-
-                startCarouselAutoSlide()
-            }
-        }
-
-        // Genres
-        viewmodel.genres.observe(viewLifecycleOwner) { genres ->
-            binding.rvGenres.adapter = AdapterGenre(genres) { genre ->
-                Toast.makeText(requireContext(), "Genre: ${genre.genre}", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        // Latest Comics
-        viewmodel.latestComics.observe(viewLifecycleOwner) { comics ->
-            if (comics.isNullOrEmpty()) {
-                binding.sectionLatest.visibility = View.GONE
-            } else {
-                binding.sectionLatest.visibility = View.VISIBLE
-                adapterLatest.updateData(comics)
-            }
-        }
-
-        // Popular Comics
-        viewmodel.popularComics.observe(viewLifecycleOwner) { comics ->
-            if (comics.isNullOrEmpty()) {
-                binding.sectionPopular.visibility = View.GONE
-            } else {
-                binding.sectionPopular.visibility = View.VISIBLE
-                adapterPopular.updateData(comics)
-            }
-        }
-
-        // Source Extensions (Filter isActive == true unless Admin/Moderator)
+        // Source Extensions
         viewmodel.source.observe(viewLifecycleOwner) { sources ->
+            updateEcosystemStatus(sources)
             if (!sources.isNullOrEmpty()) {
                 binding.layoutErrorSource.visibility = View.GONE
                 binding.listSource.visibility = View.VISIBLE
@@ -312,7 +334,7 @@ class homefragment : Fragment() {
     }
 
     // ----------------------------------------------------
-    // 5. Quick Resume ("Lanjut Baca") from Room Database
+    // 6. Quick Resume ("Lanjut Baca") from Room Database
     // ----------------------------------------------------
     private fun loadQuickResume() {
         riwayatdao.getRiwayatDetail().observe(viewLifecycleOwner) { riwayatList ->
@@ -386,54 +408,14 @@ class homefragment : Fragment() {
         }
     }
 
-    // ----------------------------------------------------
-    // 6. Carousel Auto-slide & Dots
-    // ----------------------------------------------------
-    private fun setupCarouselDots(count: Int, selectedPosition: Int) {
-        binding.layoutDots.removeAllViews()
-        for (i in 0 until count) {
-            val dot = View(requireContext()).apply {
-                val isSelected = (i == selectedPosition)
-                val widthDp = if (isSelected) 22 else 7
-                val params = LinearLayout.LayoutParams(
-                    (widthDp * resources.displayMetrics.density).toInt(),
-                    (6 * resources.displayMetrics.density).toInt()
-                ).apply {
-                    marginEnd = (5 * resources.displayMetrics.density).toInt()
-                }
-                layoutParams = params
-                background = ContextCompat.getDrawable(
-                    requireContext(),
-                    if (isSelected) R.drawable.badge_last_read else R.drawable.bg_read_btn
-                )
-            }
-            binding.layoutDots.addView(dot)
-        }
-    }
-
-    private fun startCarouselAutoSlide() {
-        carouselRunnable?.let { carouselHandler.removeCallbacks(it) }
-        carouselRunnable = object : Runnable {
-            override fun run() {
-                if (_binding != null && carouselCount > 1) {
-                    val current = binding.vpCarousel.currentItem
-                    val next = (current + 1) % carouselCount
-                    binding.vpCarousel.setCurrentItem(next, true)
-                    carouselHandler.postDelayed(this, 4000)
-                }
-            }
-        }
-        carouselHandler.postDelayed(carouselRunnable!!, 4000)
-    }
-
     override fun onResume() {
         super.onResume()
         (activity as? MainActivity)?.showBottomNav()
+        updateEcosystemStatus(viewmodel.source.value)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        carouselRunnable?.let { carouselHandler.removeCallbacks(it) }
         _binding = null
     }
 }

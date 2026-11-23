@@ -35,7 +35,7 @@ data class GenreItemIkiru(
 data class ChapterItem(
 
 	@field:SerializedName("number")
-	val number: Int? = null,
+	val number: Double? = null,
 
 	@field:SerializedName("createdAt")
 	val createdAt: String? = null,

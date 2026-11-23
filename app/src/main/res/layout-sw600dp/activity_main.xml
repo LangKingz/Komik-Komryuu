@@ -5,21 +5,10 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/aurora_bg"
     tools:context=".MainActivity">
 
-    <com.google.android.material.navigationrail.NavigationRailView
-        android:id="@+id/navigation_rail"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
-        android:background="?attr/colorSurface"
-        app:itemActiveIndicatorStyle="@style/App.Custom.Indicator"
-        app:labelVisibilityMode="labeled"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:menu="@menu/menu_bottom_navigation" />
-
-    <fragment
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="0dp"
@@ -27,8 +16,244 @@
         app:defaultNavHost="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/navigation_rail"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/bottom_navigation" />
+
+    <!-- Modern Floating Pill Bottom Navigation Bar (Tablet / Large Screen Optimized) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/floatingBottomBar"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:layout_marginHorizontal="32dp"
+        android:layout_marginBottom="16dp"
+        android:clickable="true"
+        android:focusable="false"
+        app:cardBackgroundColor="#CC1C1C28"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="8dp"
+        app:strokeColor="#2A2A3C"
+        app:strokeWidth="1dp"
+        app:layout_constraintWidth_max="560dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- 1. Beranda (Home) -->
+            <FrameLayout
+                android:id="@+id/tabNavHome"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:id="@+id/containerNavHome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <View
+                            android:id="@+id/pillHighlightHome"
+                            android:layout_width="48dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:alpha="0"
+                            android:background="@drawable/bg_nav_pill_active" />
+
+                        <ImageView
+                            android:id="@+id/ivNavHome"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/home_alt_slim_horiz"
+                            app:tint="#8E8E9E" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvNavHome"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/intersemi"
+                        android:text="@string/beranda"
+                        android:textColor="#8E8E9E"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- 2. Pustaka (Library) -->
+            <FrameLayout
+                android:id="@+id/tabNavPustaka"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:id="@+id/containerNavPustaka"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <View
+                            android:id="@+id/pillHighlightPustaka"
+                            android:layout_width="48dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:alpha="0"
+                            android:background="@drawable/bg_nav_pill_active" />
+
+                        <ImageView
+                            android:id="@+id/ivNavPustaka"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/baseline_bookmarks_24"
+                            app:tint="#8E8E9E" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvNavPustaka"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/intersemi"
+                        android:text="@string/pustaka"
+                        android:textColor="#8E8E9E"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- 3. Riwayat (History) -->
+            <FrameLayout
+                android:id="@+id/tabNavHistory"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:id="@+id/containerNavHistory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <View
+                            android:id="@+id/pillHighlightHistory"
+                            android:layout_width="48dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:alpha="0"
+                            android:background="@drawable/bg_nav_pill_active" />
+
+                        <ImageView
+                            android:id="@+id/ivNavHistory"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/baseline_history_24"
+                            app:tint="#8E8E9E" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvNavHistory"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/intersemi"
+                        android:text="@string/riwayat"
+                        android:textColor="#8E8E9E"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </FrameLayout>
+
+            <!-- 4. Profil (Profile with Real Circular Avatar) -->
+            <FrameLayout
+                android:id="@+id/tabNavProfile"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:id="@+id/containerNavProfile"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <View
+                            android:id="@+id/pillHighlightProfile"
+                            android:layout_width="48dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:alpha="0"
+                            android:background="@drawable/bg_nav_pill_active" />
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/ivNavProfileAvatar"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:scaleType="centerCrop"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.Komik.Circle"
+                            app:strokeColor="#3A3A4E"
+                            app:strokeWidth="1dp"
+                            tools:src="@drawable/ppanime" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/tvNavProfile"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="@font/intersemi"
+                        android:text="@string/profil"
+                        android:textColor="#8E8E9E"
+                        android:textSize="10sp" />
+                </LinearLayout>
+            </FrameLayout>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -7,5 +7,5 @@ import com.komik.komik.service.api.model.ShinigamiHomeExplore
 
 interface RepositorySource {
     suspend fun getExplore(pageSize:Int,sortBy:String) : List<DataItem>
-    suspend fun getSourceExtension(): List<DataItems>
+    suspend fun getSourceExtension(includeInactive: Boolean = false): List<DataItems>
 }

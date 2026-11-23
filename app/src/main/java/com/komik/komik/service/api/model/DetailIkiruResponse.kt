@@ -59,7 +59,7 @@ data class DataDetailIkiru(
 	val type: String? = null,
 
 	@field:SerializedName("lastChapter")
-	val lastChapter: Int? = null,
+	val lastChapter: Double? = null,
 
 	@field:SerializedName("isProject")
 	val isProject: Boolean? = null,
@@ -95,7 +95,7 @@ data class DataDetailIkiru(
 data class FirstChapter(
 
 	@field:SerializedName("number")
-	val number: Int? = null,
+	val number: Double? = null,
 
 	@field:SerializedName("id")
 	val id: String? = null,
@@ -161,7 +161,7 @@ data class Chapters(
 data class LatestChapter(
 
 	@field:SerializedName("number")
-	val number: Int? = null,
+	val number: Double? = null,
 
 	@field:SerializedName("createdAt")
 	val createdAt: String? = null,
@@ -183,6 +183,9 @@ data class LatestChapter(
 
 	@field:SerializedName("downloadCount")
 	val downloadCount: Int? = null,
+
+	@field:SerializedName("slug")
+	val slug: String? = null,
 
 	@field:SerializedName("updatedAt")
 	val updatedAt: String? = null
@@ -233,7 +236,7 @@ data class Metadata(
 data class ChaptersItem(
 
 	@field:SerializedName("number")
-	val number: Int? = null,
+	val number: Double? = null,
 
 	@field:SerializedName("createdAt")
 	val createdAt: String? = null,
@@ -255,6 +258,9 @@ data class ChaptersItem(
 
 	@field:SerializedName("downloadCount")
 	val downloadCount: Int? = null,
+
+	@field:SerializedName("slug")
+	val slug: String? = null,
 
 	@field:SerializedName("updatedAt")
 	val updatedAt: String? = null

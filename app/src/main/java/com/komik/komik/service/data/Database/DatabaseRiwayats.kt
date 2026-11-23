@@ -12,7 +12,9 @@ import com.komik.komik.service.data.dao.LibraryDao
 import com.komik.komik.service.data.dao.chapterDao
 import com.komik.komik.service.data.dao.genreDao
 import com.komik.komik.service.data.dao.riwayatRelationDao
+import com.komik.komik.service.data.dao.ChapterUpdateDao
 import com.komik.komik.service.data.model.Chapter
+import com.komik.komik.service.data.model.ChapterUpdateLog
 import com.komik.komik.service.data.model.Comic
 import com.komik.komik.service.data.model.DownloadChapter
 import com.komik.komik.service.data.model.DownloadLog
@@ -30,9 +32,10 @@ import com.komik.komik.service.data.model.Riwayats
         Library::class,
         Extensi::class,
         DownloadChapter::class,
-        DownloadLog::class
+        DownloadLog::class,
+        ChapterUpdateLog::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class DatabaseRiwayats : RoomDatabase() {
@@ -44,20 +47,26 @@ abstract class DatabaseRiwayats : RoomDatabase() {
     abstract fun libraryDao(): LibraryDao
     abstract fun extensiDao(): ExtensiDao
     abstract fun downloadDao(): DownloadDao
+    abstract fun chapterUpdateDao(): ChapterUpdateDao
 
     companion object {
 
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE Library ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0")
-                db.execSQL("ALTER TABLE Library ADD COLUMN isRead INTEGER NOT NULL DEFAULT 0")
-                db.execSQL("ALTER TABLE RiwayatRelasi ADD COLUMN pageRead INTEGER")
-                db.execSQL("ALTER TABLE RiwayatRelasi ADD COLUMN totalPage INTEGER")
-                db.execSQL("ALTER TABLE RiwayatRelasi ADD COLUMN isRead INTEGER NOT NULL DEFAULT 0")
-                db.execSQL("ALTER TABLE Library ADD COLUMN imageLokal TEXT")
-                db.execSQL("ALTER TABLE Chapter ADD COLUMN numChapter INTEGER DEFAULT 0")
-                db.execSQL("ALTER TABLE comic ADD COLUMN tags TEXT")
-                db.execSQL("ALTER TABLE comic ADD COLUMN totalView TEXT")
+                // Buat tabel chapter_update_logs jika belum ada
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS chapter_update_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        comicUrl TEXT NOT NULL,
+                        comicTitle TEXT NOT NULL,
+                        coverUrl TEXT NOT NULL,
+                        sourceName TEXT NOT NULL,
+                        chapterTitle TEXT NOT NULL,
+                        chapterUrl TEXT NOT NULL,
+                        detectedAt INTEGER NOT NULL,
+                        isRead INTEGER NOT NULL DEFAULT 0
+                    )
+                """.trimIndent())
             }
         }
 
@@ -71,7 +80,7 @@ abstract class DatabaseRiwayats : RoomDatabase() {
                     DatabaseRiwayats::class.java,
                     "riwayat_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(MIGRATION_1_2)
                     .build()
                 INSTANCE = instance
                 instance

@@ -41,6 +41,7 @@ import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.repository.Detail
 import com.komik.komik.service.utils.PreferenceManager
 import com.komik.komik.service.utils.createNotificationChannel
+import com.komik.komik.service.utils.formatChapterNumber
 import com.komik.komik.service.utils.showNotification
 import com.komik.komik.service.utils.typeSource
 import com.komik.komik.ui.pages.read.ReadActivity
@@ -514,7 +515,7 @@ class DetailActivity : AppCompatActivity() {
                 adapterChapter.setLastReadChapterId(lastChapter.id)
 
                 val displayTitle = if (lastChapter.numChapter > 0) {
-                    "Ch. ${lastChapter.numChapter}"
+                    "Ch. ${lastChapter.numChapter.formatChapterNumber()}"
                 } else {
                     lastChapter.title
                 }

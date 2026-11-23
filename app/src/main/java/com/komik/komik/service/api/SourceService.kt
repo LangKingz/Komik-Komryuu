@@ -61,6 +61,7 @@ interface newSourceService {
     @GET("api/v1/extensi")
     suspend fun getSource(
         @Query("type") type: String = "",
+        @Query("includeInactive") includeInactive: Boolean = false
     ): SourceNewModel
 
     @PATCH("api/v1/extensi")

@@ -95,6 +95,7 @@ class DetailViewmodel(
                         applyFilterAndSortInternal()
                     }
                 } else {
+                    Log.d(TAG, "refreshData: ")
                     _error.postValue(parsedData.description)
                 }
             } catch (e: Exception) {
@@ -127,7 +128,9 @@ class DetailViewmodel(
                             data = comicDao.getComicByUrl(url)
                         } else {
                             withContext(Dispatchers.Main) {
+                                
                                 _error.value = parsedData.description
+                                Log.d(TAG, "getChapters: ${_error}")
                             }
                         }
                     }
