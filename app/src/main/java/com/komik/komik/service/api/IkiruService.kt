@@ -38,9 +38,9 @@ interface IkiruService {
 
     // Endpoint untuk mengambil gambar per chapter
     // Contoh pemanggilan: getChapterImages("bersinar-terang", "chapter-14")
-    @GET("api/public/manga/{mangaSlug}/{chapterSlug}")
+    @GET("api/public/chapter/{chapterSlug}")
     suspend fun getChapterImages(
-        @Path("mangaSlug") mangaSlug: String,
-        @Path("chapterSlug") chapterSlug: String
+        @Path("chapterSlug") chapterSlug: String,
+        @Query("mangaSlug") mangaSlug: String
     ): ImageIkiruResponse
 }

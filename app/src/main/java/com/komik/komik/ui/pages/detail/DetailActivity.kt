@@ -89,6 +89,10 @@ class DetailActivity : AppCompatActivity() {
         locations = location
         urlResume = url
 
+        if (location?.contains("ikiru", ignoreCase = true) == true || url?.contains("ikiru", ignoreCase = true) == true) {
+            Log.d("IKIRU_TRACE", "DetailActivity onCreate: location='$location', rawUrl='$url'")
+        }
+
         createNotificationChannel("channel_detail", this)
 
         val source = typeSource.getSourceType(location.toString())
@@ -401,13 +405,31 @@ class DetailActivity : AppCompatActivity() {
                 binding.ivStarRating.visibility = View.GONE
             }
 
+            val isIkiru = sources == sourceType.ikiru || locations?.contains("ikiru", ignoreCase = true) == true
+            if (isIkiru) {
+                Log.d("IKIRU_TRACE", "DetailActivity observed comic: title='${data.title}', imageUrl='${data.imageUrl}', location='${data.location}'")
+            }
+
+            val coverModel: Any = if (data.localImageUri != null) {
+                data.localImageUri
+            } else if (isIkiru && data.imageUrl.isNotBlank()) {
+                val headers = com.bumptech.glide.load.model.LazyHeaders.Builder()
+                    .addHeader("Referer", client.getIkiruUrl())
+                    .addHeader("Origin", client.getIkiruUrl().trimEnd('/'))
+                    .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .build()
+                com.bumptech.glide.load.model.GlideUrl(data.imageUrl, headers)
+            } else {
+                data.imageUrl
+            }
+
             Glide.with(this)
-                .load(data.localImageUri ?: data.imageUrl)
+                .load(coverModel)
                 .error(R.drawable.placeholder)
                 .into(binding.banner)
 
             Glide.with(this)
-                .load(data.localImageUri ?: data.imageUrl)
+                .load(coverModel)
                 .error(R.drawable.placeholder)
                 .into(binding.imageView3)
 

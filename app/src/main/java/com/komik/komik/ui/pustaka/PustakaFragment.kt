@@ -29,6 +29,8 @@ import com.komik.komik.service.component.AlertDialogCostum
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.LibraryDao
 import com.komik.komik.service.utils.PreferenceManager
+import com.komik.komik.service.utils.calculateGridSpanCount
+import com.komik.komik.service.utils.isTablet
 import com.komik.komik.ui.pages.login.LoginActivity
 import com.komik.komik.ui.pages.search.SearchActivity
 
@@ -109,7 +111,13 @@ class PustakaFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        val initialSpan = if (prefManager.pustakaGridSpan in 2..3) prefManager.pustakaGridSpan else 3
+        val isTablet = requireContext().isTablet()
+        val optimalSpan = requireContext().calculateGridSpanCount()
+        val initialSpan = if (isTablet) {
+            optimalSpan
+        } else {
+            if (prefManager.pustakaGridSpan in 2..3) prefManager.pustakaGridSpan else 3
+        }
         adapter = AdapterPustaka(mutableListOf(), isListMode = false, spanCount = initialSpan)
         binding.listPustaka.layoutManager = GridLayoutManager(requireContext(), initialSpan)
         binding.listPustaka.adapter = adapter
@@ -143,8 +151,14 @@ class PustakaFragment : Fragment() {
                 isListMode = false
                 adapter.isListMode = false
             }
-            val currentSpan = prefManager.pustakaGridSpan
-            val newSpan = if (currentSpan == 2) 3 else 2
+            val isTablet = requireContext().isTablet()
+            val optimal = requireContext().calculateGridSpanCount()
+            val currentSpan = adapter.spanCount
+            val newSpan = if (isTablet) {
+                if (currentSpan == optimal) (optimal - 1).coerceAtLeast(2) else optimal
+            } else {
+                if (currentSpan == 2) 3 else 2
+            }
             prefManager.pustakaGridSpan = newSpan
             adapter.spanCount = newSpan
 
@@ -173,7 +187,12 @@ class PustakaFragment : Fragment() {
         if (isListMode) {
             binding.listPustaka.layoutManager = LinearLayoutManager(requireContext())
         } else {
-            val span = if (prefManager.pustakaGridSpan in 2..3) prefManager.pustakaGridSpan else 3
+            val isTablet = requireContext().isTablet()
+            val span = if (isTablet) {
+                requireContext().calculateGridSpanCount()
+            } else {
+                if (prefManager.pustakaGridSpan in 2..3) prefManager.pustakaGridSpan else 3
+            }
             binding.listPustaka.layoutManager = GridLayoutManager(requireContext(), span)
         }
         adapter.notifyDataSetChanged()

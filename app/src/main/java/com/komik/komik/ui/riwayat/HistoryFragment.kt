@@ -11,9 +11,11 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.komik.komik.service.utils.isTablet
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
 import com.komik.komik.MainActivity
@@ -62,7 +64,22 @@ class HistoryFragment : Fragment() {
             }
         )
 
-        binding.listRiwayat.layoutManager = LinearLayoutManager(requireContext())
+        // Tablet sw600dp: 2-column grid with headers spanning 2 columns
+        if (requireContext().isTablet()) {
+            val gridLayoutManager = GridLayoutManager(requireContext(), 2).apply {
+                spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                    override fun getSpanSize(position: Int): Int {
+                        return when (adapter.getItemViewType(position)) {
+                            AdapterRiwayat.VIEW_TYPE_HEADER -> 2
+                            else -> 1
+                        }
+                    }
+                }
+            }
+            binding.listRiwayat.layoutManager = gridLayoutManager
+        } else {
+            binding.listRiwayat.layoutManager = LinearLayoutManager(requireContext())
+        }
         binding.listRiwayat.adapter = adapter
 
         // Swipe to delete

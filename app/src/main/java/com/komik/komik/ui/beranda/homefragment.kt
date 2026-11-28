@@ -25,6 +25,7 @@ import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.riwayatRelationDao
 import com.komik.komik.service.utils.AppConfigHelper
 import com.komik.komik.service.utils.PreferenceManager
+import com.komik.komik.service.utils.isTablet
 import com.komik.komik.ui.pages.login.LoginActivity
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -222,7 +223,9 @@ class homefragment : Fragment() {
 
         val pref = PreferenceManager.getInstance(requireContext())
         val currentMode = pref.sourceViewMode
-        val initialSpan = if (currentMode == "list") 1 else 2
+        val isTablet = requireContext().isTablet()
+        val defaultGridSpan = if (isTablet) 3 else 2
+        val initialSpan = if (currentMode == "list") 1 else defaultGridSpan
 
         val sourceLayoutManager = GridLayoutManager(requireContext(), initialSpan).apply {
             spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
@@ -254,7 +257,8 @@ class homefragment : Fragment() {
 
     private fun applySourceViewMode(mode: String) {
         val isList = mode.equals("list", ignoreCase = true)
-        val spanCount = if (isList) 1 else 2
+        val isTablet = context?.isTablet() == true
+        val spanCount = if (isList) 1 else if (isTablet) 3 else 2
 
         (binding.listSource.layoutManager as? GridLayoutManager)?.spanCount = spanCount
         adapterSource.switchViewMode(if (isList) "list" else "grid")

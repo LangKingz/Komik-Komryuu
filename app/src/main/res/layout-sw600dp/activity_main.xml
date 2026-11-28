@@ -8,53 +8,48 @@
     android:background="@drawable/aurora_bg"
     tools:context=".MainActivity">
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/nav_host_fragment"
-        android:name="androidx.navigation.fragment.NavHostFragment"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:defaultNavHost="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/bottom_navigation" />
-
-    <!-- Modern Floating Pill Bottom Navigation Bar (Tablet / Large Screen Optimized) -->
+    <!-- Modern Floating Vertical Navigation Rail (Tablet / Large Screen Optimized) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/floatingBottomBar"
-        android:layout_width="0dp"
-        android:layout_height="64dp"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginBottom="16dp"
+        android:layout_width="80dp"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
         android:clickable="true"
         android:focusable="false"
         app:cardBackgroundColor="#CC1C1C28"
-        app:cardCornerRadius="32dp"
+        app:cardCornerRadius="28dp"
         app:cardElevation="8dp"
         app:strokeColor="#2A2A3C"
         app:strokeWidth="1dp"
-        app:layout_constraintWidth_max="560dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:baselineAligned="false"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingVertical="16dp">
+
+            <!-- App Logo Branding Header -->
+            <ImageView
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="20dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/logo_komryu_rb" />
 
             <!-- 1. Beranda (Home) -->
             <FrameLayout
                 android:id="@+id/tabNavHome"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                android:paddingVertical="8dp">
 
                 <LinearLayout
                     android:id="@+id/containerNavHome"
@@ -70,8 +65,8 @@
 
                         <View
                             android:id="@+id/pillHighlightHome"
-                            android:layout_width="48dp"
-                            android:layout_height="28dp"
+                            android:layout_width="52dp"
+                            android:layout_height="32dp"
                             android:layout_gravity="center"
                             android:alpha="0"
                             android:background="@drawable/bg_nav_pill_active" />
@@ -89,7 +84,7 @@
                         android:id="@+id/tvNavHome"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:fontFamily="@font/intersemi"
                         android:text="@string/beranda"
                         android:textColor="#8E8E9E"
@@ -100,12 +95,13 @@
             <!-- 2. Pustaka (Library) -->
             <FrameLayout
                 android:id="@+id/tabNavPustaka"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                android:paddingVertical="8dp">
 
                 <LinearLayout
                     android:id="@+id/containerNavPustaka"
@@ -121,8 +117,8 @@
 
                         <View
                             android:id="@+id/pillHighlightPustaka"
-                            android:layout_width="48dp"
-                            android:layout_height="28dp"
+                            android:layout_width="52dp"
+                            android:layout_height="32dp"
                             android:layout_gravity="center"
                             android:alpha="0"
                             android:background="@drawable/bg_nav_pill_active" />
@@ -140,7 +136,7 @@
                         android:id="@+id/tvNavPustaka"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:fontFamily="@font/intersemi"
                         android:text="@string/pustaka"
                         android:textColor="#8E8E9E"
@@ -151,12 +147,13 @@
             <!-- 3. Riwayat (History) -->
             <FrameLayout
                 android:id="@+id/tabNavHistory"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                android:paddingVertical="8dp">
 
                 <LinearLayout
                     android:id="@+id/containerNavHistory"
@@ -172,8 +169,8 @@
 
                         <View
                             android:id="@+id/pillHighlightHistory"
-                            android:layout_width="48dp"
-                            android:layout_height="28dp"
+                            android:layout_width="52dp"
+                            android:layout_height="32dp"
                             android:layout_gravity="center"
                             android:alpha="0"
                             android:background="@drawable/bg_nav_pill_active" />
@@ -191,7 +188,7 @@
                         android:id="@+id/tvNavHistory"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:fontFamily="@font/intersemi"
                         android:text="@string/riwayat"
                         android:textColor="#8E8E9E"
@@ -199,15 +196,28 @@
                 </LinearLayout>
             </FrameLayout>
 
-            <!-- 4. Profil (Profile with Real Circular Avatar) -->
+            <!-- Flexible Space to push Profile to bottom -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Thin Divider before Profile -->
+            <View
+                android:layout_width="36dp"
+                android:layout_height="1dp"
+                android:layout_marginBottom="12dp"
+                android:background="#2E333C" />
+
+            <!-- 4. Profil (Profile with Real Circular Avatar at Bottom) -->
             <FrameLayout
                 android:id="@+id/tabNavProfile"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
-                android:focusable="true">
+                android:focusable="true"
+                android:paddingVertical="8dp">
 
                 <LinearLayout
                     android:id="@+id/containerNavProfile"
@@ -223,8 +233,8 @@
 
                         <View
                             android:id="@+id/pillHighlightProfile"
-                            android:layout_width="48dp"
-                            android:layout_height="28dp"
+                            android:layout_width="52dp"
+                            android:layout_height="32dp"
                             android:layout_gravity="center"
                             android:alpha="0"
                             android:background="@drawable/bg_nav_pill_active" />
@@ -245,7 +255,7 @@
                         android:id="@+id/tvNavProfile"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:fontFamily="@font/intersemi"
                         android:text="@string/profil"
                         android:textColor="#8E8E9E"
@@ -255,5 +265,18 @@
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+
+    <!-- Content Fragment Container (Remaining Screen Width) -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:defaultNavHost="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/floatingBottomBar"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/bottom_navigation" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

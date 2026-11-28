@@ -35,8 +35,9 @@ import java.util.concurrent.ConcurrentHashMap
 /** Legacy single-image download helper (for PhotoView long-press) */
 fun downloadImageManager(context: Context, url: String) {
     try {
+        val cleanUrl = url.replace("&amp;", "&").trim()
         val filename = "gambar_${System.currentTimeMillis()}_komryuu.jpg"
-        val request = AndroidDownloadManager.Request(Uri.parse(url))
+        val request = AndroidDownloadManager.Request(Uri.parse(cleanUrl))
             .setTitle(filename)
             .setDescription("Mengunduh Gambar")
             .setNotificationVisibility(AndroidDownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -307,19 +308,20 @@ object ChapterDownloadManager {
         type: sourceType,
         destinationFile: File
     ): Long {
-        if (imageUrl.isBlank()) return 0L
+        val cleanUrl = imageUrl.replace("&amp;", "&").trim()
+        if (cleanUrl.isBlank()) return 0L
 
-        val requestBuilder = Request.Builder().url(imageUrl)
+        val requestBuilder = Request.Builder().url(cleanUrl)
 
         // Browser modern default User-Agent & Accept
         val defaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         requestBuilder.addHeader("User-Agent", defaultUserAgent)
         requestBuilder.addHeader("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
 
-        val lowerUrl = imageUrl.lowercase()
+        val lowerUrl = cleanUrl.lowercase()
         val isDoujin = lowerUrl.contains("desu.pics") || lowerUrl.contains("doujindesu") || type == sourceType.doujindesu
         val isShinigami = lowerUrl.contains("shngm.id") || type == sourceType.shinigami
-        val isIkiru = lowerUrl.contains("ikiru") || type == sourceType.ikiru
+        val isIkiru = type == sourceType.ikiru || lowerUrl.contains("ikiru.id") || lowerUrl.contains("ikiru.wtf") || lowerUrl.contains("ikiru")
 
         if (isDoujin) {
             val ddReferer = if (referer.isNotBlank() && (referer.contains("doujin") || referer.contains("desu"))) {
@@ -334,10 +336,13 @@ object ChapterDownloadManager {
         } else if (isShinigami) {
             requestBuilder.header("Referer", "https://app.shinigami.asia/")
         } else if (isIkiru) {
-            val ikiruReferer = if (referer.isNotBlank() && referer.startsWith("http")) referer else client.getIkiruUrl()
+            val ikiruReferer = if (referer.isNotBlank() && referer.startsWith("http")) referer else "https://11.ikiru.wtf/"
             requestBuilder.header("Referer", ikiruReferer)
-            requestBuilder.header("Origin", client.getIkiruUrl().trimEnd('/'))
-            requestBuilder.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+            requestBuilder.header("Origin", "https://11.ikiru.wtf")
+            requestBuilder.header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+            requestBuilder.header("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
+            Log.d("IKIRU_TRACE", "Loading CDN URL: $cleanUrl")
+            Log.d("IKIRU_TRACE", "DownloadManager downloadSingleImage: url='$cleanUrl', referer='$ikiruReferer'")
         } else if (referer.isNotBlank() && referer.startsWith("http")) {
             requestBuilder.header("Referer", referer)
         }
@@ -346,14 +351,20 @@ object ChapterDownloadManager {
             val response = okHttpClient.newCall(requestBuilder.build()).execute()
             response.use { resp ->
                 if (!resp.isSuccessful) {
-                    Log.w(TAG, "downloadSingleImage gagal HTTP ${resp.code}: $imageUrl")
+                    if (isIkiru) {
+                        Log.e("IKIRU_TRACE", "DownloadManager downloadSingleImage gagal HTTP ${resp.code}: $cleanUrl")
+                    }
+                    Log.w(TAG, "downloadSingleImage gagal HTTP ${resp.code}: $cleanUrl")
                     if (destinationFile.exists()) destinationFile.delete()
                     return 0L
                 }
 
                 val contentType = resp.header("Content-Type")?.lowercase().orEmpty()
                 if (contentType.contains("html") || contentType.contains("text")) {
-                    Log.w(TAG, "downloadSingleImage respons bukan gambar (contentType: $contentType): $imageUrl")
+                    if (isIkiru) {
+                        Log.e("IKIRU_TRACE", "DownloadManager downloadSingleImage gagal, respons bukan gambar (contentType: $contentType): $cleanUrl")
+                    }
+                    Log.w(TAG, "downloadSingleImage respons bukan gambar (contentType: $contentType): $cleanUrl")
                     if (destinationFile.exists()) destinationFile.delete()
                     return 0L
                 }
@@ -370,7 +381,7 @@ object ChapterDownloadManager {
                 }
 
                 if (!destinationFile.exists() || destinationFile.length() <= 0L) {
-                    Log.w(TAG, "downloadSingleImage file kosong (0 bytes): $imageUrl")
+                    Log.w(TAG, "downloadSingleImage file kosong (0 bytes): $cleanUrl")
                     if (destinationFile.exists()) destinationFile.delete()
                     return 0L
                 }
@@ -378,7 +389,10 @@ object ChapterDownloadManager {
                 destinationFile.length()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "downloadSingleImage error for $imageUrl: ${e.message}")
+            if (isIkiru) {
+                Log.e("IKIRU_TRACE", "DownloadManager downloadSingleImage error for $cleanUrl: ${e.message}", e)
+            }
+            Log.e(TAG, "downloadSingleImage error for $cleanUrl: ${e.message}")
             if (destinationFile.exists()) destinationFile.delete()
             0L
         }

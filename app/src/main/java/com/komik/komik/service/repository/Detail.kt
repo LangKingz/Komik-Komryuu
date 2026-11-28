@@ -20,6 +20,9 @@ class Detail(
     private val applicationContext: Context
 ) : RepositoryDetail {
     override suspend fun getDetail(type: sourceType, url: String): ParsedData {
+        if (type == sourceType.ikiru || url.contains("ikiru", ignoreCase = true)) {
+            Log.d("IKIRU_TRACE", "Detail.getDetail called: type=$type, rawUrl='$url'")
+        }
         try {
             val html = when (type) {
                 sourceType.komikcast -> client.Komikcast.getHtml(url)

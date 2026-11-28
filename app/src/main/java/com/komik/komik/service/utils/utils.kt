@@ -18,9 +18,25 @@ import java.time.Instant
 import java.util.Base64
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
+
+// === FUNGSI ADAPTIF GRID UNTUK TABLET & SMARTPHONE ===
+fun Context.isTablet(): Boolean {
+    return resources.configuration.smallestScreenWidthDp >= 600
+}
+
+fun Context.calculateGridSpanCount(columnWidthDp: Int = 155): Int {
+    val screenWidthDp = resources.displayMetrics.widthPixels / resources.displayMetrics.density
+    val calculated = (screenWidthDp / columnWidthDp).toInt()
+    return if (screenWidthDp >= 600) {
+        calculated.coerceIn(4, 6)
+    } else {
+        calculated.coerceAtLeast(3)
+    }
+}
 
 // === FUNGSI PEMBANTU BARU UNTUK EKSTRAKSI & FORMAT ANGKA CHAPTER ===
 fun extractNumberFromDataNum(dataNumString: String): Double {
@@ -52,6 +68,74 @@ fun Double.formatChapterNumber(): String {
 fun Double?.formatChapterNumberOrEmpty(): String {
     if (this == null) return ""
     return this.formatChapterNumber()
+}
+
+/**
+ * Format tanggal laporan secara aman dari Any? (ISO-8601 UTC string, epoch Long/Double ms/s, dsb.)
+ * Dikonversi ke waktu lokal WIB (Asia/Jakarta) dengan format "dd MMM yyyy, HH:mm".
+ */
+fun formatReportDate(rawDate: Any?): String {
+    if (rawDate == null) return "Baru saja"
+
+    val targetLocale = Locale("id", "ID")
+    val outputFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", targetLocale).apply {
+        timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+    }
+
+    // 1. Tipe numerik (Long, Double, Int, Float)
+    if (rawDate is Number) {
+        val num = rawDate.toLong()
+        if (num <= 0) return "Baru saja"
+        val epochMillis = if (num < 100_000_000_000L) num * 1000L else num
+        return try {
+            outputFormat.format(Date(epochMillis))
+        } catch (_: Exception) {
+            rawDate.toString()
+        }
+    }
+
+    val str = rawDate.toString().trim()
+    if (str.isEmpty()) return "Baru saja"
+
+    // 2. String angka murni (epoch ms atau detik)
+    val numericValue = str.toDoubleOrNull()
+    if (numericValue != null) {
+        val num = numericValue.toLong()
+        if (num <= 0) return "Baru saja"
+        val epochMillis = if (num < 100_000_000_000L) num * 1000L else num
+        return try {
+            outputFormat.format(Date(epochMillis))
+        } catch (_: Exception) {
+            str
+        }
+    }
+
+    // 3. String format ISO-8601 UTC
+    val isoPatterns = arrayOf(
+        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd"
+    )
+
+    for (pattern in isoPatterns) {
+        try {
+            val sdf = SimpleDateFormat(pattern, Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            val date = sdf.parse(str)
+            if (date != null) {
+                return outputFormat.format(date)
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    // 4. Fallback aman
+    return str
 }
 
 fun formatWaktuLalu(createdAt: Long): String {

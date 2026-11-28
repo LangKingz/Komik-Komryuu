@@ -53,6 +53,7 @@ class PreferenceManager(context: Context) {
         const val DEFAULT_THEME_KEY = "midnight"
         const val KEY_PUSTAKA_GRID_SPAN = "pustaka_grid_span"
         const val KEY_SOURCE_VIEW_MODE = "source_view_mode" // "grid" or "list"
+        const val KEY_FLOATING_READ_BALL_ENABLED = "floating_read_ball_enabled"
 
         @Volatile
         private var instance: PreferenceManager? = null
@@ -290,6 +291,10 @@ class PreferenceManager(context: Context) {
     var sourceViewMode: String
         get() = pref.getString(KEY_SOURCE_VIEW_MODE, "grid") ?: "grid"
         set(value) = pref.edit().putString(KEY_SOURCE_VIEW_MODE, value).apply()
+
+    var isFloatingReadBallEnabled: Boolean
+        get() = pref.getBoolean(KEY_FLOATING_READ_BALL_ENABLED, true)
+        set(value) = pref.edit().putBoolean(KEY_FLOATING_READ_BALL_ENABLED, value).apply()
 
     fun getComicShelfStatus(comicId: Int): String {
         return pref.getString("shelf_status_$comicId", "all") ?: "all"

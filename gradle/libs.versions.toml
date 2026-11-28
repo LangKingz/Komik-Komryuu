@@ -13,8 +13,10 @@ lifecycleLivedataKtx = "2.11.0"
 lifecycleViewmodelKtx = "2.11.0"
 navigationFragmentKtx = "2.9.8"
 navigationUiKtx = "2.9.8"
+avifCoderGlide = "2.1.4"
 
 [libraries]
+avif-coder-glide = { group = "com.github.awxkee", name = "avif-coder-glide", version.ref = "avifCoderGlide" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

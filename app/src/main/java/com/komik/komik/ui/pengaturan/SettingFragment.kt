@@ -35,6 +35,7 @@ import com.komik.komik.R
 import com.komik.komik.databinding.FragmentSettingBinding
 import com.komik.komik.service.api.model.AuthResponse
 import com.komik.komik.service.api.model.DeviceInfo
+import com.komik.komik.service.api.model.ReportItem
 import com.komik.komik.service.api.model.SyncHistoryItem
 import com.komik.komik.service.api.model.SyncLibraryItem
 import com.komik.komik.service.api.model.SyncRequest
@@ -47,6 +48,9 @@ import com.komik.komik.service.data.model.Comic
 import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.adapter.AdapterThemePreset
 import com.komik.komik.service.data.model.Riwayats
+import com.komik.komik.service.api.model.BroadcastBanner
+import com.komik.komik.service.api.model.UpdateConfigRequest
+import com.komik.komik.service.utils.AdminHelper
 import com.komik.komik.service.utils.AppUpdateChecker
 import com.komik.komik.service.utils.PreferenceManager
 import com.komik.komik.service.utils.ThemeManager
@@ -76,6 +80,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
+import com.komik.komik.service.adapter.AdminUserModel
 
 class SettingFragment : Fragment() {
 
@@ -479,10 +485,13 @@ class SettingFragment : Fragment() {
         // 5. Muat Badge Pending Reports Count
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val reportsRes = client.KomryuuxSource.getReports()
+                val token = AdminHelper.fetchAdminToken()
+                Log.d("ADMIN_SYNC", "GET /api/v1/reports: tokenPresent=${token != null}")
+                val reportsRes = client.KomryuuxSource.getReports(authHeader = token)
+                Log.d("ADMIN_SYNC", "Response GET /api/v1/reports: status=${reportsRes.code()}, isSuccess=${reportsRes.isSuccessful}")
                 if (reportsRes.isSuccessful && reportsRes.body() != null) {
                     val reports = reportsRes.body()?.data.orEmpty()
-                    val pendingCount = reports.count { it.status.equals("pending", true) }
+                    val pendingCount = reports.count { it.status.equals("pending", true) || it.status.equals("menunggu", true) }
                     withContext(Dispatchers.Main) {
                         if (_binding != null) {
                             if (pendingCount > 0) {
@@ -494,7 +503,8 @@ class SettingFragment : Fragment() {
                         }
                     }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                Log.w("ADMIN_SYNC", "Gagal memuat badge pending reports: ${e.message}")
             }
         }
 
@@ -505,21 +515,56 @@ class SettingFragment : Fragment() {
     }
 
     private fun toggleMaintenanceMode(firestore: FirebaseFirestore, isMaintenance: Boolean) {
+        val maintenanceMsg = "Server Komryuu.x sedang dalam pemeliharaan berkala. Silakan coba beberapa saat lagi."
         val data = mapOf(
             "isMaintenance" to isMaintenance,
             "maintenanceMode" to isMaintenance,
-            "activeMaintenanceMessage" to "Server Komryuu.x sedang dalam pemeliharaan berkala. Silakan coba beberapa saat lagi.",
+            "activeMaintenanceMessage" to maintenanceMsg,
             "updatedAt" to System.currentTimeMillis()
         )
         firestore.collection("SETTINGS").document("app_config")
             .set(data, SetOptions.merge())
             .addOnSuccessListener {
-                val msg = if (isMaintenance) "Mode Maintenance diaktifkan! Pengguna biasa terkunci." else "Mode Maintenance dinonaktifkan! Akses kembali normal."
+                val msg = if (isMaintenance) "Mode Maintenance diaktifkan di Firebase!" else "Mode Maintenance dinonaktifkan di Firebase!"
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Gagal mengubah mode maintenance: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Gagal mengubah mode maintenance di Firebase: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+
+        // Sinkronisasi ke REST API POST api/v1/config
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val token = AdminHelper.fetchAdminToken()
+                val request = UpdateConfigRequest(
+                    maintenanceMode = isMaintenance,
+                    maintenanceMessage = maintenanceMsg
+                )
+                val payloadJson = Gson().toJson(request)
+                Log.d("ADMIN_SYNC", "POST /api/v1/config: payload=$payloadJson, tokenPresent=${token != null}")
+
+                var res = client.KomryuuxSource.updateAppConfig(authHeader = token, request = request)
+                if (res.code() == 405) {
+                    Log.d("ADMIN_SYNC", "POST /api/v1/config returned 405, fallback ke PUT /api/v1/config")
+                    res = client.KomryuuxSource.putAppConfig(authHeader = token, request = request)
+                }
+                Log.d("ADMIN_SYNC", "Response /api/v1/config: status=${res.code()}, isSuccess=${res.isSuccessful}, msg=${res.body()?.message}")
+
+                withContext(Dispatchers.Main) {
+                    val context = context ?: return@withContext
+                    if (res.isSuccessful) {
+                        val serverMsg = res.body()?.message ?: (if (isMaintenance) "Mode Maintenance server aktif!" else "Mode Maintenance server dinonaktifkan!")
+                        Toast.makeText(context, serverMsg, Toast.LENGTH_SHORT).show()
+                    } else {
+                        val errBody = res.errorBody()?.string()
+                        Log.e("ADMIN_SYNC", "toggleMaintenanceMode gagal HTTP ${res.code()}: $errBody")
+                        Toast.makeText(context, "Sinkronisasi server gagal (${res.code()})", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ADMIN_SYNC", "Exception toggleMaintenanceMode: ${e.message}", e)
+            }
+        }
     }
 
     private fun showBroadcastDialog(firestore: FirebaseFirestore) {
@@ -624,6 +669,46 @@ class SettingFragment : Fragment() {
                     .addOnFailureListener { e ->
                         Toast.makeText(context, "Gagal menyiarkan: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
+
+                // Sinkronisasi ke REST API POST api/v1/config
+                val bannerObj = BroadcastBanner(
+                    id = "banner_${System.currentTimeMillis()}",
+                    title = title,
+                    message = message,
+                    type = type,
+                    isActive = isPublished
+                )
+                val request = UpdateConfigRequest(
+                    announcement = message.ifBlank { title },
+                    announcementType = type,
+                    broadcastBanner = bannerObj
+                )
+                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        val token = AdminHelper.fetchAdminToken()
+                        val payloadJson = Gson().toJson(request)
+                        Log.d("ADMIN_SYNC", "POST /api/v1/config: payload=$payloadJson, tokenPresent=${token != null}")
+
+                        var res = client.KomryuuxSource.updateAppConfig(authHeader = token, request = request)
+                        if (res.code() == 405) {
+                            Log.d("ADMIN_SYNC", "POST /api/v1/config returned 405, fallback ke PUT /api/v1/config")
+                            res = client.KomryuuxSource.putAppConfig(authHeader = token, request = request)
+                        }
+                        Log.d("ADMIN_SYNC", "Response /api/v1/config: status=${res.code()}, isSuccess=${res.isSuccessful}, msg=${res.body()?.message}")
+
+                        withContext(Dispatchers.Main) {
+                            if (res.isSuccessful) {
+                                val serverMsg = res.body()?.message ?: "Broadcast pengumuman berhasil disiarkan!"
+                                Toast.makeText(context, serverMsg, Toast.LENGTH_SHORT).show()
+                            } else {
+                                val errBody = res.errorBody()?.string()
+                                Log.e("ADMIN_SYNC", "showBroadcastDialog gagal HTTP ${res.code()}: $errBody")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("ADMIN_SYNC", "Exception showBroadcastDialog: ${e.message}", e)
+                    }
+                }
             }
             .setNegativeButton("Batal", null)
             .show()
@@ -1248,6 +1333,13 @@ class SettingFragment : Fragment() {
         binding.pindah.setOnCheckedChangeListener { _, isChecked ->
             pref.edit().putBoolean("pindah", isChecked).apply()
         }
+
+        // Floating Assistive Ball
+        val prefManager = PreferenceManager.getInstance(requireContext())
+        binding.switchFloatingBall.isChecked = prefManager.isFloatingReadBallEnabled
+        binding.switchFloatingBall.setOnCheckedChangeListener { _, isChecked ->
+            prefManager.isFloatingReadBallEnabled = isChecked
+        }
     }
 
     // ----------------------------------------------------
@@ -1737,5 +1829,197 @@ class SettingFragment : Fragment() {
         adminFirestoreListener?.remove()
         adminUsersCountListener?.remove()
         _binding = null
+    }
+
+    fun formatDeviceInfo(raw: Any?): String = SettingFragment.formatDeviceInfo(raw)
+    fun formatReportDate(raw: Any?): String = SettingFragment.formatReportDate(raw)
+    fun formatLastLogin(raw: Any?): String = SettingFragment.formatLastLogin(raw)
+    fun isUserActive24h(raw: Any?): Boolean = SettingFragment.isUserActive24h(raw)
+    fun parseDateToMillis(raw: Any?): Long = SettingFragment.parseDateToMillis(raw)
+
+    fun showReportDetailDialog(report: ReportItem) {
+        val ctx = context ?: return
+        val deviceFormatted = formatDeviceInfo(report.deviceInfo)
+        val reporter = report.reporterEmail ?: "Anonim"
+        val statusText = report.status.uppercase()
+        val comic = report.comicTitle.ifBlank { "Komik Tidak Disebutkan" }
+        val chapter = report.chapterTitle?.let { "\nChapter: $it" } ?: ""
+        val category = report.category ?: "Laporan Masalah"
+        val desc = report.description.ifBlank { "(Tidak ada deskripsi)" }
+        val adminNote = report.adminNote?.let { "\nCatatan Admin: $it" } ?: ""
+
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle("Detail Tiket Laporan")
+            .setMessage("Status: $statusText\nKategori: $category\nKomik: $comic$chapter\nPelapor: $reporter\nPerangkat: $deviceFormatted\n\nPesan: $desc$adminNote")
+            .setPositiveButton("Tutup", null)
+            .show()
+    }
+
+    fun showUserDetailDialog(user: AdminUserModel) {
+        val ctx = context ?: return
+        SettingFragment.showUserDetailDialog(ctx, user)
+    }
+
+    companion object {
+        fun formatDeviceInfo(raw: Any?): String {
+            if (raw == null) return "-"
+            if (raw is String) return if (raw.isBlank()) "-" else raw
+            if (raw is Map<*, *>) {
+                val brand = raw["brand"]?.toString() ?: ""
+                val model = raw["model"]?.toString() ?: ""
+                val os = raw["androidVersion"]?.toString()
+                    ?: raw["os"]?.toString()
+                    ?: raw["osVersion"]?.toString()
+                    ?: raw["version"]?.toString()
+                    ?: "-"
+                val appVersion = raw["appVersion"]?.toString() ?: raw["versionName"]?.toString()
+                val base = "$brand $model (Android $os)".trim()
+                return if (base.isNotBlank() && base != "(Android -)") {
+                    if (!appVersion.isNullOrBlank()) "$base, v$appVersion" else base
+                } else {
+                    raw.entries.filter { it.value != null }
+                        .joinToString(" • ") { "${it.key}: ${it.value}" }
+                        .ifBlank { "-" }
+                }
+            }
+            if (raw is com.google.gson.JsonObject) {
+                val brand = raw.get("brand")?.asString ?: ""
+                val model = raw.get("model")?.asString ?: ""
+                val os = raw.get("androidVersion")?.asString
+                    ?: raw.get("os")?.asString
+                    ?: raw.get("osVersion")?.asString
+                    ?: raw.get("version")?.asString
+                    ?: "-"
+                val appVersion = raw.get("appVersion")?.asString ?: raw.get("versionName")?.asString
+                val base = "$brand $model (Android $os)".trim()
+                return if (base.isNotBlank() && base != "(Android -)") {
+                    if (!appVersion.isNullOrBlank()) "$base, v$appVersion" else base
+                } else {
+                    raw.entrySet().joinToString(" • ") { "${it.key}: ${it.value}" }.ifBlank { "-" }
+                }
+            }
+            return raw.toString()
+        }
+
+        fun formatReportDate(raw: Any?): String {
+            return com.komik.komik.service.utils.formatReportDate(raw)
+        }
+
+        fun parseDateToMillis(raw: Any?): Long {
+            if (raw == null) return 0L
+            if (raw is Number) {
+                val num = raw.toLong()
+                return if (num > 0L && num < 100_000_000_000L) num * 1000L else num
+            }
+            if (raw is com.google.firebase.Timestamp) {
+                return raw.toDate().time
+            }
+            if (raw is Date) {
+                return raw.time
+            }
+            val str = raw.toString().trim()
+            if (str.isEmpty()) return 0L
+
+            val num = str.toDoubleOrNull()
+            if (num != null) {
+                val l = num.toLong()
+                return if (l > 0L && l < 100_000_000_000L) l * 1000L else l
+            }
+
+            val isoPatterns = arrayOf(
+                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                "yyyy-MM-dd'T'HH:mm:ssXXX",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy-MM-dd"
+            )
+
+            for (pattern in isoPatterns) {
+                try {
+                    val sdf = SimpleDateFormat(pattern, Locale.US).apply {
+                        timeZone = TimeZone.getTimeZone("UTC")
+                    }
+                    val date = sdf.parse(str)
+                    if (date != null) {
+                        return date.time
+                    }
+                } catch (_: Exception) {
+                }
+            }
+            return 0L
+        }
+
+        fun isUserActive24h(raw: Any?): Boolean {
+            val millis = parseDateToMillis(raw)
+            if (millis <= 0L) return false
+            val diff = System.currentTimeMillis() - millis
+            return diff in 0L..86_400_000L
+        }
+
+        fun formatLastLogin(raw: Any?): String {
+            val millis = parseDateToMillis(raw)
+            if (millis <= 0L) return "Belum tercatat"
+
+            val now = System.currentTimeMillis()
+            val diff = now - millis
+
+            if (diff < 0L) return "Baru saja"
+            if (diff < 60_000L) return "Baru saja"
+            if (diff < 3600_000L) {
+                val minutes = (diff / 60_000L).coerceAtLeast(1)
+                return "$minutes menit lalu"
+            }
+
+            val locale = Locale("id", "ID")
+            val nowCal = Calendar.getInstance()
+            val thenCal = Calendar.getInstance().apply { timeInMillis = millis }
+
+            val isToday = nowCal.get(Calendar.YEAR) == thenCal.get(Calendar.YEAR) &&
+                    nowCal.get(Calendar.DAY_OF_YEAR) == thenCal.get(Calendar.DAY_OF_YEAR)
+
+            return if (isToday) {
+                val timeFormat = SimpleDateFormat("HH:mm", locale).apply {
+                    timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+                }
+                "Hari ini, ${timeFormat.format(Date(millis))}"
+            } else {
+                val isThisYear = nowCal.get(Calendar.YEAR) == thenCal.get(Calendar.YEAR)
+                val pattern = if (isThisYear) "dd MMM, HH:mm" else "dd MMM yyyy, HH:mm"
+                val fullFormat = SimpleDateFormat(pattern, locale).apply {
+                    timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+                }
+                fullFormat.format(Date(millis))
+            }
+        }
+
+        fun showUserDetailDialog(context: Context, user: AdminUserModel) {
+            val lastLoginStr = formatLastLogin(user.lastLogin)
+            val regDateStr = formatReportDate(user.createdAt)
+            val activeStatus = if (user.isBanned) "Dibanned: ${user.banReason}" else if (isUserActive24h(user.lastLogin)) "Aktif (Online 24 Jam)" else "Offline"
+            val vipStatus = if (user.role.equals("vip", true)) {
+                if (user.vipExpiresAt <= 0L) "VIP (Permanen)" else "VIP hingga ${formatReportDate(user.vipExpiresAt)}"
+            } else {
+                user.role.uppercase()
+            }
+
+            val msg = buildString {
+                append("Nama: ${user.name}\n")
+                append("Email: ${user.email.ifBlank { "(Tanpa email)" }}\n")
+                append("UID: ${user.uid}\n")
+                append("Role: $vipStatus\n")
+                append("Status: $activeStatus\n")
+                append("Terakhir Masuk: $lastLoginStr\n")
+                append("Terdaftar: $regDateStr")
+            }
+
+            MaterialAlertDialogBuilder(context)
+                .setTitle("Detail Pengguna")
+                .setMessage(msg)
+                .setPositiveButton("Tutup", null)
+                .show()
+        }
     }
 }

@@ -32,12 +32,17 @@ import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.shape.RelativeCornerSize
 import com.google.android.material.snackbar.Snackbar
+import android.app.DownloadManager
+import android.content.Intent
+import android.content.IntentFilter
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.komik.komik.databinding.ActivityMainBinding
 import com.komik.komik.service.data.Database.DatabaseRiwayats
 import com.komik.komik.service.data.dao.LibraryDao
 import com.komik.komik.service.utils.AppConfigHelper
 import com.komik.komik.service.utils.AppUpdateChecker
+import com.komik.komik.service.utils.AppUpdateReceiver
 import com.komik.komik.service.utils.PreferenceManager
 import com.komik.komik.service.utils.ThemeManager
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +58,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
     private var isBottomNavVisible: Boolean = true
     private var maintenanceDialog: Dialog? = null
+    private var updateReceiver: AppUpdateReceiver? = null
 
     private var currentSelectedDestinationId: Int = R.id.homefragment
 
@@ -112,6 +118,7 @@ class MainActivity : AppCompatActivity() {
             PreferenceManager.checkAccountSecurity(this@MainActivity)
         }
 
+        handleUpdateNotificationIntent(intent)
         checkServerConfig()
     }
 
@@ -420,8 +427,56 @@ class MainActivity : AppCompatActivity() {
         applyTabSelectionUI(currentSelectedDestinationId, previousId = null, animate = false)
     }
 
+    override fun onStart() {
+        super.onStart()
+        registerUpdateReceiver()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unregisterUpdateReceiver()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleUpdateNotificationIntent(intent)
+    }
+
+    private fun registerUpdateReceiver() {
+        if (updateReceiver == null) {
+            val receiver = AppUpdateReceiver()
+            updateReceiver = receiver
+            val filter = IntentFilter().apply {
+                addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+                addAction(DownloadManager.ACTION_NOTIFICATION_CLICKED)
+            }
+            ContextCompat.registerReceiver(this, receiver, filter, ContextCompat.RECEIVER_EXPORTED)
+            Log.d("APP_UPDATE", "MainActivity: updateReceiver registered")
+        }
+    }
+
+    private fun unregisterUpdateReceiver() {
+        updateReceiver?.let {
+            try {
+                unregisterReceiver(it)
+                Log.d("APP_UPDATE", "MainActivity: updateReceiver unregistered")
+            } catch (_: Exception) {}
+            updateReceiver = null
+        }
+    }
+
+    private fun handleUpdateNotificationIntent(intent: Intent?) {
+        val action = intent?.action ?: return
+        Log.d("APP_UPDATE", "MainActivity handleUpdateNotificationIntent: action=$action")
+        if (action == DownloadManager.ACTION_NOTIFICATION_CLICKED) {
+            val downloadIds = intent.getLongArrayExtra(DownloadManager.EXTRA_NOTIFICATION_CLICK_DOWNLOAD_IDS)
+            AppUpdateChecker.handleNotificationClicked(this, downloadIds)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        unregisterUpdateReceiver()
         maintenanceDialog?.dismiss()
         maintenanceDialog = null
     }

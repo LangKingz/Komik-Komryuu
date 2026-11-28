@@ -194,14 +194,33 @@ object comicParser {
     }
 
 
+    fun extractIkiruMangaSlug(rawUrl: String): String {
+        var s = rawUrl.trim().trimEnd('/')
+        if (s.contains("://")) {
+            s = s.substringAfter("://").substringAfter('/')
+        }
+        if (s.contains("manga/")) {
+            s = s.substringAfterLast("manga/").trim('/')
+        }
+        if (s.contains('?')) s = s.substringBefore('?')
+        if (s.contains('#')) s = s.substringBefore('#')
+        if (s.contains('/')) s = s.substringBefore('/')
+        return s.trim('/')
+    }
+
     suspend fun parseIkiru(context: Context, url: String): ParsedData {
-        val slug = if (url.startsWith("http://") || url.startsWith("https://")) {
-            url.trimEnd('/').substringAfterLast('/')
-        } else {
-            url.trim('/')
+        val slug = extractIkiruMangaSlug(url)
+        Log.d("IKIRU_TRACE", "parseIkiru: rawUrl='$url' -> extracted slug='$slug'")
+
+        val response = try {
+            val resp = client.ikiruService.getDetailManga(slug)
+            Log.d("IKIRU_TRACE", "parseIkiru getDetailManga success: title='${resp.data?.title}', rawChaptersCount=${resp.data?.chapters?.chapters?.size ?: 0}")
+            resp
+        } catch (e: Exception) {
+            Log.e("IKIRU_TRACE", "parseIkiru getDetailManga error for slug='$slug': ${e.message}", e)
+            throw e
         }
 
-        val response = client.ikiruService.getDetailManga(url)
         val data = response.data
 
         val title = data?.title?.takeIf { it.isNotBlank() } ?: "Komik Ikiru"
@@ -257,9 +276,9 @@ object comicParser {
         val chapters = rawChapters.map { chItem ->
             val numChapter = chItem.number ?: 0.0
             val formattedNum = numChapter.formatChapterNumber()
-            val chTitle = chItem.title?.takeIf { it.isNotBlank() } ?: "Chapter $formattedNum"
-            val chSlug = if (!chItem.slug.isNullOrBlank()) chItem.slug else "chapter-$formattedNum"
-            val chLink = "$slug/$chSlug"
+            val chTitle = chItem.title?.takeIf { it.isNotBlank() } ?: "Chapter $numChapter"
+//            val chSlug = if (!chItem.slug.isNullOrBlank()) chItem.slug else "chapter-$formattedNum"
+            val chLink = "$slug/${numChapter.toInt()}"
             val chDate = chItem.createdAt.orEmpty()
 
             com.komik.komik.service.data.model.Chapter(
@@ -272,6 +291,8 @@ object comicParser {
                 comicId = 0
             )
         }
+
+        Log.d("IKIRU_TRACE", "parseIkiru: parsed ${chapters.size} chapters (sample first 3: ${chapters.take(3).map { "${it.title} -> link='${it.link}' (num=${it.numChapter})" }})")
 
         return ParsedData(
             url = url,

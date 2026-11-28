@@ -2,8 +2,11 @@ package com.komik.komik.ui.pages.read
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -40,6 +43,7 @@ import com.komik.komik.service.data.model.Library
 import com.komik.komik.service.data.model.Riwayats
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getImages
+import kotlin.math.abs
 import com.komik.komik.service.utils.CloudSyncHelper
 import com.komik.komik.service.utils.PreferenceManager
 import com.komik.komik.service.utils.formatChapterNumber
@@ -89,6 +93,12 @@ class ReadActivity : AppCompatActivity() {
     private var autoScrollSpeed = 2
     private var autoScrollJob: Job? = null
 
+    // Floating Assistive Ball state
+    private val floatingBallIdleHandler = Handler(Looper.getMainLooper())
+    private val floatingBallIdleRunnable = Runnable {
+        binding.fabFloatingBall.animate().alpha(0.65f).setDuration(300).start()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         ThemeManager.applyTheme(this)
         super.onCreate(savedInstanceState)
@@ -108,6 +118,10 @@ class ReadActivity : AppCompatActivity() {
         comicId = intent.getIntExtra(EXTRA_ID_COMIC, 0)
         currentChapter = num
         currentId = comicId
+
+        if (currentType.contains("ikiru", ignoreCase = true) || currentUrl.contains("ikiru", ignoreCase = true)) {
+            Log.d("IKIRU_TRACE", "ReadActivity onCreate: currentType='$currentType', currentUrl='$currentUrl', num=$num, title='$currentTitle'")
+        }
 
         initialPageToScroll = intent.getIntExtra("pageRead", 0)
         currentLocation = typeSource.getSourceType(currentType)
@@ -173,6 +187,7 @@ class ReadActivity : AppCompatActivity() {
 
         setupScrollListener()
         setupHudListeners()
+        setupFloatingBall()
     }
 
     // ---------------------
@@ -261,6 +276,9 @@ class ReadActivity : AppCompatActivity() {
     }
 
     private fun toggleHud() {
+        if (binding.cardFloatingMenu.visibility == View.VISIBLE) {
+            hideFloatingMenu()
+        }
         if (isHudVisible) {
             hideHud()
         } else {
@@ -269,6 +287,9 @@ class ReadActivity : AppCompatActivity() {
     }
 
     private fun showHud() {
+        if (binding.cardFloatingMenu.visibility == View.VISIBLE) {
+            hideFloatingMenu()
+        }
         isHudVisible = true
         // Fade out floating page pill so it doesn't overlap bottom HUD
         binding.pillPageInfo.animate()
@@ -521,11 +542,24 @@ class ReadActivity : AppCompatActivity() {
                 delay(16)
             }
         }
+        updateAutoScrollFloatIndicator()
     }
 
     private fun stopAutoScroll() {
         isAutoScrolling = false
         autoScrollJob?.cancel()
+        updateAutoScrollFloatIndicator()
+    }
+
+    private fun updateAutoScrollFloatIndicator() {
+        if (!isAutoScrolling) {
+            binding.tvFloatAutoScroll?.text = "Auto Scroll: Off"
+            binding.ivFloatAutoScroll?.setColorFilter(getColor(R.color.mint_teal))
+        } else {
+            val speedLabel = if (autoScrollSpeed <= 2) "1x" else "2x"
+            binding.tvFloatAutoScroll?.text = "Auto Scroll: $speedLabel"
+            binding.ivFloatAutoScroll?.setColorFilter(getColor(R.color.brand))
+        }
     }
 
     private fun preloadImagesWithGlide(list: List<getImages>, refererUrl: String?, isVip: Boolean) {
@@ -807,10 +841,15 @@ class ReadActivity : AppCompatActivity() {
         super.onPause()
         saveProgress()
         stopAutoScroll()
+        floatingBallIdleHandler.removeCallbacks(floatingBallIdleRunnable)
+        if (binding.cardFloatingMenu.visibility == View.VISIBLE) {
+            binding.cardFloatingMenu.visibility = View.GONE
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        setupFloatingBall()
         val pref = getSharedPreferences("app_settings", MODE_PRIVATE)
         if (pref.getBoolean("fullscreen", true)) hideUi() else showUi()
         if (pref.getBoolean("keep_screen_on", true)) {
@@ -821,6 +860,12 @@ class ReadActivity : AppCompatActivity() {
 
         val brightness = pref.getFloat("reader_brightness", -1f)
         applyBrightness(brightness)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        floatingBallIdleHandler.removeCallbacks(floatingBallIdleRunnable)
+        stopAutoScroll()
     }
 
     // ---------------------
@@ -858,6 +903,10 @@ class ReadActivity : AppCompatActivity() {
         // Single tap detector on RecyclerView so tapping anywhere toggles HUD instantly
         val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                if (binding.cardFloatingMenu.visibility == View.VISIBLE) {
+                    hideFloatingMenu()
+                    return true
+                }
                 toggleHud()
                 return true
             }
@@ -865,6 +914,14 @@ class ReadActivity : AppCompatActivity() {
 
         binding.listImage.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                if (e.action == MotionEvent.ACTION_DOWN) {
+                    if (binding.cardFloatingMenu.visibility == View.VISIBLE) {
+                        hideFloatingMenu()
+                    }
+                    if (isAutoScrolling) {
+                        stopAutoScroll()
+                    }
+                }
                 gestureDetector.onTouchEvent(e)
                 return false
             }
@@ -899,6 +956,232 @@ class ReadActivity : AppCompatActivity() {
     fun showUi() {
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+    }
+
+    // ---------------------
+    // Floating Assistive Ball (Bola Mengambang)
+    // ---------------------
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupFloatingBall() {
+        val prefManager = PreferenceManager.getInstance(this)
+        if (!prefManager.isFloatingReadBallEnabled) {
+            binding.fabFloatingBall.visibility = View.GONE
+            binding.cardFloatingMenu.visibility = View.GONE
+            return
+        }
+
+        binding.fabFloatingBall.visibility = View.VISIBLE
+        binding.fabFloatingBall.alpha = 1.0f
+        resetFloatingBallIdleTimer()
+
+        val touchSlop = 10 * resources.displayMetrics.density
+        var startRawX = 0f
+        var startRawY = 0f
+        var dX = 0f
+        var dY = 0f
+        var isDragging = false
+
+        binding.fabFloatingBall.setOnTouchListener { view, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    floatingBallIdleHandler.removeCallbacks(floatingBallIdleRunnable)
+                    view.animate().alpha(1.0f).setDuration(100).start()
+                    startRawX = event.rawX
+                    startRawY = event.rawY
+                    dX = view.x - event.rawX
+                    dY = view.y - event.rawY
+                    isDragging = false
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val deltaX = abs(event.rawX - startRawX)
+                    val deltaY = abs(event.rawY - startRawY)
+                    if (deltaX > touchSlop || deltaY > touchSlop) {
+                        isDragging = true
+                        if (binding.cardFloatingMenu.visibility == View.VISIBLE) {
+                            hideFloatingMenu()
+                        }
+                    }
+
+                    if (isDragging) {
+                        val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+                        val screenHeight = resources.displayMetrics.heightPixels.toFloat()
+                        val marginHorizontal = 12 * resources.displayMetrics.density
+                        val marginVertical = 60 * resources.displayMetrics.density
+
+                        val newX = (event.rawX + dX).coerceIn(marginHorizontal, screenWidth - view.width - marginHorizontal)
+                        val newY = (event.rawY + dY).coerceIn(marginVertical, screenHeight - view.height - marginVertical)
+
+                        view.x = newX
+                        view.y = newY
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (!isDragging) {
+                        toggleFloatingMenu()
+                    } else {
+                        val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+                        val marginHorizontal = 12 * resources.displayMetrics.density
+                        val ballCenterX = view.x + view.width / 2f
+                        val targetX = if (ballCenterX < screenWidth / 2f) {
+                            marginHorizontal
+                        } else {
+                            screenWidth - view.width - marginHorizontal
+                        }
+                        view.animate()
+                            .x(targetX)
+                            .setDuration(250)
+                            .withEndAction { resetFloatingBallIdleTimer() }
+                            .start()
+                    }
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    resetFloatingBallIdleTimer()
+                    true
+                }
+                else -> false
+            }
+        }
+
+        setupFloatingMenuActions()
+    }
+
+    private fun resetFloatingBallIdleTimer() {
+        floatingBallIdleHandler.removeCallbacks(floatingBallIdleRunnable)
+        binding.fabFloatingBall.animate().alpha(1.0f).setDuration(150).start()
+        floatingBallIdleHandler.postDelayed(floatingBallIdleRunnable, 2500)
+    }
+
+    private fun toggleFloatingMenu() {
+        if (binding.cardFloatingMenu.visibility == View.VISIBLE) {
+            hideFloatingMenu()
+        } else {
+            showFloatingMenu()
+        }
+    }
+
+    private fun showFloatingMenu() {
+        floatingBallIdleHandler.removeCallbacks(floatingBallIdleRunnable)
+        binding.fabFloatingBall.alpha = 1.0f
+
+        val ball = binding.fabFloatingBall
+        val menu = binding.cardFloatingMenu
+
+        menu.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
+        val menuWidth = if (menu.measuredWidth > 0) menu.measuredWidth.toFloat() else (210 * resources.displayMetrics.density)
+        val menuHeight = if (menu.measuredHeight > 0) menu.measuredHeight.toFloat() else (260 * resources.displayMetrics.density)
+
+        val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+        val screenHeight = resources.displayMetrics.heightPixels.toFloat()
+        val margin = 8 * resources.displayMetrics.density
+        val edgeMargin = 12 * resources.displayMetrics.density
+
+        val ballCenterX = ball.x + ball.width / 2f
+        val isBallOnLeft = ballCenterX < screenWidth / 2f
+
+        val targetX = if (isBallOnLeft) {
+            (ball.x + ball.width + margin).coerceIn(edgeMargin, screenWidth - menuWidth - edgeMargin)
+        } else {
+            (ball.x - menuWidth - margin).coerceIn(edgeMargin, screenWidth - menuWidth - edgeMargin)
+        }
+
+        val ballCenterY = ball.y + ball.height / 2f
+        val targetY = (ballCenterY - menuHeight / 2f).coerceIn(
+            60 * resources.displayMetrics.density,
+            screenHeight - menuHeight - 60 * resources.displayMetrics.density
+        )
+
+        menu.x = targetX
+        menu.y = targetY
+        menu.pivotX = if (isBallOnLeft) 0f else menuWidth
+        menu.pivotY = (ballCenterY - targetY).coerceIn(0f, menuHeight)
+
+        menu.alpha = 0f
+        menu.scaleX = 0.8f
+        menu.scaleY = 0.8f
+        menu.visibility = View.VISIBLE
+
+        menu.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(200)
+            .setListener(null)
+            .start()
+
+        updateAutoScrollFloatIndicator()
+    }
+
+    private fun hideFloatingMenu() {
+        val menu = binding.cardFloatingMenu
+        if (menu.visibility != View.VISIBLE) return
+
+        menu.animate()
+            .alpha(0f)
+            .scaleX(0.8f)
+            .scaleY(0.8f)
+            .setDuration(160)
+            .setListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    menu.visibility = View.GONE
+                    resetFloatingBallIdleTimer()
+                }
+            })
+            .start()
+    }
+
+    private fun setupFloatingMenuActions() {
+        binding.btnFloatPrevChapter.setOnClickListener {
+            hideFloatingMenu()
+            triggerPrevChapter()
+        }
+
+        binding.btnFloatNextChapter.setOnClickListener {
+            hideFloatingMenu()
+            triggerNextChapter()
+        }
+
+        binding.btnFloatAutoScroll.setOnClickListener {
+            val isVip = PreferenceManager.getInstance(this@ReadActivity).isVipOrAbove()
+            if (!isVip) {
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(this@ReadActivity)
+                    .setTitle("Fitur VIP: Auto-Scroll")
+                    .setMessage("Fitur membaca hands-free (Auto-Scroll) otomatis hanya tersedia untuk pengguna VIP / Moderator / Admin.\n\nUpgrade akun Anda untuk menikmati membaca komik tanpa perlu menyentuh layar!")
+                    .setPositiveButton("Mengerti", null)
+                    .show()
+                return@setOnClickListener
+            }
+
+            if (!isAutoScrolling) {
+                startAutoScroll(2)
+            } else if (autoScrollSpeed == 2) {
+                startAutoScroll(4)
+            } else {
+                stopAutoScroll()
+            }
+        }
+
+        binding.btnFloatScrollTop.setOnClickListener {
+            hideFloatingMenu()
+            binding.listImage.smoothScrollToPosition(0)
+        }
+
+        binding.btnFloatFullscreen.setOnClickListener {
+            hideFloatingMenu()
+            val pref = getSharedPreferences("app_settings", MODE_PRIVATE)
+            val currentFullscreen = pref.getBoolean("fullscreen", true)
+            val newFullscreen = !currentFullscreen
+            pref.edit().putBoolean("fullscreen", newFullscreen).apply()
+            if (newFullscreen) hideUi() else showUi()
+            Toast.makeText(this, if (newFullscreen) "Layar Penuh: Aktif" else "Layar Penuh: Nonaktif", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnFloatExit.setOnClickListener {
+            hideFloatingMenu()
+            finish()
+        }
     }
 
     private fun formatChapterNum(num: Double): String {

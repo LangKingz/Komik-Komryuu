@@ -10,6 +10,8 @@ import com.komik.komik.service.parser.comic.SourceParser
 import com.komik.komik.service.parser.comic.comicParser
 import com.komik.komik.service.parser.model.getListUpdate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
@@ -18,197 +20,208 @@ import org.jsoup.Jsoup
 import kotlin.math.log
 
 class Comic(val client: client) : RepositroyComic {
-    override suspend fun getComic(type: sourceType, url: String, pages: Int): List<getListUpdate> {
-
-        return withContext(Dispatchers.IO) {
-            when (type) {
-                sourceType.komikcast -> {
-
-                    val result = mutableListOf<getListUpdate>()
-
-                    for (page in 2..pages) {
-                        val html =
-                            client.Komikcast.getHtml("${url}daftar-komik/page/$page/?sortby=update")
-                        val document = Jsoup.parse(html)
-                        val pageData = SourceParser.parseKomikcast(document).toList()
-                        result.addAll(pageData)
-
-                    }
-
-                    result
-
-                }
-
-                sourceType.ikiru -> {
-                    val result = mutableListOf<getListUpdate>()
-                    for (page in 1..pages) {
-                        try {
-                            val response = client.ikiruService.getProjectManga(
-                                page = page,
-                                sortBy = "popular",
-                                sort = "desc"
-                            )
-                            val mangas = response.data?.mangas?.mapIndexed { index, item ->
-                                getListUpdate(
-                                    index = index,
-                                    title = item?.title ?: "Manga",
-                                    urlImage = formatIkiruCover(item?.featuredImage),
-                                    link = item?.slug ?: item?.id.orEmpty(),
-                                    location = "ikiru",
-                                    tagModel = "komik"
-                                )
-                            }
-                            if (!mangas.isNullOrEmpty()) {
-                                result.addAll(mangas)
-                            } else {
-                                val projectResponse = client.ikiruService.getProjects(page = page)
-                                val projects = projectResponse.data?.project?.mapIndexed { index, item ->
-                                    getListUpdate(
-                                        index = index,
-                                        title = item?.title ?: "Project Manga",
-                                        urlImage = formatIkiruCover(item?.featuredImage),
-                                        link = item?.slug ?: item?.id.orEmpty(),
-                                        location = "ikiru",
-                                        tagModel = "komik"
-                                    )
-                                }
-                                if (!projects.isNullOrEmpty()) {
-                                    result.addAll(projects)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e(TAG, "getComic ikiru error page $page: ${e.message}")
-                            try {
-                                val fallback = SourceParser.parseIkiru(client, page)?.toList()
-                                if (!fallback.isNullOrEmpty()) {
-                                    result.addAll(fallback)
-                                }
-                            } catch (_: Exception) {}
-                        }
-                    }
-                    result
-                }
-
-                sourceType.komiku,
-                sourceType.shinigami -> {
-                    val offset = if (pages > 1) (pages - 1) * 24 else 0
-                    SourceParser.parseShinigami(client, limit = 24, offset = offset) ?: emptyList()
-                }
-
-                sourceType.comicscan -> {
-                    val result = mutableListOf<getListUpdate>()
-
-                    for (page in 1..pages) {
-                        val html =
-                            client.Comicscan.getHtml("${url}manga/?page=$page&order=update")
-                        val document = Jsoup.parse(html)
-                        val pageData = SourceParser.parseComicscan(document).toList()
-                        result.addAll(pageData)
-                    }
-
-                    Log.d(TAG, "getComic: ${result.size}")
-
-                    result
-                }
-
-                sourceType.kiryuu -> {
-                    val result = mutableListOf<getListUpdate>()
-
-                    for (page in 1..pages) {
-                        val html =
-                            com.komik.komik.service.client.Ikiru.getHtml("${url}manga/?page=$page&order=update")
-                        val document = Jsoup.parse(html)
-
-                        val pageData = SourceParser.parseKiryuu(document)
-                        result.addAll(pageData)
-                    }
-                    result
-                }
-
-                sourceType.manhwaindo -> {
-                    val result = mutableListOf<getListUpdate>()
-
-                    for (page in 1..pages) {
-                        val html =
-                            client.Ikiru.getHtml("${url}series/?page=$page&order=update")
-                        val document = Jsoup.parse(html)
-                        val pageData = SourceParser.parseManhwaindo(document)
-
-                        result.addAll(pageData)
-                    }
-
-                    Log.d(TAG, "getComic: ${result}")
-
-                    result
-                }
-
-                sourceType.batoto_all -> {
-                    val result = mutableListOf<getListUpdate>()
-
-                    for (page in 1..pages) {
-                        val html =
-                            client.ScrapeDataImage.getHtml("https://bato.si/v4x-latest/$page")
-                        val document = Jsoup.parse(html)
-                        val pageData = SourceParser.parseBatoto(document)
-
-                        result.addAll(pageData)
-                    }
-
-                    Log.d(TAG, "getComic: ${result}")
-
-                    result
-                }
-
-//                sourceType.doujindesu -> {
+//    override suspend fun getComic(type: sourceType, url: String, pages: Int): List<getListUpdate> {
+//
+//        return withContext(Dispatchers.IO) {
+//            when (type) {
+//                sourceType.komikcast -> {
+//
+//                    val result = mutableListOf<getListUpdate>()
+//
+//                    for (page in 2..pages) {
+//                        val html =
+//                            client.Komikcast.getHtml("${url}daftar-komik/page/$page/?sortby=update")
+//                        val document = Jsoup.parse(html)
+//                        val pageData = SourceParser.parseKomikcast(document).toList()
+//                        result.addAll(pageData)
+//
+//                    }
+//
+//                    result
+//
+//                }
+//
+//                sourceType.ikiru -> {
+//                    val result = mutableListOf<getListUpdate>()
+//                    for (page in 1..pages) {
+//                        try {
+//                            Log.d("IKIRU_TRACE", "getComic (explore): requesting page=$page, sortBy=popular, sort=desc")
+//                            val response = client.ikiruService.getProjectManga(
+//                                page = page,
+//                                sortBy = "popular",
+//                                sort = "desc"
+//                            )
+//                            val rawCount = response.data?.mangas?.size ?: 0
+//                            val mangas = response.data?.mangas?.mapIndexed { index, item ->
+//                                getListUpdate(
+//                                    index = index,
+//                                    title = item?.title ?: "Manga",
+//                                    urlImage = formatIkiruCover(item?.featuredImage),
+//                                    link = item?.slug ?: item?.id.orEmpty(),
+//                                    location = "ikiru",
+//                                    tagModel = "komik"
+//                                )
+//                            }
+//                            val mappedCount = mangas?.size ?: 0
+//                            Log.d("IKIRU_TRACE", "getComic (explore): page=$page, rawCount=$rawCount, mappedCount=$mappedCount")
+//                            if (!mangas.isNullOrEmpty()) {
+//                                result.addAll(mangas)
+//                            } else {
+//                                Log.d("IKIRU_TRACE", "getComic (explore): mangas empty, trying getProjects page=$page")
+//                                val projectResponse = client.ikiruService.getProjects(page = page)
+//                                val rawProjCount = projectResponse.data?.project?.size ?: 0
+//                                val projects = projectResponse.data?.project?.mapIndexed { index, item ->
+//                                    getListUpdate(
+//                                        index = index,
+//                                        title = item?.title ?: "Project Manga",
+//                                        urlImage = formatIkiruCover(item?.featuredImage),
+//                                        link = item?.slug ?: item?.id.orEmpty(),
+//                                        location = "ikiru",
+//                                        tagModel = "komik"
+//                                    )
+//                                }
+//                                val mappedProjCount = projects?.size ?: 0
+//                                Log.d("IKIRU_TRACE", "getComic (explore): getProjects page=$page, rawCount=$rawProjCount, mappedCount=$mappedProjCount")
+//                                if (!projects.isNullOrEmpty()) {
+//                                    result.addAll(projects)
+//                                }
+//                            }
+//                        } catch (e: Exception) {
+//                            Log.e("IKIRU_TRACE", "getComic (explore) error page $page: ${e.message}", e)
+//                            try {
+//                                val fallback = SourceParser.parseIkiru(client, page)?.toList()
+//                                Log.d("IKIRU_TRACE", "getComic (explore) fallback count: ${fallback?.size ?: 0}")
+//                                if (!fallback.isNullOrEmpty()) {
+//                                    result.addAll(fallback)
+//                                }
+//                            } catch (ex: Exception) {
+//                                Log.e("IKIRU_TRACE", "getComic (explore) fallback error: ${ex.message}", ex)
+//                            }
+//                        }
+//                    }
+//                    result
+//                }
+//
+//                sourceType.komiku,
+//                sourceType.shinigami -> {
+//                    val offset = if (pages > 1) (pages - 1) * 24 else 0
+//                    SourceParser.parseShinigami(client, limit = 24, offset = offset) ?: emptyList()
+//                }
+//
+//                sourceType.comicscan -> {
 //                    val result = mutableListOf<getListUpdate>()
 //
 //                    for (page in 1..pages) {
-//                        val html = client.Ikiru.getHtml("https://doujin.desu.xxx/manhwa?page=${page}")
+//                        val html =
+//                            client.Comicscan.getHtml("${url}manga/?page=$page&order=update")
 //                        val document = Jsoup.parse(html)
-//                        val pageData = SourceParser.parseDoujindesu(document)
+//                        val pageData = SourceParser.parseComicscan(document).toList()
+//                        result.addAll(pageData)
+//                    }
+//
+//                    Log.d(TAG, "getComic: ${result.size}")
+//
+//                    result
+//                }
+//
+//                sourceType.kiryuu -> {
+//                    val result = mutableListOf<getListUpdate>()
+//
+//                    for (page in 1..pages) {
+//                        val html =
+//                            com.komik.komik.service.client.Ikiru.getHtml("${url}manga/?page=$page&order=update")
+//                        val document = Jsoup.parse(html)
+//
+//                        val pageData = SourceParser.parseKiryuu(document)
+//                        result.addAll(pageData)
+//                    }
+//                    result
+//                }
+//
+//                sourceType.manhwaindo -> {
+//                    val result = mutableListOf<getListUpdate>()
+//
+//                    for (page in 1..pages) {
+//                        val html =
+//                            client.Ikiru.getHtml("${url}series/?page=$page&order=update")
+//                        val document = Jsoup.parse(html)
+//                        val pageData = SourceParser.parseManhwaindo(document)
+//
+//                        result.addAll(pageData)
+//                    }
+//
+//                    Log.d(TAG, "getComic: ${result}")
+//
+//                    result
+//                }
+//
+//                sourceType.batoto_all -> {
+//                    val result = mutableListOf<getListUpdate>()
+//
+//                    for (page in 1..pages) {
+//                        val html =
+//                            client.ScrapeDataImage.getHtml("https://bato.si/v4x-latest/$page")
+//                        val document = Jsoup.parse(html)
+//                        val pageData = SourceParser.parseBatoto(document)
+//
+//                        result.addAll(pageData)
+//                    }
+//
+//                    Log.d(TAG, "getComic: ${result}")
+//
+//                    result
+//                }
+//
+////                sourceType.doujindesu -> {
+////                    val result = mutableListOf<getListUpdate>()
+////
+////                    for (page in 1..pages) {
+////                        val html = client.Ikiru.getHtml("https://doujin.desu.xxx/manhwa?page=${page}")
+////                        val document = Jsoup.parse(html)
+////                        val pageData = SourceParser.parseDoujindesu(document)
+////
+////                        result.addAll(pageData)
+////                    }
+////
+////                    result
+////                }
+//                sourceType.doujindesu -> {
+//                    val result = mutableListOf<getListUpdate>()
+//                    val limit = 24
+//
+//                    for (page in 1..pages) {
+//                        val offset = (page - 1) * limit
+//                        val json = client.Doujindesu.getHtml(
+//                            "https://doujin.desu.xxx/api/manga?limit=$limit&type=manhwa&sort=latest_chapter&offset=$offset"
+//                        )
+//
+//                        Log.d(TAG, "getComic: ${json}")
+//                        val pageData = SourceParser.parseDoujindesu(json)
 //
 //                        result.addAll(pageData)
 //                    }
 //
 //                    result
 //                }
-                sourceType.doujindesu -> {
-                    val result = mutableListOf<getListUpdate>()
-                    val limit = 24
-
-                    for (page in 1..pages) {
-                        val offset = (page - 1) * limit
-                        val json = client.Doujindesu.getHtml(
-                            "https://doujin.desu.xxx/api/manga?limit=$limit&type=manhwa&sort=latest_chapter&offset=$offset"
-                        )
-
-                        Log.d(TAG, "getComic: ${json}")
-                        val pageData = SourceParser.parseDoujindesu(json)
-
-                        result.addAll(pageData)
-                    }
-
-                    result
-                }
-
-                sourceType.otakudesu -> {
-                    val result = mutableListOf<getListUpdate>()
-
-                    for (page in 1..10) {
-                        val html = client.Ikiru.getHtml("${url}ongoing-anime/page/$page/")
-                        val document = Jsoup.parse(html)
-                        val pageData = CinemaParser.parswerOtakuDesu(document)
-
-                        result.addAll(pageData)
-                    }
-
-                    result
-                }
-
-                else -> emptyList() // Default case, kembalikan list kosong
-            }
-        }
-    }
+//
+//                sourceType.otakudesu -> {
+//                    val result = mutableListOf<getListUpdate>()
+//
+//                    for (page in 1..10) {
+//                        val html = client.Ikiru.getHtml("${url}ongoing-anime/page/$page/")
+//                        val document = Jsoup.parse(html)
+//                        val pageData = CinemaParser.parswerOtakuDesu(document)
+//
+//                        result.addAll(pageData)
+//                    }
+//
+//                    result
+//                }
+//
+//                else -> emptyList() // Default case, kembalikan list kosong
+//            }
+//        }
+//    }
 
     override suspend fun getComicPaged(
         type: sourceType,
@@ -254,12 +267,59 @@ class Comic(val client: client) : RepositroyComic {
                 }
 
                 sourceType.ikiru -> {
-                    val page = (offset / limit) + 1
+                    // Atur berapa page API yang ditarik sekaligus dalam 1 kali load UI
+                    val pagesPerBatch = 3
+                    val batchIndex = (offset / limit)
+                    val startPage = (batchIndex * pagesPerBatch) + 1
+                    val endPage = startPage + pagesPerBatch - 1
+
+                    Log.d("IKIRU_TRACE", "getComicUpdate: offset=$offset, limit=$limit, fetching pages=$startPage..$endPage")
+
                     try {
-                        SourceParser.parseIkiru(client,page)?.toList() ?: emptyList()
+                        kotlinx.coroutines.coroutineScope {
+                            // Tembak page startPage sampai endPage secara BERSAMAAN (paralel)
+                            val deferredPages = (startPage..endPage).map { currentPage ->
+                                async {
+                                    try {
+                                        val response = client.ikiruService.getProjectManga(
+                                            page = currentPage,
+                                            sortBy = "popular",
+                                            sort = "desc"
+                                        )
+                                        val list = response.data?.mangas ?: emptyList()
+                                        Log.d("IKIRU_TRACE", "getComicUpdate: page=$currentPage sukses, rawCount=${list.size}")
+                                        list
+                                    } catch (e: Exception) {
+                                        Log.e("IKIRU_TRACE", "getComicUpdate: gagal di page=$currentPage (${e.message})")
+                                        emptyList()
+                                    }
+                                }
+                            }
+
+                            // Gabungkan semua hasil page & buang jika ada komik yang kembar (distinctBy slug/id)
+                            val combinedRaw = deferredPages.awaitAll()
+                                .flatten()
+                                .distinctBy { it?.slug ?: it?.id }
+
+                            val mangas = combinedRaw.mapIndexed { index, item ->
+                                getListUpdate(
+                                    index = offset + index,
+                                    title = item?.title ?: "Manga",
+                                    urlImage = formatIkiruCover(item?.featuredImage),
+                                    link = item?.slug ?: item?.id.orEmpty(),
+                                    location = "ikiru",
+                                    tagModel = "komik"
+                                )
+                            }
+
+                            Log.d("IKIRU_TRACE", "getComicUpdate: total batch (${startPage}..${endPage}) mappedCount=${mangas.size}")
+                            mangas
+                        }
                     } catch (e: Exception) {
-                        e.printStackTrace()
-                        SourceParser.parseIkiru(client, page)?.toList() ?: emptyList()
+                        Log.e("IKIRU_TRACE", "getComicUpdate fatal error: ${e.message}, fallback to SourceParser", e)
+                        val fallback = SourceParser.parseIkiru(client, startPage)?.toList() ?: emptyList()
+                        Log.d("IKIRU_TRACE", "getComicUpdate fallback count: ${fallback.size}")
+                        fallback
                     }
                 }
 
@@ -347,12 +407,14 @@ class Comic(val client: client) : RepositroyComic {
 
             sourceType.ikiru -> {
                 try {
+                    Log.d("IKIRU_TRACE", "getSearch: querying query='$query', page=1")
                     val response = client.ikiruService.searchManga(
                         query = query,
                         page = 1,
                         sortBy = "popular",
                         sort = "desc"
                     )
+                    val rawCount = response.data?.mangas?.size ?: 0
                     val searchData = response.data?.mangas?.mapIndexed { index, item ->
                         getListUpdate(
                             index = index,
@@ -363,16 +425,19 @@ class Comic(val client: client) : RepositroyComic {
                             tagModel = "komik"
                         )
                     }
+                    val mappedCount = searchData?.size ?: 0
+                    Log.d("IKIRU_TRACE", "getSearch: rawCount=$rawCount, mappedCount=$mappedCount")
                     if (!searchData.isNullOrEmpty()) {
                         result.addAll(searchData)
                         result
                     } else {
+                        Log.d("IKIRU_TRACE", "getSearch: searchData empty, fallback to legacy")
                         val legacyResult = runLegacyIkiruSearch(query, url)
                         result.addAll(legacyResult)
                         result
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "getSearch ikiru API error: ${e.message}, fallback to legacy")
+                    Log.e("IKIRU_TRACE", "getSearch ikiru API error: ${e.message}, fallback to legacy", e)
                     val legacyResult = runLegacyIkiruSearch(query, url)
                     result.addAll(legacyResult)
                     result

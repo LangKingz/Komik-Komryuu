@@ -10,40 +10,51 @@ import com.komik.komik.service.parser.model.getImages
 import org.jsoup.Jsoup
 
 class Image(private val client: client) : RepositoryImage {
+
+    companion object {
+        private const val TAG = "Image"
+
+        fun extractIkiruChapterSlugs(rawUrl: String): Pair<String, String> {
+            val clean = rawUrl.trim().trimEnd('/')
+            val withoutProtocol = if (clean.contains("://")) clean.substringAfter("://").substringAfter('/') else clean
+            val withoutQuery = withoutProtocol.substringBefore('?').substringBefore('#')
+            val segments = withoutQuery
+                .split('/')
+                .map { it.trim() }
+                .filter { it.isNotBlank() && it != "manga" && it != "api" && it != "public" && !it.contains("ikiru.") }
+            return when {
+                segments.size >= 2 -> Pair(segments[segments.size - 2], segments[segments.size - 1])
+                segments.size == 1 -> Pair("", segments[0])
+                else -> Pair("", "")
+            }
+        }
+    }
+
     override suspend fun getImage(url: String, type: sourceType): List<getImages> {
         try {
             return when (type) {
                 sourceType.ikiru -> {
                     try {
-                        val cleanUrl = url.trim().trimEnd('/')
-                        val pathParts = cleanUrl.substringAfter("://").substringAfter('/')
-                            .split('/')
-                            .filter { it.isNotBlank() && it != "manga" && it != "api" && it != "public" }
-
-                        val (mangaSlug, chapterSlug) = if (pathParts.size >= 2) {
-                            Pair(pathParts[pathParts.size - 2], pathParts[pathParts.size - 1])
-                        } else if (cleanUrl.contains('/')) {
-                            val segments = cleanUrl.split('/').filter { it.isNotBlank() }
-                            if (segments.size >= 2) {
-                                Pair(segments[segments.size - 2], segments[segments.size - 1])
-                            } else {
-                                Pair("", "")
-                            }
-                        } else {
-                            Pair("", "")
-                        }
+                        val (mangaSlug, chapterSlug) = extractIkiruChapterSlugs(url)
+                        val baseUrl = if (client.getIkiruUrl().isNotBlank()) client.getIkiruUrl().trimEnd('/') else "https://11.ikiru.wtf"
+                        Log.d("IKIRU_TRACE", "Image.getImage called: url='$url' -> extracted mangaSlug='$mangaSlug', chapterSlug='$chapterSlug'")
 
                         if (mangaSlug.isNotBlank() && chapterSlug.isNotBlank()) {
-                            val response = client.ikiruService.getChapterImages(mangaSlug, chapterSlug)
+                            Log.d("IKIRU_TRACE", "Image.getImage: hitting IkiruService.getChapterImages(mangaSlug='$mangaSlug', chapterSlug='$chapterSlug')")
+                            val response = client.ikiruService.getChapterImages(
+                                chapterSlug = chapterSlug,
+                                mangaSlug = mangaSlug
+                            )
                             val medias = response.data?.medias.orEmpty().filterNotNull()
                             val sortedMedias = medias.sortedBy { it.pageNumber ?: 0 }
                             val imagesList = sortedMedias.mapIndexedNotNull { index, mediaItem ->
-                                val rawPath = mediaItem.filePath?.trim().orEmpty()
+                                val rawPath = mediaItem.filePath?.replace("&amp;", "&")?.trim().orEmpty()
                                 if (rawPath.isNotBlank()) {
-                                    val fullUrl = if (rawPath.startsWith("http://") || rawPath.startsWith("https://")) {
-                                        rawPath
-                                    } else {
-                                        "${client.getIkiruUrl().trimEnd('/')}/${rawPath.trimStart('/')}"
+                                    val fullUrl = when {
+                                        rawPath.startsWith("//") -> "https:$rawPath"
+                                        rawPath.startsWith("http://", ignoreCase = true) || rawPath.startsWith("https://", ignoreCase = true) -> rawPath
+                                        rawPath.startsWith("/") -> "$baseUrl$rawPath"
+                                        else -> "$baseUrl/$rawPath"
                                     }
                                     getImages(
                                         index = mediaItem.pageNumber ?: (index + 1),
@@ -52,23 +63,54 @@ class Image(private val client: client) : RepositoryImage {
                                 } else null
                             }
 
+                            Log.d("IKIRU_TRACE", "Image.getImage: received ${imagesList.size} images from API")
+                            imagesList.take(3).forEachIndexed { idx, item ->
+                                Log.d("IKIRU_TRACE", "Image URL [$idx]: ${item.image}")
+                            }
+
                             if (imagesList.isNotEmpty()) {
-                                Log.d(TAG, "Ikiru API getImage: ${imagesList.size} pages")
                                 return imagesList
                             }
                         }
 
                         // Fallback ke scraping HTML jika slug tidak valid atau medias kosong
+                        Log.w("IKIRU_TRACE", "Image.getImage: API returned no images or invalid slugs for url='$url', trying HTML fallback")
                         val html = client.Ikiru.getHtml(url)
                         val document = Jsoup.parse(html)
-                        val pagedData = ImageParser.ikiruParse(document)
-                        Log.d(TAG, "Ikiru HTML fallback getImage: $pagedData")
+                        val pagedData = ImageParser.ikiruParse(document).map { img ->
+                            val clean = img.image.replace("&amp;", "&").trim()
+                            val fullUrl = when {
+                                clean.startsWith("//") -> "https:$clean"
+                                clean.startsWith("http://", ignoreCase = true) || clean.startsWith("https://", ignoreCase = true) -> clean
+                                clean.startsWith("/") -> "$baseUrl$clean"
+                                else -> "$baseUrl/$clean"
+                            }
+                            img.copy(image = fullUrl)
+                        }
+                        Log.d("IKIRU_TRACE", "Image.getImage: Ikiru HTML fallback count=${pagedData.size}")
                         pagedData
                     } catch (e: Exception) {
-                        Log.e(TAG, "Ikiru API getChapterImages error for $url: ${e.message}, fallback to HTML")
-                        val html = client.Ikiru.getHtml(url)
-                        val document = Jsoup.parse(html)
-                        ImageParser.ikiruParse(document)
+                        Log.e("IKIRU_TRACE", "Image.getImage error for url='$url': ${e.message}, fallback to HTML", e)
+                        try {
+                            val baseUrl = if (client.getIkiruUrl().isNotBlank()) client.getIkiruUrl().trimEnd('/') else "https://11.ikiru.wtf"
+                            val html = client.Ikiru.getHtml(url)
+                            val document = Jsoup.parse(html)
+                            val fallback = ImageParser.ikiruParse(document).map { img ->
+                                val clean = img.image.replace("&amp;", "&").trim()
+                                val fullUrl = when {
+                                    clean.startsWith("//") -> "https:$clean"
+                                    clean.startsWith("http://", ignoreCase = true) || clean.startsWith("https://", ignoreCase = true) -> clean
+                                    clean.startsWith("/") -> "$baseUrl$clean"
+                                    else -> "$baseUrl/$clean"
+                                }
+                                img.copy(image = fullUrl)
+                            }
+                            Log.d("IKIRU_TRACE", "Image.getImage: Ikiru HTML fallback in catch count=${fallback.size}")
+                            fallback
+                        } catch (ex: Exception) {
+                            Log.e("IKIRU_TRACE", "Image.getImage HTML fallback failed: ${ex.message}", ex)
+                            emptyList()
+                        }
                     }
                 }
 
@@ -141,9 +183,5 @@ class Image(private val client: client) : RepositoryImage {
             Log.e(TAG, "getImage: ${e.message}")
             return emptyList()
         }
-    }
-
-    companion object{
-        private const val TAG = "Image"
     }
 }

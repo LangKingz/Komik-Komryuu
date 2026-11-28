@@ -110,6 +110,9 @@ class DetailViewmodel(
     }
 
     fun getChapters(sourceType: sourceType, url: String) {
+        if (sourceType == com.komik.komik.service.enumclass.sourceType.ikiru || url.contains("ikiru", ignoreCase = true)) {
+            Log.d("IKIRU_TRACE", "DetailViewmodel.getChapters: sourceType=$sourceType, url='$url'")
+        }
         _loading.value = true
         _isChapterLoading.value = true
         viewModelScope.launch {

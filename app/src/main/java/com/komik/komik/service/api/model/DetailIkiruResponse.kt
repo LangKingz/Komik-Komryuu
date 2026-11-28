@@ -215,7 +215,7 @@ data class Metadata(
 	val galleryUrl: List<Any?>? = null,
 
 	@field:SerializedName("score")
-	val score: Int? = null,
+	val score: Double? = null,
 
 	@field:SerializedName("dailyViews")
 	val dailyViews: Int? = null,

@@ -16,10 +16,12 @@ import com.komik.komik.service.api.model.UpdateConfigRequest
 import com.komik.komik.service.api.model.UpdateExtensionRequest
 import com.komik.komik.service.api.model.UpdateReportRequest
 import com.komik.komik.service.api.model.UpdateUserRoleRequest
+import com.komik.komik.service.api.model.UserListResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -82,13 +84,15 @@ interface newSourceService {
     @GET("api/v1/config")
     suspend fun getAppConfig(): Response<AppConfigResponse>
 
-    @PATCH("api/v1/config")
+    @POST("api/v1/config")
     suspend fun updateAppConfig(
+        @Header("Authorization") authHeader: String? = null,
         @Body request: UpdateConfigRequest
     ): Response<GenericAdminResponse>
 
     @POST("api/v1/config")
     suspend fun postAppConfig(
+        @Header("Authorization") authHeader: String? = null,
         @Body request: UpdateConfigRequest
     ): Response<GenericAdminResponse>
 
@@ -110,21 +114,43 @@ interface newSourceService {
 
     @GET("api/v1/reports")
     suspend fun getReports(
+        @Header("Authorization") authHeader: String? = null,
         @Query("status") status: String? = null
     ): Response<ReportListResponse>
 
     @PATCH("api/v1/reports")
     suspend fun updateReport(
+        @Header("Authorization") authHeader: String? = null,
+        @Body request: UpdateReportRequest
+    ): Response<GenericAdminResponse>
+
+    @POST("api/v1/reports")
+    suspend fun postUpdateReport(
+        @Header("Authorization") authHeader: String? = null,
         @Body request: UpdateReportRequest
     ): Response<GenericAdminResponse>
 
     @DELETE("api/v1/reports")
     suspend fun deleteReport(
+        @Header("Authorization") authHeader: String? = null,
         @Query("id") id: String
     ): Response<GenericAdminResponse>
 
+    @PUT("api/v1/config")
+    suspend fun putAppConfig(
+        @Header("Authorization") authHeader: String? = null,
+        @Body request: UpdateConfigRequest
+    ): Response<GenericAdminResponse>
+
+    @GET("api/v1/users")
+    suspend fun getUsers(
+        @Header("Authorization") authHeader: String? = null,
+        @Query("role") role: String? = null
+    ): Response<UserListResponse>
+
     @PATCH("api/v1/users")
     suspend fun updateUserRole(
+        @Header("Authorization") authHeader: String? = null,
         @Body request: UpdateUserRoleRequest
     ): Response<GenericAdminResponse>
 }

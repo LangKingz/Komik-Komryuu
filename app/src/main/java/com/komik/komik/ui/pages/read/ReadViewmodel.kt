@@ -92,12 +92,21 @@ class ReadViewmodel : ViewModel() {
             }
 
             try {
+                if (type == sourceType.ikiru || url.contains("ikiru", ignoreCase = true)) {
+                    Log.d("IKIRU_TRACE", "ReadViewmodel.setImage: fetching images for type=$type, url='$url'")
+                }
                 val data = repository.getImage(url, type)
+                if (type == sourceType.ikiru || url.contains("ikiru", ignoreCase = true)) {
+                    Log.d("IKIRU_TRACE", "ReadViewmodel.setImage: successfully received ${data.size} images for Ikiru")
+                }
                 Log.d(TAG, "setImage: ${data.size} images loaded")
                 _image.postValue(data)
                 _loading.postValue(false)
                 _chapterLoaded.postValue(true)
             } catch (e: Exception) {
+                if (type == sourceType.ikiru || url.contains("ikiru", ignoreCase = true)) {
+                    Log.e("IKIRU_TRACE", "ReadViewmodel.setImage error for Ikiru url='$url': ${e.message}", e)
+                }
                 e.printStackTrace()
                 Log.d(TAG, "setImage error: ${e.localizedMessage}")
                 _error.postValue(e.localizedMessage ?: "Gagal memuat halaman")

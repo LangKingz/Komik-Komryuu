@@ -34,6 +34,7 @@ import com.komik.komik.service.component.BottomsheetInfo
 import com.komik.komik.service.data.model.RiwayatDetail
 import com.komik.komik.service.enumclass.sourceType
 import com.komik.komik.service.parser.model.getListUpdate
+import com.komik.komik.service.utils.calculateGridSpanCount
 import com.komik.komik.service.utils.isNetworkAvaible
 import com.komik.komik.service.utils.typeSource
 
@@ -153,9 +154,10 @@ class sourceActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerViews(source: sourceType) {
-        // Main Comic List
+        // Main Comic List (Adaptive columns for Tablet & Phone)
         adapterManhwa = AdapterManhwa(mutableListOf())
-        val gridLayoutManager = GridLayoutManager(this, 3)
+        val spanCount = calculateGridSpanCount()
+        val gridLayoutManager = GridLayoutManager(this, spanCount)
         binding.listSource.layoutManager = gridLayoutManager
         binding.listSource.adapter = adapterManhwa
 

@@ -1,12 +1,15 @@
 package com.komik.komik.service.adapter
 
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.HttpException
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
@@ -51,6 +54,8 @@ class AdapterImage(
             binding.layoutRetry.visibility = View.GONE
             binding.imagechapter.setImageDrawable(null)
 
+            val cleanUrl = data.image.replace("&amp;", "&").trim()
+
             val listener = object : RequestListener<Drawable> {
                 override fun onLoadFailed(
                     e: GlideException?,
@@ -58,6 +63,18 @@ class AdapterImage(
                     target: Target<Drawable>,
                     isFirstResource: Boolean
                 ): Boolean {
+                    val url = model?.toString() ?: cleanUrl
+                    if (type == sourceType.ikiru || url.contains("ikiru.id", ignoreCase = true) || url.contains("ikiru.wtf", ignoreCase = true) || url.contains("ikiru", ignoreCase = true)) {
+                        Log.e("IKIRU_TRACE", "Glide gagal load URL: $url | Error: ${e?.message}", e)
+                        e?.logRootCauses("IKIRU_TRACE")
+                        e?.rootCauses?.forEach { cause ->
+                            if (cause is HttpException) {
+                                Log.e("IKIRU_TRACE", "Glide HTTP status error: ${cause.statusCode} for URL: $url")
+                            } else {
+                                Log.e("IKIRU_TRACE", "Glide root cause: ${cause.message}", cause)
+                            }
+                        }
+                    }
                     binding.loading.visibility = View.GONE
                     binding.layoutRetry.visibility = View.VISIBLE
                     return true
@@ -70,18 +87,21 @@ class AdapterImage(
                     dataSource: DataSource,
                     isFirstResource: Boolean
                 ): Boolean {
+                    val url = model.toString()
+                    if (type == sourceType.ikiru || url.contains("ikiru.id", ignoreCase = true) || url.contains("ikiru.wtf", ignoreCase = true) || url.contains("ikiru", ignoreCase = true)) {
+                        Log.d("IKIRU_TRACE", "Glide onResourceReady for model='$url', dataSource=$dataSource")
+                    }
                     binding.loading.visibility = View.GONE
                     binding.layoutRetry.visibility = View.GONE
                     return false
                 }
             }
 
-            val imageStr = data.image.trim()
-            val isLocal = imageStr.startsWith("/") || imageStr.startsWith("file://")
+            val isLocal = cleanUrl.startsWith("/") || cleanUrl.startsWith("file://")
 
             if (isLocal) {
                 // Mode Offline: Muat langsung dari File lokal tanpa header jaringan
-                val localPath = if (imageStr.startsWith("file://")) imageStr.substring(7) else imageStr
+                val localPath = if (cleanUrl.startsWith("file://")) cleanUrl.substring(7) else cleanUrl
                 val localFile = File(localPath)
                 if (localFile.exists() && localFile.length() > 0L) {
                     loadWithGlide(localFile, listener)
@@ -92,7 +112,7 @@ class AdapterImage(
             } else {
                 // Mode Online: Tambahkan header referer & user-agent sesuai sumber
                 when {
-                    type == sourceType.doujindesu || imageStr.contains("desu.pics") || imageStr.contains("doujindesu") -> {
+                    type == sourceType.doujindesu || cleanUrl.contains("desu.pics") || cleanUrl.contains("doujindesu") -> {
                         val effectiveReferer = if (!refererUrl.isNullOrBlank() && refererUrl.startsWith("http")) {
                             refererUrl
                         } else {
@@ -107,10 +127,10 @@ class AdapterImage(
                             )
                             .addHeader("X-Requested-With", "XMLHttpRequest")
                             .build()
-                        val glideUrl = GlideUrl(imageStr, headers)
+                        val glideUrl = GlideUrl(cleanUrl, headers)
                         loadWithGlide(glideUrl, listener)
                     }
-                    imageStr.contains("shngm.id") || type == sourceType.shinigami -> {
+                    cleanUrl.contains("shngm.id") || type == sourceType.shinigami -> {
                         val headers = LazyHeaders.Builder()
                             .addHeader("Referer", "https://app.shinigami.asia/")
                             .addHeader(
@@ -118,26 +138,12 @@ class AdapterImage(
                                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                             )
                             .build()
-                        val glideUrl = GlideUrl(imageStr, headers)
+                        val glideUrl = GlideUrl(cleanUrl, headers)
                         loadWithGlide(glideUrl, listener)
                     }
-                    type == sourceType.ikiru || imageStr.contains("ikiru") -> {
-                        val effectiveReferer = if (!refererUrl.isNullOrBlank() && refererUrl.startsWith("http")) {
-                            refererUrl
-                        } else {
-                            com.komik.komik.service.client.getIkiruUrl()
-                        }
-                        val headers = LazyHeaders.Builder()
-                            .addHeader("Referer", effectiveReferer)
-                            .addHeader("Origin", com.komik.komik.service.client.getIkiruUrl().trimEnd('/'))
-                            .addHeader(
-                                "User-Agent",
-                                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                            )
-                            .addHeader("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
-                            .build()
-                        val glideUrl = GlideUrl(imageStr, headers)
-                        loadWithGlide(glideUrl, listener)
+                    type == sourceType.ikiru || cleanUrl.contains("ikiru.id", ignoreCase = true) || cleanUrl.contains("ikiru.wtf", ignoreCase = true) -> {
+                        Log.d("IKIRU_TRACE", "AdapterImage loading Ikiru image without custom headers: $cleanUrl")
+                        loadWithGlide(cleanUrl, listener)
                     }
                     !refererUrl.isNullOrBlank() && refererUrl.startsWith("http") -> {
                         val headers = LazyHeaders.Builder()
@@ -147,11 +153,11 @@ class AdapterImage(
                                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
                             )
                             .build()
-                        val glideUrl = GlideUrl(imageStr, headers)
+                        val glideUrl = GlideUrl(cleanUrl, headers)
                         loadWithGlide(glideUrl, listener)
                     }
                     else -> {
-                        loadWithGlide(imageStr, listener)
+                        loadWithGlide(cleanUrl, listener)
                     }
                 }
             }
@@ -178,7 +184,7 @@ class AdapterImage(
                         "Unduh Gambar",
                         "Apakah anda yakin ingin mendownload gambar ini?",
                         onPositive = { _ ->
-                            downloadImageManager(context, data.image)
+                            downloadImageManager(context, cleanUrl)
                         },
                         onNegative = { dialog ->
                             dialog.dismiss()
@@ -197,6 +203,7 @@ class AdapterImage(
         private fun loadWithGlide(url: Any, listener: RequestListener<Drawable>) {
             Glide.with(context)
                 .load(url)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .listener(listener)
                 .override(Target.SIZE_ORIGINAL)
                 .into(binding.imagechapter)
